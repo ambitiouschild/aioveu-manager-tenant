@@ -7,7 +7,7 @@
       <picker
         mode="multiSelector"
         :value="multiIndex"
-        :range="categoryOptions"
+        :range="multiOptions"
         range-key="label"
         @change="handlePickerChange"
         @columnchange="handlePickerColumnChange"
@@ -172,8 +172,8 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { onLoad, onShow, onHide, onReady } from '@dcloudio/uni-app';
 
 // 导入API
-import PmsCategoryAPI from '@/pacKageC/api/aioveuMallPms/aioveuMallPmsCategory/pms-category';
-import PmsSpuAPI from '@/pacKageC/api/aioveuMallPms/aioveuMallPmsSpu/pms-spu';
+import PmsCategoryAPI from '@/packageC/api/aioveuMallPms/aioveuMallPmsCategory/pms-category';
+import PmsSpuAPI from '@/packageC/api/aioveuMallPms/aioveuMallPmsSpu/pms-spu';
 
 // 类型定义
 class CategoryOption {
@@ -225,7 +225,7 @@ class GoodsInfo {
   }
 }
 
-// Props 和 Emit
+// // Props 和 Emit
 // const props = defineProps({
 //   // 商品信息
 //   goodsInfo: {
@@ -256,7 +256,7 @@ const systemInfo = uni.getSystemInfoSync();
 // 商品信息双向绑定
 const goodsInfo = computed({
   get: () => {
-    const data = props.goodsInfo || new GoodsInfo();
+    const data =  new GoodsInfo();  //props.goodsInfo ||
     return data;
   },
   set: (value) => {
@@ -282,34 +282,37 @@ const loadCategoryData = async () => {
 
     const response = await PmsCategoryAPI.getCategoryOptions();
 
-    // UniApp API 调用
-    // const response = await uni.request({
-    //   url: '/api/category/options',
-    //   method: 'GET',
-    //   header: {
-    //     'Content-Type': 'application/json'
-    //   }
-    // });
+    console.log('📦 原始API响应:', response);
+    console.log('📦 响应类型:', typeof response);
+    console.log('📦 是否是数组:', Array.isArray(response));
+    console.log('📦 响应字符串:', JSON.stringify(response));
+
+    console.log('📦 开始加载商品分类数据：{}',response);
 
     let data = [];
-    if (response.statusCode === 200 && response.data) {
-      const resData = response.data;
-      if (resData.code === 0 && Array.isArray(resData.data)) {
-        data = resData.data;
-      } else if (Array.isArray(resData)) {
-        data = resData;
-      }
-    }
+    // if (response.statusCode === 200 && response.data) {
+    //   const resData = response.data;
+    //   if (resData.code === 0 && Array.isArray(resData.data)) {
+    //     data = resData.data;
+    //   } else if (Array.isArray(resData)) {
+    //     data = resData;
+    //   }
+    // }
+
+    data = response;
 
     if (data && data.length > 0) {
       // 转换数据格式
       const options = data.map(item => new CategoryOption({
-        id: item.id,
-        name: item.name,
-        label: item.name,
-        value: item.id,
+        id: item.value,      // 使用 value 作为 id
+        name: item.label,    // 使用 label 作为 name
+        label: item.label,   // label 保持不变
+        value: item.value,   // value 保持不变
         children: item.children || []
       }));
+
+      console.log('✅ 转换数据格式:{}', options);
+
 
       categoryOptions.value = options;
       updateMultiOptions(options);
