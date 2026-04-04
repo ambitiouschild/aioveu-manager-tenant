@@ -15,9 +15,16 @@
       class="swiper-container"
     >
       <swiper-item v-for="(item, index) in swiperList" :key="index" @click="handleClick(item, index)">
-        <image :src="item" mode="aspectFill" class="swiper-image" />
+        <image :src="item.imageUrl" mode="aspectFill" class="swiper-image" />
       </swiper-item>
     </swiper>
+
+    <!-- 自定义swiper指示器 -->
+<!--    <view class="swiper-dots">-->
+<!--      <text class="num">{{ swiperCurrent + 1 }}</text>-->
+<!--      <text class="sign">/</text>-->
+<!--      <text class="num">{{ swiperLength }}</text>-->
+<!--    </view>-->
 
     <!-- 快捷导航 -->
 <!--    网格布局：-->
@@ -27,9 +34,9 @@
     <view class="nav-grid mt-2">
       <uni-grid :column="4" :highlight="false" :square="false">
       <uni-grid-item v-for="(item, index) in navList" :key="index">
-        <view class="nav-item" @click="navigateTo(item.url)">
-          <image class="nav-icon" :src="item.icon" mode="aspectFit" />
-          <text class="nav-text">{{ item.title }}</text>
+        <view class="nav-item" @click="navigateTo(item.jumpPath)">
+          <image class="nav-icon" :src="item.homeIcon" mode="aspectFit" />
+          <text class="nav-text">{{ item.homeName }}</text>
         </view>
       </uni-grid-item>
       </uni-grid>
@@ -61,15 +68,15 @@
         <uni-grid-item>
           <view class="stats-item">
             <!-- 扫描按钮 -->
-            <view class="scan-btn-container" v-if="hasScanPermission">
-              <button
-                class="scan-btn"
-                @click="startQRCodeScan"
-              >
-                <image class="scan-icon" src="/static/icons/scan.png" />
-                扫描
-              </button>
-            </view>
+<!--            <view class="scan-btn-container" v-if="hasScanPermission">-->
+<!--              <button-->
+<!--                class="scan-btn"-->
+<!--                @click="startQRCodeScan"-->
+<!--              >-->
+<!--                <image class="scan-icon" src="/static/icons/scan.png" />-->
+<!--                扫描-->
+<!--              </button>-->
+<!--            </view>-->
 
             <view class="stats-content">
               <image class="stats-icon" src="/static/icons/visitor.png" />
@@ -135,14 +142,31 @@
 </template>
 
 <script setup lang="ts">
+
+//可以直接赋值
+// 这是 JavaScript，不是 TypeScript
+// 注意：这里没有 "lang='ts'"
+//onst carouselList = ref([]);
+//carouselList.value = response;  // 在 JS 中是允许的
+//TypeScript 和 JavaScript 的类型检查差异
+//你的 <script setup>标签没有 lang="ts"属性，所以 Vue 3 默认当作 JavaScript 处理。
+
+//如果你想获得更好的类型安全性和开发体验，建议迁移到 TypeScript 并正确注解类型。
+
 import * as dayjs from 'wot-design-uni/dayjs';
 import LogAPI, { VisitStatsVO } from "@/api/system/log";
-import { ref, reactive, nextTick } from 'vue';
+import { ref, onMounted, reactive, nextTick } from 'vue';
 import AioveuLaundryGarmentIdentityAPI, { QRCodeScanRequest } from '@/api/aioveuLaundryGarmentIdentity/aioveu-laundry-garment-identity';
 import BarcodeScanner from '@/components/BarcodeScanner/BarcodeScanner.vue';
+import { getAdvertList } from "@/api/sms/advert";
+import { bennerItem } from "@/types/sms/advert";
+import { listSeckillingSpus } from "@/api/pms/goods";
+import SmsHomeAdvertAPI, { SmsHomeAdvertPageVO } from "@/api/sms/sms-home-advert";
+import AuthAPI from "@/api/auth";
 
 const current = ref<number>(0);
 const noticeText = ref("可我不敌可爱 恰同学少年，风华正茂；书生意气，挥斥方遒。指点江山，激扬文字，粪土当年万户侯。");
+const loading = ref(false);
 
 const visitStatsData = ref<VisitStatsVO>({
   todayUvCount: 0,
@@ -153,6 +177,10 @@ const visitStatsData = ref<VisitStatsVO>({
   totalPvCount: 0,
 });
 
+const swiperCurrent = ref(0);
+const swiperLength = ref(0);
+const categories = ref();
+const navList = ref();
 
 // 权限检查函数 - 替换自定义指令
 const hasScanPermission = computed(() => {
@@ -277,53 +305,126 @@ const chartOpts = ref({
 // 日期范围
 const recentDaysRange = ref(7);
 
-const swiperList = ref([
-  "https://minio.aioveu.com/aioveu/login-bg1.jpg",
-  "https://minio.aioveu.com/aioveu/IMG_7193.JPG"
-]);
+const swiperList = ref<bennerItem[]>([]);
+
+// 生命周期
+// 页面显示时触发
+onMounted(() => {
+  console.log("首页页面加载");
+  loadData();
+});
+
+
+
+// 数据加载
+const loadData = async (isRefresh = false) => {
+  try {
+    loading.value = true;
+
+    await Promise.all([
+      loadCarouselData(),
+      loadCategoriesData(),
+      // loadAdvertsData(),
+      // loadGoodsData(),
+    ]);
+  } catch (error) {
+    console.error("加载首页数据失败:", error);
+    uni.showToast({
+      title: "加载失败",
+      icon: "none",
+    });
+  } finally {
+    loading.value = false;
+    if (isRefresh) {
+      uni.stopPullDownRefresh();
+    }
+  }
+};
+
+//获取轮播图广告列表
+const loadCarouselData = async () => {
+  try {
+    const response = await getAdvertList();
+    console.log("获取轮播图广告列表:", response);
+
+    if (response && Array.isArray(response)) {
+      swiperList.value = response;
+      swiperLength.value = response.length;
+    }
+  } catch (error) {
+    console.error("加载轮播图数据失败:", error);
+    swiperList.value = getDefaultCarouselData();
+  }
+};
+
+// 默认数据
+const getDefaultCarouselData = () => [
+  { imageUrl: "/static/temp/b1.jpg", title: "广告1" },
+  { imageUrl: "/static/temp/b2.jpg", title: "广告2" },
+  { imageUrl: "/static/temp/b3.jpg", title: "广告3" },
+];
+
+const loadCategoriesData = async () => {
+  try {
+    const response = await AuthAPI.getManagerHomeCategories();
+    console.log("获取分类列表:", response);
+
+    if (response) {
+      navList.value = response ;
+      console.log("====navList.value============",navList.value);
+    } else {
+      navList.value = [];
+    }
+  } catch (error) {
+    console.error("加载分类数据失败:", error);
+    categories.value = [];
+  }
+};
+
+
 
 // 快捷导航列表
-const navList = reactive([
-  {
-    icon: "/static/icons/weixin.png",
-    title: "员工管理",
-    url: "/packageC/pages/aioveu_department/employee/index",
-  },
-  {
-    icon: "/static/icons/browser.png",
-    title: "物资管理",
-    url: "/packageD/pages/aioveu_material/material/index",
-  },
-  {
-    icon: "/static/icons/visitor.png",
-    title: "客户管理",
-    url: "/packageE/pages/aioveu_customer/customer/index",
-  },
-  {
-    icon: "/static/icons/user.png",
-    title: "用户管理",
-    url: "/packageB/pages/work/user/index",
-    prem: "sys:user:query",
-  },
-  {
-    icon: "/static/icons/role.png",
-    title: "角色管理",
-    url: "/packageB/pages/work/role/index",
-    prem: "sys:role:query",
-  },
-  {
-    icon: "/static/icons/notice.png",
-    title: "通知公告",
-    url: "/packageB/pages/work/notice/index",
-    prem: "sys:notice:query",
-  },
-  {
-    icon: "/static/icons/setting.png",
-    title: "系统配置",
-    url: "/packageB/pages/work/config/index",
-    prem: "sys:config:query",
-  },
-]);
+// const navList = reactive([
+//   {
+//     icon: "/static/icons/weixin.png",
+//     title: "员工管理",
+//     url: "/packageC/pages/aioveu_department/employee/index",
+//   },
+//   {
+//     icon: "/static/icons/browser.png",
+//     title: "物资管理",
+//     url: "/packageD/pages/aioveu_material/material/index",
+//   },
+//   {
+//     icon: "/static/icons/visitor.png",
+//     title: "客户管理",
+//     url: "/packageE/pages/aioveu_customer/customer/index",
+//   },
+//   {
+//     icon: "/static/icons/user.png",
+//     title: "用户管理",
+//     url: "/packageB/pages/work/user/index",
+//     prem: "sys:user:query",
+//   },
+//   {
+//     icon: "/static/icons/role.png",
+//     title: "角色管理",
+//     url: "/packageB/pages/work/role/index",
+//     prem: "sys:role:query",
+//   },
+//   {
+//     icon: "/static/icons/notice.png",
+//     title: "通知公告",
+//     url: "/packageB/pages/work/notice/index",
+//     prem: "sys:notice:query",
+//   },
+//   {
+//     icon: "/static/icons/setting.png",
+//     title: "系统配置",
+//     url: "/packageB/pages/work/config/index",
+//     prem: "sys:config:query",
+//   },
+// ]);
 
 // 导航跳转
 const navigateTo = (url: string) => {
@@ -333,6 +434,8 @@ const navigateTo = (url: string) => {
 };
 
 function handleClick(item: any, index: number) {
+
+  swiperCurrent.value = index;
   console.log('点击轮播图:', item, index);
 }
 

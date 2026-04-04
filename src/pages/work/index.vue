@@ -29,7 +29,11 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, computed } from 'vue';
+import {reactive, computed, ref} from 'vue';
+import AuthAPI from "@/api/auth";
+
+
+const loading = ref(false);
 
 // 权限检查函数
 const hasPermission = (permission: string) => {
@@ -81,33 +85,25 @@ const navigateTo = (url: string) => {
   });
 };
 
-const gridList = reactive([
+const gridList = ref();
+const gridList1 = reactive([
   {
-    title: "洗护管理",
+    title: "商品管理",
     children: [
       {
-        icon: "https://minio.aioveu.com/aioveu/logo.png",
-        title: "洗衣订单",
-        url: "/packageG/pages/aioveu_laundry/laundry_order/index",
-        prem: "aioveuLaundryOrder:aioveu-laundry-order:query",
+        icon: "",
+        title: "商品上架",
+        url: "/packageC/pages/aioveuMallPms/Goods/index",
       },
       {
-        icon: "https://minio.aioveu.com/aioveu/logo.png",
-        title: "衣物类型",
-        url: "/packageG/pages/aioveu_laundry/laundry_clothing_type/index",
-        prem: "aioveuLaundryClothingType:aioveu-laundry-clothing-type:query",
+        icon: "",
+        title: "商品品牌",
+        url: "/packageC/pages/aioveuMallPms/Brand/index",
       },
       {
-        icon: "https://minio.aioveu.com/aioveu/logo.png",
-        title: "洗衣订单衣物明细",
-        url: "/packageG/pages/aioveu_laundry/laundry_order_item/index",
-        prem: "aioveuLaundryOrderItem:aioveu-laundry-order-item:query",
-      },
-      {
-        icon: "https://minio.aioveu.com/aioveu/logo.png",
-        title: "洗衣流程图片记录",
-        url: "/packageG/pages/aioveu_laundry/laundry_process_image/index",
-        prem: "aioveuLaundryProcessImage:aioveu-laundry-process-image:query",
+        icon: "",
+        title: "商品分类树",
+        url: "/packageC/pages/aioveuMallPms/CategoryTree/index",
       },
     ],
   },
@@ -137,135 +133,6 @@ const gridList = reactive([
         title: "会员充值记录",
         url: "/packageF/pages/aioveu_member/member_recharge_record/index",
         prem: "aioveuMemberRechargeRecord:aioveu-member-recharge-record:query",
-      },
-    ],
-  },
-  {
-    title: "人员管理",
-    children: [
-      {
-        icon: "https://minio.aioveu.com/aioveu/logo.png",
-        title: "部门管理",
-        url: "/packageC/pages/aioveu_department/department/index",
-        prem: "aioveuDepartment:aioveuProcurement-department:query",
-      },
-      {
-        icon: "https://minio.aioveu.com/aioveu/logo.png",
-        title: "岗位管理",
-        url: "/packageC/pages/aioveu_department/position/index",
-        prem: "aioveuPosition:aioveuProcurement-position:query",
-      },
-      {
-        icon: "https://minio.aioveu.com/aioveu/logo.png",
-        title: "员工管理",
-        url: "/packageC/pages/aioveu_department/employee/index",
-        prem: "aioveuEmployee:aioveuProcurement-employee:query",
-      },
-      {
-        icon: "https://minio.aioveu.com/aioveu/logo.png",
-        title: "考勤管理",
-        url: "/packageC/pages/aioveu_department/attendance/index",
-        prem: "aioveuAttendance:aioveuProcurement-attendance:query",
-      },
-      {
-        icon: "https://minio.aioveu.com/aioveu/logo.png",
-        title: "绩效管理",
-        url: "/packageC/pages/aioveu_department/performance/index",
-        prem: "aioveuPerformance:aioveuProcurement-performance:query",
-      },
-      {
-        icon: "https://minio.aioveu.com/aioveu/logo.png",
-        title: "薪资管理",
-        url: "/packageC/pages/aioveu_department/salary/index",
-        prem: "aioveuSalary:aioveuProcurement-salary:query",
-      },
-    ],
-  },
-  {
-    title: "物资管理",
-    children: [
-      {
-        icon: "https://minio.aioveu.com/aioveu/logo.png",
-        title: "物资分类管理",
-        url: "/packageD/pages/aioveu_material/category/index",
-        prem: "aioveuCategory:aioveuProcurement-category:query",
-      },
-      {
-        icon: "https://minio.aioveu.com/aioveu/logo.png",
-        title: "物资管理",
-        url: "/packageD/pages/aioveu_material/material/index",
-        prem: "aioveuMaterial:aioveuProcurement-material:query",
-      },
-      {
-        icon: "https://minio.aioveu.com/aioveu/logo.png",
-        title: "仓库管理",
-        url: "/packageD/pages/aioveu_material/warehouse/index",
-        prem: "aioveuWarehouse:aioveuProcurement-warehouse:query",
-      },
-      {
-        icon: "https://minio.aioveu.com/aioveu/logo.png",
-        title: "库存管理",
-        url: "/packageD/pages/aioveu_material/inventory/index",
-        prem: "aioveuInventory:aioveuProcurement-inventory:query",
-      },
-      {
-        icon: "https://minio.aioveu.com/aioveu/logo.png",
-        title: "入库管理",
-        url: "/packageD/pages/aioveu_material/inbound/index",
-        prem: "aioveuInbound:aioveuProcurement-inbound:query",
-      },
-      {
-        icon: "https://minio.aioveu.com/aioveu/logo.png",
-        title: "设备管理",
-        url: "/packageD/pages/aioveu_material/equipment/index",
-        prem: "aioveuEquipment:aioveuProcurement-equipment:query",
-      },
-      {
-        icon: "https://minio.aioveu.com/aioveu/logo.png",
-        title: "采购管理",
-        url: "/packageD/pages/aioveu_material/procurement/index",
-        prem: "aioveuProcurement:aioveuProcurement-procurement:query",
-      },
-      {
-        icon: "https://minio.aioveu.com/aioveu/logo.png",
-        title: "出库管理",
-        url: "/packageD/pages/aioveu_material/outbound/index",
-        prem: "aioveuOutbound:aioveuProcurement-outbound:query",
-      },
-    ],
-  },
-  {
-    title: "客户管理",
-    children: [
-      {
-        icon: "https://minio.aioveu.com/aioveu/logo.png",
-        title: "客户管理",
-        url: "/packageE/pages/aioveu_customer/customer/index",
-        prem: "aioveuCustomer:aioveuProcurement-customer:query",
-      },
-      {
-        icon: "https://minio.aioveu.com/aioveu/logo.png",
-        title: "联系人管理",
-        url: "/packageE/pages/aioveu_customer/contact/index",
-        prem: "aioveuContact:aioveuProcurement-contact:query",
-      },
-      {
-        icon: "https://minio.aioveu.com/aioveu/logo.png",
-        title: "交易管理",
-        url: "/packageE/pages/aioveu_customer/transaction/index",
-        prem: "aioveuTransaction:aioveuProcurement-transaction:query",
-      },
-      {
-        icon: "https://minio.aioveu.com/aioveu/logo.png",
-        title: "订单管理",
-        url: "/packageE/pages/aioveu_customer/sales_order/index",
-        prem: "aioveuSalesOrder:aioveuProcurement-sales-order:query",
-      },
-      {
-        icon: "https://minio.aioveu.com/aioveu/logo.png",
-        title: "订单明细管理",
-        url: "/packageE/pages/aioveu_customer/sales_order_detail/index",
-        prem: "aioveuSalesOrderDetail:aioveuProcurement-sales-order-detail:query",
       },
     ],
   },
@@ -310,6 +177,53 @@ const gridList = reactive([
     ],
   },
 ]);
+
+
+// 生命周期
+// 页面显示时触发
+onMounted(() => {
+  console.log("工作台页面加载");
+  loadData();
+});
+
+// 数据加载
+const loadData = async (isRefresh = false) => {
+  try {
+    loading.value = true;
+
+    await Promise.all([
+      loadGridListData(),
+    ]);
+  } catch (error) {
+    console.error("加载工作台数据失败:", error);
+    uni.showToast({
+      title: "加载失败",
+      icon: "none",
+    });
+  } finally {
+    loading.value = false;
+    if (isRefresh) {
+      uni.stopPullDownRefresh();
+    }
+  }
+};
+
+//获取轮播图广告列表
+const loadGridListData = async () => {
+  try {
+    const response = await AuthAPI.getWorkbenchCategoriesWithItems();
+    console.log("获取工作台分类列表:", response);
+
+    if (response && Array.isArray(response)) {
+      gridList.value = response;
+    }
+  } catch (error) {
+    console.error("加载工作台分类失败:", error);
+    gridList.value = gridList1;
+  }
+};
+
+
 </script>
 
 <style lang="scss" scoped>

@@ -1,18 +1,32 @@
 import { defineStore } from "pinia";
+import { store } from "@/store";
 import AuthAPI, { type LoginFormData } from "@/api/auth";
 import UserAPI, { type UserInfo } from "@/api/system/user";
 import { setToken, getUserInfo, setUserInfo, clearAll } from "@/utils/cache";
+
+import { AuthStorage } from "@/utils/auth.storage";
 
 export const useUserStore = defineStore("user", () => {
   const userInfo = ref<UserInfo | undefined>(getUserInfo());
   const permissions = ref<string[]>([]); // 新增权限列表字段
 
+  // 记住我状态
+  const rememberMe = ref(AuthStorage.getRememberMe());
+
   // 登录
-  const login = (data: LoginFormData) => {
+  const login = (loginRequest: LoginFormData) => {
     return new Promise((resolve, reject) => {
-      AuthAPI.login(data)
+      AuthAPI.login(loginRequest)
         .then((data) => {
-          setToken(data.accessToken);
+
+          // console.log("data是什么：", data);
+          const accessToken = data.access_token;
+          const refreshToken = data.refresh_token;
+
+          // 保存记住我状态和token
+          rememberMe.value = loginRequest.rememberMe ?? false;
+          AuthStorage.setTokens(accessToken, refreshToken, rememberMe.value);
+          setToken(accessToken);
           resolve(data);
         })
         .catch((error) => {
@@ -39,6 +53,9 @@ export const useUserStore = defineStore("user", () => {
 
   // 获取用户信息
   const getInfo = () => {
+
+    console.log("获取用户信息");
+
     return new Promise((resolve, reject) => {
       UserAPI.getUserInfo()
         .then((data) => {
@@ -72,6 +89,41 @@ export const useUserStore = defineStore("user", () => {
     }
   };
 
+  /**
+   * 重置所有系统状态
+   * 统一处理所有清理工作，包括用户凭证、路由、缓存等
+   */
+  function resetAllState() {
+    // 1. 重置用户状态
+    resetUserState();
+
+    // 2. 重置其他模块状态
+    // 重置路由
+    // usePermissionStoreHook().resetRouter();
+    // // 清除字典缓存
+    // useDictStoreHook().clearDictCache();
+    // // 清除标签视图
+    // useTagsViewStore().delAllViews();
+    //
+    // // 3. 清理 WebSocket 连接
+    // cleanupWebSocket();
+    console.log("[UserStore] WebSocket connections cleaned up");
+
+    return Promise.resolve();
+  }
+
+  /**
+   * 重置用户状态
+   * 仅处理用户模块内的状态
+   */
+  function resetUserState() {
+    // 清除用户凭证
+    AuthStorage.clearAuth();
+    // 重置用户信息
+    userInfo.value = {} as UserInfo;
+  }
+
+
   // 判断用户信息是否完整
   const isUserInfoComplete = (): boolean => {
     if (!userInfo.value) return false;
@@ -87,9 +139,11 @@ export const useUserStore = defineStore("user", () => {
   return {
     userInfo,
     // permissions, // 导出权限列表
+    rememberMe,
     login,
     loginByWechat,
     logout,
+    resetAllState,
     getInfo,
     isUserInfoComplete,
 
@@ -106,3 +160,6 @@ export const useUserStore = defineStore("user", () => {
 // 2.在getInfo方法中，除了获取用户信息，还要获取权限列表（或者单独提供一个加载权限的方法，并在适当的时候调用）。
 // 3.确保在指令中能够访问到permissions状态。
 //由于用户已经调用了getInfo，但指令仍然无法识别，可能是因为权限数据没有正确存储或指令没有正确实现。
+export function useUserStoreHook() {
+  return useUserStore(store);
+}

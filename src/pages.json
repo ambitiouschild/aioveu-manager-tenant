@@ -169,78 +169,9 @@
       "independent": true,
       "pages": [
         {
-          "path": "pages/aioveu_department/department/index",
+          "path": "pages/aioveuMallPms/Goods/index",
           "style": {
-            "navigationBarTitleText": "部门管理"
-          }
-        },
-        {
-          "path": "pages/aioveu_department/department/form",
-          "style": {
-            "navigationBarTitleText": "部门管理表单"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_department/position/index",
-          "style": {
-            "navigationBarTitleText": "岗位管理"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_department/position/form",
-          "style": {
-            "navigationBarTitleText": "岗位管理表单"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_department/employee/index",
-          "style": {
-            "navigationBarTitleText": "员工管理"
-          }
-        },
-        {
-          "path": "pages/aioveu_department/employee/form",
-          "style": {
-            "navigationBarTitleText": "员工管理表单"
-          }
-        },
-        {
-          "path": "pages/aioveu_department/attendance/index",
-          "style": {
-            "navigationBarTitleText": "考勤管理"
-          }
-        },
-        {
-          "path": "pages/aioveu_department/attendance/form",
-          "style": {
-            "navigationBarTitleText": "考勤管理表单"
-          }
-        },
-        {
-          "path": "pages/aioveu_department/performance/index",
-          "style": {
-            "navigationBarTitleText": "绩效管理"
-          }
-        },
-        {
-          "path": "pages/aioveu_department/performance/form",
-          "style": {
-            "navigationBarTitleText": "绩效管理表单"
-          }
-        },
-        {
-          "path": "pages/aioveu_department/salary/index",
-          "style": {
-            "navigationBarTitleText": "薪资管理"
-          }
-        },
-        {
-          "path": "pages/aioveu_department/salary/form",
-          "style": {
-            "navigationBarTitleText": "薪资管理表单"
+            "navigationBarTitleText": "商品上架"
           }
         }
       ]
@@ -250,116 +181,11 @@
       "independent": true,
       "pages": [
         {
-          "path": "pages/aioveu_material/category/index",
+          "path": "pages/aioveuMallOms/Order/index",
           "style": {
-            "navigationBarTitleText": "物资分类管理"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_material/category/form",
-          "style": {
-            "navigationBarTitleText": "物资分类管理表单"
-          }
-        },
-        {
-          "path": "pages/aioveu_material/material/index",
-          "style": {
-            "navigationBarTitleText": "物资管理"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_material/material/form",
-          "style": {
-            "navigationBarTitleText": "物资管理表单"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_material/warehouse/index",
-          "style": {
-            "navigationBarTitleText": "仓库管理"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_material/warehouse/form",
-          "style": {
-            "navigationBarTitleText": "仓库管理表单"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_material/inventory/index",
-          "style": {
-            "navigationBarTitleText": "库存管理"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_material/inventory/form",
-          "style": {
-            "navigationBarTitleText": "库存管理表单"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_material/inbound/index",
-          "style": {
-            "navigationBarTitleText": "入库管理"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_material/inbound/form",
-          "style": {
-            "navigationBarTitleText": "入库管理表单"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_material/equipment/index",
-          "style": {
-            "navigationBarTitleText": "设备管理"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_material/equipment/form",
-          "style": {
-            "navigationBarTitleText": "设备管理表单"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_material/procurement/index",
-          "style": {
-            "navigationBarTitleText": "采购管理"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_material/procurement/form",
-          "style": {
-            "navigationBarTitleText": "采购管理表单"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_material/outbound/index",
-          "style": {
-            "navigationBarTitleText": "出库管理"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_material/outbound/form",
-          "style": {
-            "navigationBarTitleText": "出库管理表单"
+            "navigationBarTitleText": "订单管理"
           }
         }
-
       ]
     },
     {
@@ -367,72 +193,16 @@
       "independent": true,
       "pages": [
         {
-          "path": "pages/aioveu_customer/customer/index",
+          "path": "pages/aioveuMallSms/Banner/index",
           "style": {
-            "navigationBarTitleText": "客户管理"
+            "navigationBarTitleText": "营销Banner管理"
           }
         },
 
         {
-          "path": "pages/aioveu_customer/customer/form",
+          "path": "pages/aioveuMallSms/coupon/index",
           "style": {
-            "navigationBarTitleText": "客户管理表单"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_customer/contact/index",
-          "style": {
-            "navigationBarTitleText": "联系人管理"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_customer/contact/form",
-          "style": {
-            "navigationBarTitleText": "联系人管理表单"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_customer/transaction/index",
-          "style": {
-            "navigationBarTitleText": "交易管理"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_customer/transaction/form",
-          "style": {
-            "navigationBarTitleText": "交易管理表单"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_customer/sales_order/index",
-          "style": {
-            "navigationBarTitleText": "订单管理"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_customer/sales_order/form",
-          "style": {
-            "navigationBarTitleText": "订单管理表单"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_customer/sales_order_detail/index",
-          "style": {
-            "navigationBarTitleText": "订单明细管理"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_customer/sales_order_detail/form",
-          "style": {
-            "navigationBarTitleText": "订单明细管理表单"
+            "navigationBarTitleText": "营销优惠券管理"
           }
         }
 
@@ -443,64 +213,16 @@
       "independent": true,
       "pages": [
         {
-          "path": "pages/aioveu_member/member_level/index",
+          "path": "pages/aioveuMallUms/member/index",
           "style": {
-            "navigationBarTitleText": "会员等级管理"
+            "navigationBarTitleText": "会员管理"
           }
         },
 
         {
-          "path": "pages/aioveu_member/member_level/form",
+          "path": "pages/aioveuMallUms/memberAddress/index",
           "style": {
-            "navigationBarTitleText": "会员等级表单"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_member/member/index",
-          "style": {
-            "navigationBarTitleText": "会员信息管理"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_member/member/form",
-          "style": {
-            "navigationBarTitleText": "会员信息管理表单"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_member/member_account/index",
-          "style": {
-            "navigationBarTitleText": "会员充值账户管理"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_member/member_account/form",
-          "style": {
-            "navigationBarTitleText": "会员充值账户表单"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_member/member_recharge_record/index",
-          "style": {
-            "navigationBarTitleText": "会员充值记录管理"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_member/member_recharge_record/form",
-          "style": {
-            "navigationBarTitleText": "会员充值记录表单"
-          }
-        },
-        {
-          "path": "pages/aioveu_member/member_recharge_record/recharge",
-          "style": {
-            "navigationBarTitleText": "会员充值表单"
+            "navigationBarTitleText": "会员地址管理"
           }
         }
       ]
@@ -510,64 +232,16 @@
       "independent": true,
       "pages": [
         {
-          "path": "pages/aioveu_laundry/laundry_order/index",
+          "path": "pages/aioveuMallManager/homeBanner/index",
           "style": {
-            "navigationBarTitleText": "洗护订单管理"
+            "navigationBarTitleText": "管理端首页Banner管理"
           }
         },
 
         {
-          "path": "pages/aioveu_laundry/laundry_order/form",
+          "path": "pages/aioveuMallManager/homeCategory/index",
           "style": {
-            "navigationBarTitleText": "洗护订单表单"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_laundry/laundry_clothing_type/index",
-          "style": {
-            "navigationBarTitleText": "衣物类型管理"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_laundry/laundry_clothing_type/form",
-          "style": {
-            "navigationBarTitleText": "衣物类型表单"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_laundry/laundry_order_item/index",
-          "style": {
-            "navigationBarTitleText": "洗护订单衣物明细管理"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_laundry/laundry_order_item/form",
-          "style": {
-            "navigationBarTitleText": "洗护订单衣物明细表单"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_laundry/laundry_process_image/index",
-          "style": {
-            "navigationBarTitleText": "洗护流程图片管理"
-          }
-        },
-
-        {
-          "path": "pages/aioveu_laundry/laundry_process_image/form",
-          "style": {
-            "navigationBarTitleText": "洗护流程图片表单"
-          }
-        },
-        {
-          "path": "pages/aioveu_laundry/laundry_garment_info/index",
-          "style": {
-            "navigationBarTitleText": "衣物详情页面"
+            "navigationBarTitleText": "管理端首页分类管理"
           }
         }
       ]
@@ -575,7 +249,7 @@
   ],
   "globalStyle": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "可我不敌可爱",
+    "navigationBarTitleText": "可我不敌心软",
     "navigationBarBackgroundColor": "#F8F8F8",
     "backgroundColor": "#F8F8F8"
   },
@@ -596,12 +270,12 @@
         "iconPath": "static/tabbar/work.png",
         "selectedIconPath": "static/tabbar/work-active.png"
       },
-      {
-        "pagePath": "pages/todo/index",
-        "text": "todo",
-        "iconPath": "static/tabbar/work.png",
-        "selectedIconPath": "static/tabbar/work-active.png"
-      },
+//      {
+//        "pagePath": "pages/todo/index",
+//        "text": "todo",
+//        "iconPath": "static/tabbar/work.png",
+//        "selectedIconPath": "static/tabbar/work-active.png"
+//      },
       {
         "pagePath": "pages/mine/index",
         "text": "我的",

@@ -66,17 +66,57 @@
           <!-- 用户名输入框 -->
           <view class="form-item">
             <uni-icons type="contact" size="22" color="#165DFF" class="input-icon" />
-            <input v-model="loginFormData.username" class="form-input" placeholder="请输入用户名" />
+            <input
+              v-model="loginFormData.username"
+              class="form-input"
+              placeholder="请输入用户名"
+              @blur="handleUsernameBlur"
+            />
             <uni-icons
               v-if="loginFormData.username"
               type="clear"
               size="18"
               color="#9ca3af"
               class="clear-icon"
-              @click="loginFormData.username = ''"
+              @click="clearUsername"
             />
           </view>
           <view class="divider"></view>
+
+
+          <!-- 租户选择器 -->
+          <view v-if="showTenantSelect" class="form-item">
+            <uni-icons type="home" size="22" color="#165DFF" class="input-icon" />
+            <picker
+              v-if="tenantList.length > 0"
+              :range="tenantList"
+              range-key="name"
+              :value="selectedTenantIndex"
+              @change="handleTenantChange"
+              class="form-input"
+              style="height: 60rpx; line-height: 60rpx;"
+            >
+              <view class="picker-display">
+                <text v-if="selectedTenantIndex >= 0" class="picker-text">
+                  {{ tenantList[selectedTenantIndex]?.name || '请选择租户' }}
+                </text>
+                <text v-else class="picker-placeholder">请选择租户</text>
+                <uni-icons type="arrowdown" size="16" color="#9ca3af" style="margin-left: auto;" />
+              </view>
+            </picker>
+
+            <!-- 租户加载中 -->
+            <view v-else-if="tenantLoading" class="tenant-loading">
+              <uni-icons type="spinner-cycle" size="20" color="#165DFF" />
+              <text class="loading-text">加载租户中...</text>
+            </view>
+
+            <!-- 无租户提示 -->
+            <view v-else class="no-tenant">
+              <text class="no-tenant-text">该用户暂无可用租户</text>
+            </view>
+          </view>
+          <view v-if="showTenantSelect" class="divider"></view>
 
           <!-- 密码输入框 -->
           <view class="form-item">
@@ -109,14 +149,48 @@
           </view>
           <view class="divider"></view>
 
+          <!-- 验证码输入框   验证码功能在多租户登录中很重要，可以防止暴力破解。-->
+          <view class="form-item">
+            <uni-icons type="shield" size="22" color="#165DFF" class="input-icon" />
+            <input
+              v-model="loginFormData.captchaCode"
+              class="form-input captcha-input"
+              placeholder="请输入验证码"
+              placeholder-style="color: #9ca3af; font-weight: normal;"
+              @keyup.enter="handleLoginSubmit"
+            />
+            <view class="captcha-image" @click="getCaptcha">
+              <uni-icons
+                v-if="codeLoading"
+                type="spinner-cycle"
+                size="20"
+                color="#165DFF"
+                class="loading-icon"
+              />
+              <image
+                v-else-if="captchaBase64"
+                :src="captchaBase64"
+                mode="aspectFit"
+                class="captcha-img"
+                @error="handleCaptchaError"
+              />
+              <text v-else class="captcha-refresh">点击获取验证码</text>
+            </view>
+          </view>
+          <view class="divider"></view>
+
+
+
+
+
           <!-- 登录按钮 -->
           <button
             class="login-btn"
-            :disabled="loading || !hasAgreed"
+            :disabled="loading || !hasAgreed || !canSubmit"
             :style="(loading || !hasAgreed) ? 'opacity: 0.7;' : ''"
-            @click="handleLogin"
+            @click="handleLoginSubmit"
           >
-            {{ hasAgreed ? '登录' : '请先同意协议' }}
+            {{ getLoginButtonText() }}
           </button>
         </view>
 
@@ -157,27 +231,39 @@
 <script lang="ts" setup>
 import { onLoad, onShow} from "@dcloudio/uni-app";  // 添加 onShow 导入
 import { type LoginFormData } from "@/api/auth";
+import type { LoginRequest , TenantItem  } from "@/types/api";
+
+import AuthAPI from "@/api/auth/index";
 import { useUserStore } from "@/store/modules/user";
-import { ref } from "vue";
+import { ref , computed } from "vue";
+import { AuthStorage } from "@/utils/auth.storage";
 
 // 移除 wd-toast 引用
 const loading = ref(false);
+const codeLoading = ref(false);
 const userStore = useUserStore();
 const showPassword = ref(false);
-
 // 用户是否同意协议的状态  // 统一使用一个 hasAgreed 变量
-const hasAgreed = ref(false);
+const hasAgreed = ref(true);
 
 // 隐私协议相关状态
 const showPrivacyAgreement = ref(false);
+const captchaBase64 = ref("");
 
-
+// 租户相关状态
+const tenantList = ref<TenantItem[]>([]);
+const tenantLoading = ref(false);
+const showTenantSelect = ref(false);
+const selectedTenantIndex = ref(-1);
 
 
 // 登录表单数据
 const loginFormData = ref<LoginFormData>({
-  username: "aioveu",
-  password: "aioveu",
+  username: "",
+  password: "",
+  tenantId: undefined as number | undefined, // 新增租户ID字段
+  captchaId: "",
+  captchaCode: "",
 });
 
 // 获取重定向参数
@@ -191,19 +277,211 @@ onLoad((options) => {
 
   // 检查是否已经同意过协议
   checkAgreementStatus();
+
+  // 页面加载时获取验证码
+  getCaptcha();
 });
+
+// 计算是否可提交
+const canSubmit = computed(() => {
+  if (!loginFormData.value.username || !loginFormData.value.password) {
+    console.log("计算是否可提交");
+    return false;
+  }
+  // 如果有租户列表且长度>0，必须选择租户
+  if (tenantList.value.length > 0 && loginFormData.value.tenantId == null) {
+    console.log("计算是否可提交",loginFormData.value.tenantId);
+    return false;
+  }
+
+  if (!loginFormData.value.captchaCode) {
+    console.log("计算是否可提交，验证码:{}",loginFormData.value.captchaCode);
+    return false;
+  }
+
+  if (!hasAgreed.value) {
+    console.log("计算是否可提交，是否同意隐私:{}",hasAgreed.value);
+    return false;
+  }
+
+  console.log("计算是否可提交:可以提交");
+
+  return true;
+});
+
+
+// 获取登录按钮文本
+const getLoginButtonText = () => {
+  if (!hasAgreed.value) return '请先同意协议';
+  if (!canSubmit.value) return '登录';
+  if (tenantList.value.length > 0 && loginFormData.value.tenantId == null) return '请选择租户';
+  if (!loginFormData.value.captchaCode) {
+    return '请输入验证码';
+  }
+  return '登录';
+};
+
 
 // 检查隐私协议同意状态
 const checkAgreementStatus = () => {
   const agreed = uni.getStorageSync('hasAgreedPrivacy');
   hasAgreed.value = agreed;
   showPrivacyAgreement.value = !agreed;
+
+  // 如果已同意协议，加载上次选择的租户
+  if (hasAgreed.value && loginFormData.value.username) {
+    loadLastSelectedTenant();
+  }
 };
 
 // 检查隐私协议同意状态
 onShow(() => {
   checkAgreementStatus();
 });
+
+
+// 从本地存储加载上次选择的租户
+const loadLastSelectedTenant = () => {
+  const lastTenant = AuthStorage.getLastSelectedTenant();
+  if (lastTenant && lastTenant.username === loginFormData.value.username) {
+    // 这里需要等待租户列表加载完成后才能设置
+    // 在实际加载租户列表后处理
+  }
+};
+
+
+// 用户名输入框失去焦点
+let usernameBlurTimer: any = null;
+const handleUsernameBlur = () => {
+  if (usernameBlurTimer) clearTimeout(usernameBlurTimer);
+
+  usernameBlurTimer = setTimeout(() => {
+    if (!loginFormData.value.username || loginFormData.value.username.length < 2) {
+      tenantList.value = [];
+      showTenantSelect.value = false;
+      return;
+    }
+
+    showTenantSelect.value = true;
+    loadTenants();
+  }, 500);
+};
+
+// 清空用户名
+const clearUsername = () => {
+  loginFormData.value.username = "";
+  tenantList.value = [];
+  loginFormData.value.tenantId = undefined;
+  selectedTenantIndex.value = -1;
+  showTenantSelect.value = false;
+};
+
+// 加载租户列表
+const loadTenants = async () => {
+  if (!loginFormData.value.username) {
+    tenantList.value = [];
+    showTenantSelect.value = false;
+    return;
+  }
+
+  tenantList.value = [];
+  tenantLoading.value = true;
+
+  try {
+    // 这里需要调用你的API获取租户列表
+    // 假设你的API路径是：GET /api/auth/tenants?username=xxx
+    console.log("登录用户名:{}",loginFormData.value.username);
+    const response  = await AuthAPI.getAccessibleTenantsByUsername(loginFormData.value.username);
+
+    console.log("一次查询获取用户名在所有租户中的可访问租户:{}",response); //如果字段基本一致，可以安全断言
+    tenantList.value = response as unknown as TenantItem[] || [];
+    console.log("一次查询获取用户名在所有租户中的可访问租户tenantList:{}",tenantList.value);
+
+    if (tenantList.value.length > 0) {
+      showTenantSelect.value = true;
+
+        // 如果只有一个租户，自动选择
+        if (tenantList.value.length === 1) {
+          selectedTenantIndex.value = 0;
+          loginFormData.value.tenantId = tenantList.value[0].id;
+          handleTenantChange({ detail: { value: 0 } });
+        } else {
+          // 多个租户，尝试使用上次的选择
+          const lastTenant = AuthStorage.getLastSelectedTenant();
+          if (lastTenant && lastTenant.username === loginFormData.value.username) {
+            const index = tenantList.value.findIndex(t => t.id === lastTenant.tenantId);
+            if (index >= 0) {
+              selectedTenantIndex.value = index;
+              loginFormData.value.tenantId = tenantList.value[index].id;
+            }
+          }
+        }
+      } else {
+        loginFormData.value.tenantId = undefined;
+        selectedTenantIndex.value = -1;
+      }
+
+  } catch (error) {
+    console.error('加载租户列表失败:', error);
+    uni.showToast({
+      title: '加载租户列表失败',
+      icon: 'none',
+      duration: 2000
+    });
+    tenantList.value = [];
+  } finally {
+    tenantLoading.value = false;
+  }
+};
+
+// 租户选择变化
+const handleTenantChange = (e: any) => {
+  const index = e.detail.value;
+  selectedTenantIndex.value = index;
+  if (index >= 0 && tenantList.value[index]) {
+    loginFormData.value.tenantId = tenantList.value[index].id;
+
+    // 保存到本地存储
+    if (loginFormData.value.username) {
+      AuthStorage.setLastSelectedTenant({
+        username: loginFormData.value.username,
+        tenantId: loginFormData.value.tenantId
+      });
+    }
+  }
+};
+
+
+// 获取验证码
+const getCaptcha = async () => {
+  codeLoading.value = true;
+  try {
+    const data = await AuthAPI.getCaptcha();
+    if (data) {
+      loginFormData.value.captchaId = data.captchaId ;
+      captchaBase64.value = data.captchaBase64 ;
+    }
+  } catch (error) {
+    console.error('获取验证码失败:', error);
+    uni.showToast({
+      title: '获取验证码失败',
+      icon: 'none',
+      duration: 2000
+    });
+  } finally {
+    codeLoading.value = false;
+  }
+};
+
+// 验证码图片加载错误
+const handleCaptchaError = () => {
+  uni.showToast({
+    title: '验证码加载失败',
+    icon: 'none',
+    duration: 2000
+  });
+  getCaptcha();
+};
 
 // 切换同意状态
 const toggleAgree = () => {
@@ -252,7 +530,7 @@ const previewAgreement = (type: string) => {
 
 
 // 登录处理 - 使用 uni.showToast 替换 wd-toast
-const handleLogin = () => {
+const handleLoginSubmit = async () => {
   if (!hasAgreed.value) {
     uni.showToast({
       title: '请先同意用户协议和隐私政策',
@@ -262,43 +540,73 @@ const handleLogin = () => {
     return;
   }
 
-  if (loading.value) return;
-  loading.value = true;
-
-  userStore
-    .login(loginFormData.value)
-    .then(() => userStore.getInfo())
-    .then(() => {
+  if (!canSubmit.value) {
+    if (tenantList.value.length > 0 && !loginFormData.value.tenantId) {
       uni.showToast({
-        title: '登录成功',
-        icon: 'success',
-        duration: 1000
-      });
-
-      if (!userStore.isUserInfoComplete()) {
-        setTimeout(() => {
-          uni.navigateTo({
-            url: `/pages/login/complete-profile?redirect=${encodeURIComponent(redirect.value)}`,
-          });
-        }, 1000);
-      } else {
-        setTimeout(() => {
-          uni.reLaunch({
-            url: redirect.value,
-          });
-        }, 1000);
-      }
-    })
-    .catch((error) => {
-      uni.showToast({
-        title: error?.message || "登录失败",
+        title: '请选择要登录的租户',
         icon: 'none',
         duration: 2000
       });
-    })
-    .finally(() => {
-      loading.value = false;
+    }else if (!loginFormData.value.captchaCode) {
+      uni.showToast({
+        title: '请输入验证码',
+        icon: 'none',
+        duration: 2000
+      });
+    }
+    return;
+  }
+
+  if (loading.value) return;
+  loading.value = true;
+
+  try {
+    // 修改登录逻辑，传入租户ID
+    await userStore.login({
+      ...loginFormData.value,
+      // 这里确保后端接口支持tenantId参数
     });
+
+    await userStore.getInfo();
+    console.log("获取用户信息...", userStore.getInfo());
+
+    uni.showToast({
+      title: '登录成功',
+      icon: 'success',
+      duration: 1000
+    });
+
+    // 登录成功，保存租户选择
+    if (loginFormData.value.tenantId && loginFormData.value.username) {
+      AuthStorage.setLastSelectedTenant({
+        username: loginFormData.value.username,
+        tenantId: loginFormData.value.tenantId
+      });
+    }
+
+    // 跳转逻辑
+    if (!userStore.isUserInfoComplete()) {
+      setTimeout(() => {
+        uni.navigateTo({
+          url: `/pages/login/complete-profile?redirect=${encodeURIComponent(redirect.value)}`,
+        });
+      }, 1000);
+    } else {
+      setTimeout(() => {
+        uni.reLaunch({
+          url: redirect.value,
+        });
+      }, 1000);
+    }
+  } catch (error: any) {
+    uni.showToast({
+      title: error?.message || "登录失败",
+      icon: 'none',
+      duration: 2000
+    });
+  } finally {
+    loading.value = false;
+  }
 };
 
 // 微信登录处理 - 使用 uni.showToast 替换 wd-toast
@@ -321,9 +629,57 @@ const handleWechatLogin = async () => {
       provider: "weixin",
     });
 
+    // 这里需要修改微信登录逻辑，支持多租户
+    // 微信登录后需要让用户选择租户
     const result = await userStore.loginByWechat(code);
 
     if (result) {
+
+      // 微信登录成功后，需要获取该微信账号绑定的租户列表
+      // 然后让用户选择租户
+      // 这里需要根据你的业务逻辑调整
+
+      // 模拟获取租户列表
+
+      const wechatTenants = await getTenantsByWechat(code);
+
+
+      if (wechatTenants.length === 0) {
+        uni.showToast({
+          title: '该微信账号未绑定任何租户',
+          icon: 'none',
+          duration: 2000
+        });
+        return;
+      }
+
+      if (wechatTenants.length === 1) {
+        // 只有一个租户，自动登录
+        loginFormData.value.tenantId = wechatTenants[0].id;
+        await userStore.login({
+          ...loginFormData.value,
+          // isWechat: true
+        });
+      } else {
+        // 多个租户，需要选择
+        // 这里可以弹出一个选择器让用户选择租户
+        uni.showActionSheet({
+          itemList: wechatTenants.map(t => t.name),
+          success: async (res) => {
+            const index = res.tapIndex;
+            loginFormData.value.tenantId = wechatTenants[index].id;
+            await userStore.login({
+              ...loginFormData.value,
+              // isWechat: true
+            });
+
+            // 后续处理...
+          }
+        });
+        return;
+      }
+
+
       await userStore.getInfo();
       uni.showToast({
         title: '登录成功',
@@ -363,6 +719,16 @@ const handleWechatLogin = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+// 模拟通过微信获取租户列表
+const getTenantsByWechat = async (code: string): Promise<TenantItem[]> => {
+  // 这里需要调用你的后端接口
+  // 示例：根据微信登录获取用户绑定的租户列表
+  return [
+    { id: 1, name: '租户A' },
+    { id: 2, name: '租户B' }
+  ];
 };
 
 // 跳转到用户协议页面
@@ -592,6 +958,36 @@ const navigateToPrivacy = () => {
   color: #333;
 }
 
+.captcha-input {
+  flex: 1;
+  margin-right: 20rpx;
+}
+
+.captcha-image {
+  width: 200rpx;
+  height: 60rpx;
+  border-radius: 8rpx;
+  border: 1rpx solid #dcdfe6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-color: #f9f9f9;
+}
+
+.captcha-img {
+  width: 100%;
+  height: 100%;
+}
+
+.captcha-refresh {
+  font-size: 24rpx;
+  color: #909399;
+  text-align: center;
+  padding: 0 10rpx;
+}
+
+
 .clear-icon,
 .eye-icon {
   padding: 10rpx;
@@ -620,6 +1016,11 @@ const navigateToPrivacy = () => {
 .login-btn:active {
   box-shadow: 0 4rpx 10rpx rgba(22, 93, 255, 0.2);
   transform: translateY(2rpx);
+}
+
+.login-btn:disabled {
+  background: linear-gradient(90deg, #c0c4cc, #d4d7de);
+  box-shadow: 0 4rpx 10rpx rgba(192, 196, 204, 0.2);
 }
 
 .other-login {
