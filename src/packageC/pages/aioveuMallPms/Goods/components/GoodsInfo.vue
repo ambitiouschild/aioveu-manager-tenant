@@ -23,7 +23,7 @@
               placeholder="请输入商品名称"
               class="form-input"
               placeholder-class="placeholder"
-              maxlength="100"
+              maxlength="200"
               @input="handleNameInput"
               @blur="validateField('name')"
             />

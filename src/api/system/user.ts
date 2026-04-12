@@ -141,13 +141,13 @@ export default UserAPI;
 /** 登录用户信息 */
 export interface UserInfo {
   /** 用户ID */
-  userId?: number;
+  id?: number;
 
   /** 用户名 */
   username?: string;
 
   /** 昵称 */
-  nickname?: string;
+  nickName?: string;
 
   /** 头像URL */
   avatar?: string;

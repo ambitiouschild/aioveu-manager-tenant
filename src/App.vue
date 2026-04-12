@@ -13,6 +13,9 @@ onLaunch(async() => {
   // 初始化主题
   themeStore.initTheme();
 
+  // 定时检查token（每30分钟检查一次）
+  setInterval(checkTokenStatus, 30 * 60 * 1000);
+
   // // 2. 加载用户权限数据
   // try {
   //   // 加载用户信息（包含权限数据）
@@ -27,6 +30,21 @@ onLaunch(async() => {
   // }
 
 });
+
+
+const checkTokenStatus = async () => {
+  const userStore = useUserStore();
+
+  // 如果有token但即将过期，尝试静默刷新
+  if (userStore.token && userStore.isTokenExpiring && userStore.refreshToken) {
+    try {
+      await userStore.refreshAccessToken();
+      console.log("令牌静默刷新成功");
+    } catch (error) {
+      console.log("令牌静默刷新失败，用户下次操作时会提示重新登录");
+    }
+  }
+};
 
 onShow(() => {
   console.log("App Show");

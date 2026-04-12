@@ -587,8 +587,11 @@ const handleLoginSubmit = async () => {
     // 跳转逻辑
     if (!userStore.isUserInfoComplete()) {
       setTimeout(() => {
-        uni.navigateTo({
-          url: `/pages/login/complete-profile?redirect=${encodeURIComponent(redirect.value)}`,
+        // uni.navigateTo({
+        // url: `/pages/login/complete-profile?redirect=${encodeURIComponent(redirect.value)}`,
+        // });
+        uni.reLaunch({
+          url: redirect.value,
         });
       }, 1000);
     } else {

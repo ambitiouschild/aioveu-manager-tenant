@@ -1,7 +1,14 @@
 import request from "@/utils/request";
 import type { LoginRequest, LoginResponse, CaptchaInfo } from "@/types/api/auth";
 import type { TenantItem  } from "@/types/api";
-import {CLIENT_CONFIG, getClientId} from "@/utils/clientManager";
+import {
+  CLIENT_CONFIG,
+  setClientId,
+  getClientId,
+  clearClientId,
+  detectClientId,
+
+} from "@/utils/clientManager";
 
 
 const AUTH_BASE_URL = "/aioveu-tenant-auth/api/v1/auth";
@@ -96,6 +103,42 @@ const AuthAPI = {
     });
   },
 
+
+
+  /**
+   * refreshToken  刷新令牌
+   *
+   * @param refreshToken 刷新令牌
+   * @returns 返回 token
+   */
+  refreshToken(refreshToken: string): Promise<LoginResult> {
+    // console.log("微信登录接口wechatLogin");
+
+    // console.log("微信登录code", code);
+    //code: "0a106x000bOLFV1Pis000Tsiqh306x0u"传递的应该是字符串而不是对象
+    const clientId = getClientId() || CLIENT_CONFIG.CLIENT_ID;
+    console.log("登录使用客户端ID:", clientId);
+    const basicAuth =  CLIENT_CONFIG.getBASIC_AUTH();
+    console.log("动态生成的认证头:", basicAuth);
+
+
+    return request<LoginResult>({
+      url: `${AUTH_LOGIN_URL}/oauth2/token`,
+      method: "POST",
+      data: {
+        refresh_token: refreshToken ,
+        grant_type: "aioveu_refresh_token",
+      },
+      header: {
+        //修改你的 API 文件，使用字符串格式参数
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: basicAuth,  // 使用动态生成的认证头
+        // Authorization: "Basic bWFsbC1hcHA6MTIzNDU2", // 客户端信息Base64加密，明文：mall-app:123456  return 'Basic bWFsbC1hcHA6MTIzNDU2';
+        skipAuth: true, // 跳过认证，因为还没有有效的access_token
+      },
+
+    });
+  },
 
   //----------------------------
 

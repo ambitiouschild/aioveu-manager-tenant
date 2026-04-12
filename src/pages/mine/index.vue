@@ -166,6 +166,23 @@
           <!-- 右箭头图标 -->
           <uni-icons type="right" size="14" color="#999" />
         </view>
+
+        <view class="service-item" @click=manualRefresh()>
+          <view class="service-left">
+            <view class="service-icon">
+              <!-- 分享图标 -->
+              <uni-icons type="more" size="22" :color="themeStore.primaryColor" />
+            </view>
+            <view class="service-info">
+              <view class="service-name">手动刷新Token</view>
+              <view class="service-desc">手动刷新Token</view>
+            </view>
+          </view>
+          <!-- 右箭头图标 -->
+          <uni-icons type="right" size="14" color="#999" />
+        </view>
+
+
       </view>
     </view>
 
@@ -269,6 +286,7 @@ const navigateToSection = (section: string, subSection?: string) => {
     orders: "我的订单",
     address: "收货地址",
     services: "增值服务",
+    refreshToken: "手动刷新Token服务",
   };
 
   let message = sections[section];
@@ -295,6 +313,19 @@ const navigateToSection = (section: string, subSection?: string) => {
   })
 
 };
+
+
+// 手动刷新令牌（可选）
+const manualRefresh = async () => {
+  try {
+    const newToken = await userStore.refreshAccessToken();
+    console.log('令牌已刷新:', newToken);
+  } catch (error) {
+    console.error('刷新失败:', error);
+  }
+};
+
+
 </script>
 
 <style lang="scss" scoped>

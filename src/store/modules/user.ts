@@ -2,16 +2,172 @@ import { defineStore } from "pinia";
 import { store } from "@/store";
 import AuthAPI, { type LoginFormData } from "@/api/auth";
 import UserAPI, { type UserInfo } from "@/api/system/user";
-import { setToken, getUserInfo, setUserInfo, clearAll } from "@/utils/cache";
+import {
+  setToken,
+  getToken,
+  getUserInfo,
+  setUserInfo,
+  clearAll ,
+  setPermissions,
+  getPermissions,
+
+  setRefreshToken,
+  getRefreshToken,
+  getTokenExpiresAt,
+  setTokenExpiresAt
+
+} from "@/utils/cache";
 
 import { AuthStorage } from "@/utils/auth.storage";
 
 export const useUserStore = defineStore("user", () => {
+
+  // 状态
+  const token = ref(getToken() || '');
+  const refreshToken = ref(getRefreshToken() || '');
+  const tokenExpiresAt = ref(getTokenExpiresAt() || 0);
+
   const userInfo = ref<UserInfo | undefined>(getUserInfo());
   const permissions = ref<string[]>([]); // 新增权限列表字段
+  const hasLogin = computed(() => !!token.value);
+
+  const isRefreshing = ref(false); // 是否正在刷新令牌
+  const refreshQueue: any[] = []; // 刷新队列
+
+
+  // Getters
+  const userId = computed(() => userInfo.value?.id || null);
+  const nickName = computed(() => userInfo.value?.nickName || '');
+  const userName = computed(() => userInfo.value?.username || userInfo.value?.nickName || '');
+  const avatar = computed(() => userInfo.value?.avatar || '');
 
   // 记住我状态
   const rememberMe = ref(AuthStorage.getRememberMe());
+
+
+  // 检查token是否即将过期（提前5分钟）
+  const isTokenExpiring = computed(() => {
+    if (!tokenExpiresAt.value) return true;
+    const now = Date.now();
+    return tokenExpiresAt.value - now < 5 * 60 * 1000; // 5分钟
+  });
+
+  // 检查token是否已过期
+  const isTokenExpired = computed(() => {
+    if (!tokenExpiresAt.value) return true;
+    return Date.now() > tokenExpiresAt.value;
+  });
+
+
+  // 保存令牌到状态和缓存，保存过期时间
+  const saveTokens = (data: any) => {
+
+
+    const accessToken = data.access_token || data.accessToken;
+    const refreshTokenValue = data.refresh_token || data.refreshToken;
+    const expiresIn = data.expires_in || 86400; // 默认24小时
+
+
+    if (!accessToken) {
+      console.error("登录返回中没有找到access_token字段");
+      return;
+    }
+
+    if (accessToken) {
+      token.value = accessToken;  //将token添加到状态
+      setToken(accessToken);  //将token添加到缓存
+
+      if (refreshTokenValue) {
+        refreshToken.value = refreshTokenValue;
+        setRefreshToken(refreshTokenValue);
+      }
+
+      // 计算过期时间
+      const expiresAt = Date.now() + expiresIn * 1000;
+      tokenExpiresAt.value = expiresAt;
+      setTokenExpiresAt(expiresAt.toString());
+    }
+  };
+
+
+  // 刷新令牌
+  const refreshAccessToken = async (): Promise<string> => {
+    const currentRefreshToken = refreshToken.value;
+
+    if (!currentRefreshToken) {
+      console.error("没有刷新令牌，需要重新登录");
+      throw new Error("NO_REFRESH_TOKEN");
+    }
+
+    // 如果已经在刷新中，加入队列等待
+    if (isRefreshing.value) {
+      return new Promise((resolve, reject) => {
+        refreshQueue.push({ resolve, reject });
+      });
+    }
+
+    isRefreshing.value = true;
+
+    try {
+      console.log("开始刷新访问令牌...");
+      const response = await AuthAPI.refreshToken(currentRefreshToken);
+
+      // 保存新的令牌
+      saveTokens(response);
+      console.log("令牌刷新成功");
+
+      // 处理等待队列中的请求
+      refreshQueue.forEach(item => item.resolve(response.access_token || response.accessToken));
+      refreshQueue.length = 0; // 清空队列
+
+      return response.access_token || response.accessToken;
+    } catch (error: any) {
+      console.error("刷新令牌失败:", error);
+
+      // 刷新失败，需要重新登录
+      if (error.response?.status === 401 ||
+        error.code === 'INVALID_REFRESH_TOKEN' ||
+        error.message?.includes('invalid_token')) {
+        console.log("刷新令牌无效，清除登录状态");
+        logout();
+      }
+
+      // 处理等待队列中的请求
+      refreshQueue.forEach(item => item.reject(error));
+      refreshQueue.length = 0;
+
+      throw error;
+    } finally {
+      isRefreshing.value = false;
+    }
+  };
+
+
+  // 获取有效的访问令牌（会自动刷新）
+  const getValidToken = async (): Promise<string> => {
+    // 如果没有token，需要登录
+    if (!token.value) {
+      throw new Error("NOT_LOGGED_IN");
+    }
+
+    // 检查token是否即将过期
+    if (isTokenExpiring.value && refreshToken.value) {
+      console.log("访问令牌即将过期，自动刷新...");
+      return await refreshAccessToken();
+    }
+
+    // 检查token是否已过期
+    if (isTokenExpired.value) {
+      console.log("访问令牌已过期，尝试刷新...");
+      return await refreshAccessToken();
+    }
+
+    // token有效，直接返回
+    return token.value;
+  };
+
+
+
 
   // 登录
   const login = (loginRequest: LoginFormData) => {
@@ -19,14 +175,16 @@ export const useUserStore = defineStore("user", () => {
       AuthAPI.login(loginRequest)
         .then((data) => {
 
-          // console.log("data是什么：", data);
-          const accessToken = data.access_token;
-          const refreshToken = data.refresh_token;
+
+          console.log("登录返回数据:", data);
+
+          // 保存令牌
+          saveTokens(data);
+          console.log("微信登录成功，保存令牌到状态和缓存，保存过期时间成功");
 
           // 保存记住我状态和token
           rememberMe.value = loginRequest.rememberMe ?? false;
-          AuthStorage.setTokens(accessToken, refreshToken, rememberMe.value);
-          setToken(accessToken);
+
           resolve(data);
         })
         .catch((error) => {
@@ -41,7 +199,12 @@ export const useUserStore = defineStore("user", () => {
     return new Promise((resolve, reject) => {
       AuthAPI.wechatLogin(code)
         .then((data) => {
-          setToken(data.accessToken);
+          console.log("微信登录返回数据:", data);
+
+          // 保存令牌
+          saveTokens(data);
+          console.log("微信登录成功，保存令牌到状态和缓存，保存过期时间成功");
+
           resolve(data);
         })
         .catch((error) => {
@@ -64,7 +227,19 @@ export const useUserStore = defineStore("user", () => {
           // if (data.perms) {
           //   permissions.value = data.perms;
           // }
-          console.log("获取用户信息成功，我是雒世松");
+          console.log("获取用户信息成功:", data);
+
+
+          // // 处理权限数据
+          // if (data.perms || data.perms) {
+          //   const perms = data.perms || data.perms || [];
+          //   permissions.value = perms;
+          //   setPermissions(perms);
+          //   console.log("权限数据已保存:", perms);
+          // }
+
+
+
           setUserInfo(data);
           userInfo.value = data;
           resolve(data);
@@ -84,10 +259,19 @@ export const useUserStore = defineStore("user", () => {
     } catch (error) {
       console.error("登出失败", error);
     } finally {
+      // 清除所有状态
+      token.value = '';
+      userInfo.value = undefined;
+      permissions.value = [];
+
+
       clearAll(); // 清除本地的 token 和用户信息缓存
       userInfo.value = undefined; // 清空用户信息
+
+      console.log("用户已退出登录");
     }
   };
+
 
   /**
    * 重置所有系统状态
@@ -128,16 +312,48 @@ export const useUserStore = defineStore("user", () => {
   const isUserInfoComplete = (): boolean => {
     if (!userInfo.value) return false;
 
-    return !!(userInfo.value.nickname && userInfo.value.avatar);
+    return !!(userInfo.value.nickName && userInfo.value.avatar);
   };
 
-  // // 检查权限
-  // const hasPermission = (perm: string): boolean => {
-  //   return permissions.value.includes(perm);
-  // };
+  // 检查权限
+  const hasPermission = (perm: string): boolean => {
+    return permissions.value.includes(perm);
+  };
+
+  // 获取所有权限
+  const getPermissionsList = (): string[] => {
+    return permissions.value;
+  };
+
+  // 更新用户信息
+  const updateUserInfo = (info: Partial<UserInfo>) => {
+    if (userInfo.value) {
+      userInfo.value = { ...userInfo.value, ...info };
+      setUserInfo(userInfo.value);
+    }
+  };
+
 
   return {
+
+    // 状态
+    token,
     userInfo,
+    permissions,
+    hasLogin,
+    refreshToken,
+
+
+    // Getters
+    userId,
+    nickName,
+    userName,
+    avatar,
+
+    isTokenExpiring,
+    refreshAccessToken,
+    getValidToken,
+
     // permissions, // 导出权限列表
     rememberMe,
     login,
@@ -146,8 +362,11 @@ export const useUserStore = defineStore("user", () => {
     resetAllState,
     getInfo,
     isUserInfoComplete,
+    hasPermission, // 导出权限检查方法
+    getPermissionsList,
+    updateUserInfo,
 
-    // hasPermission, // 导出权限检查方法
+
   };
 });
 
