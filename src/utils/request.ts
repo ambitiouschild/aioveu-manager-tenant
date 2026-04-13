@@ -65,10 +65,10 @@ export default function request<T>(options: UniApp.RequestOptions): Promise<T> {
           });
         } else {
           // 其他业务处理失败
-          uni.showToast({
-            title: resData.msg || "业务处理失败",
-            icon: "none",
-          });
+          // uni.showToast({
+          //   title: resData.msg || "业务处理失败",
+          //   icon: "none",
+          // });
           reject({
             message: resData.msg || "业务处理失败",
             code: resData.code,
