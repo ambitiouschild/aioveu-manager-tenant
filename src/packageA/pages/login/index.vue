@@ -2,53 +2,53 @@
   <view class="login-container">
 
     <!-- 隐私协议弹窗 -->
-    <view v-if="showPrivacyAgreement" class="privacy-mask">
-      <view class="privacy-content">
-        <view class="privacy-header">
-          <text class="title">用户协议与隐私政策</text>
-        </view>
+<!--    <view v-if="showPrivacyAgreement" class="privacy-mask">-->
+<!--      <view class="privacy-content">-->
+<!--        <view class="privacy-header">-->
+<!--          <text class="title">用户协议与隐私政策</text>-->
+<!--        </view>-->
 
-        <view class="privacy-body">
-          <text class="desc">感谢您使用可我不敌可爱！我们高度重视您的个人信息和隐私保护。在您使用我们的服务前，请仔细阅读并同意以下协议：</text>
+<!--        <view class="privacy-body">-->
+<!--          <text class="desc">感谢您使用可我不敌可爱！我们高度重视您的个人信息和隐私保护。在您使用我们的服务前，请仔细阅读并同意以下协议：</text>-->
 
-          <view class="agreement-links">
-            <text class="link" @click="previewAgreement('user')">《用户服务协议》</text>
-            <text>和</text>
-            <text class="link" @click="previewAgreement('privacy')">《隐私政策》</text>
-          </view>
+<!--          <view class="agreement-links">-->
+<!--            <text class="link" @click="previewAgreement('user')">《用户服务协议》</text>-->
+<!--            <text>和</text>-->
+<!--            <text class="link" @click="previewAgreement('privacy')">《隐私政策》</text>-->
+<!--          </view>-->
 
-          <view class="agreement-checkbox" @click="toggleAgree">
-            <!-- 圆形选择按钮 -->
-            <view class="circle-checkbox" :class="{ checked: hasAgreed }">
-              <view v-if="hasAgreed" class="circle-checkbox-inner"></view>
-            </view>
-            <text class="checkbox-label">我已阅读并同意以上协议</text>
-          </view>
-        </view>
+<!--          <view class="agreement-checkbox" @click="toggleAgree">-->
+<!--            &lt;!&ndash; 圆形选择按钮 &ndash;&gt;-->
+<!--            <view class="circle-checkbox" :class="{ checked: hasAgreed }">-->
+<!--              <view v-if="hasAgreed" class="circle-checkbox-inner"></view>-->
+<!--            </view>-->
+<!--            <text class="checkbox-label">我已阅读并同意以上协议</text>-->
+<!--          </view>-->
+<!--        </view>-->
 
-        <view class="privacy-footer">
-          <button class="btn disagree" @click="handleDisagree">暂不同意</button>
-          <button
-            class="btn agree"
-            :class="{ disabled: !hasAgreed }"
-            :disabled="!hasAgreed"
-            @click="handleAgree"
-          >
-            同意并继续
-          </button>
-        </view>
-      </view>
-    </view>
-
-
+<!--        <view class="privacy-footer">-->
+<!--          <button class="btn disagree" @click="handleDisagree">暂不同意</button>-->
+<!--          <button-->
+<!--            class="btn agree"-->
+<!--            :class="{ disabled: !hasAgreed }"-->
+<!--            :disabled="!hasAgreed"-->
+<!--            @click="handleAgree"-->
+<!--          >-->
+<!--            同意并继续-->
+<!--          </button>-->
+<!--        </view>-->
+<!--      </view>-->
+<!--    </view>-->
 
 
 
 
-    <!-- 背景图 -->
+
+
+    <!-- 背景图  v-if="!showPrivacyAgreement" -->
 <!--    <image src="/static/images/login-bg.svg" mode="aspectFill" class="login-bg" />-->
     <!-- 原有登录页面内容 -->
-    <image v-if="!showPrivacyAgreement" src="/static/images/login-bg.svg" mode="aspectFill" class="login-bg" />
+    <image  src="/static/images/login-bg.svg" mode="aspectFill" class="login-bg" />
 
     <!-- Logo和标题区域 -->
     <view class="header">
@@ -336,7 +336,7 @@ const checkAgreementStatus = () => {
 
 // 检查隐私协议同意状态
 onShow(() => {
-  checkAgreementStatus();
+  // checkAgreementStatus();
 });
 
 
