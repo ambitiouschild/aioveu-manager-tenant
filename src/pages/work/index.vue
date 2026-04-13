@@ -183,12 +183,12 @@ const gridList1 = reactive([
   },
 ]);
 
-
+import { SHARE_CONFIG } from "@/utils/shareConfig/shareConfig";
 // 分享功能
 onShareAppMessage(() => ({
-  title: "可我不敌心软~",
-  path: "/pages/index/index",
-  imageUrl: "********************",
+  title: SHARE_CONFIG.TITLE,  // 统一使用这里的标题
+  path: "/pages/work/index",
+  imageUrl: "",
   success: (res?:any) => {
     console.log("分享成功", res);
   },
@@ -198,9 +198,9 @@ onShareAppMessage(() => ({
 }));
 
 onShareTimeline(() => ({
-  title: "可我不敌心软~",
-  query: "key=value",
-  imageUrl: "https://cdn.aioveu.com/aioveu-server/avatar/avatar.png",
+  title: SHARE_CONFIG.TITLE,  // 统一使用这里的标题
+  query: SHARE_CONFIG.DEFAULT_QUERY,  // 统一使用这里的参数
+  imageUrl: SHARE_CONFIG.IMAGE_URL,  // 统一使用这里的图片
   success: (res?:any) => {
     console.log("分享到朋友圈成功", res);
   },
