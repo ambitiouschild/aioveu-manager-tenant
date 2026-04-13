@@ -4,7 +4,7 @@
       <!-- 使用 uni-card 替代 wd-card -->
       <uni-card :title="item.title" class="card-container">
         <!-- 使用 uni-grid 替代 wd-grid -->
-        <uni-grid :column="4" :highlight="false" :square="false" class="grid-container">
+        <uni-grid :column="4" :highlight="false" :square="false" :show-border="false" class="grid-container">
           <uni-grid-item
             v-for="(child, childIndex) in item.children"
             :key="childIndex"
@@ -17,7 +17,9 @@
               @click="navigateTo(child.url)"
             >
               <view class="icon-container">
-                <image class="item-icon" :src="child.icon" mode="aspectFit" />
+                <image
+                  class="item-icon"
+                  :src="child.icon" mode="aspectFit" />
               </view>
               <text class="item-text">{{ child.title }}</text>
             </view>
@@ -267,18 +269,73 @@ page {
   padding: 40rpx 0;
 }
 
+/* 深度选择器覆盖 uni-card 的默认样式 */
+:deep(.uni-card) {
+  margin: 10rpx 20rpx !important; /* 调整这个值来改变卡片间距 */
+  border: none !important;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1) !important;
+  border-radius: 16rpx !important;
+}
+
+
+
+//去除卡片（uni-card）的边框和多余间距
+
 .card-container {
-  margin: 20rpx;
+  margin: 10rpx 20rpx !important;  /* 增加 !important 强制生效 */
   border-radius: 16rpx;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
 }
 
+//.card-container {
+//  margin: 10rpx 20rpx;   // 上下 10rpx，左右 20rpx       // 减小卡片之间的外间距
+//  border: none;         // 去除卡片边框
+//  box-shadow: none;     // 去除卡片阴影（如果不需要）
+//  border-radius: 0;     // 去除圆角（可选，根据设计）
+//  padding: 0;           // 去除卡片内边距
+//}
+
+
+
+//.grid-container {
+//  padding: 20rpx 0;
+//}
+
+//去除网格（uni-grid）的边框和间距
+
 .grid-container {
-  padding: 20rpx 0;
+  padding: 10rpx 0;     // 减小网格内部上下间距
+  border: none;         // 去除网格外边框
+
+  // 深度选择器：去除网格列之间的竖线
+  :deep(.uni-grid) {
+    border: none;       // 去除网格整体边框
+  }
+
+  // 深度选择器：去除单个网格项的边框（列之间的竖线）
+  :deep(.uni-grid-item) {
+    border: none;       // 去除列之间的竖线
+  }
 }
 
+//减小网格项（uni-grid-item）的间距
+
+//.grid-item {
+//  padding: 20rpx 0;
+//}
+
 .grid-item {
-  padding: 20rpx 0;
+  padding: 10rpx 0;     // 减小网格项的上下内边距
+}
+
+
+//去除标题栏（uni-card__header）的边框
+
+:deep(.uni-card__header) {
+  border-bottom: none;  // 去除标题栏底部边框
+  //background-color: #6c5ce7; // 保持标题背景色（如果需要）
+  color: #fff;          // 标题文字颜色
+  padding: 16rpx 20rpx; // 调整标题内边距
 }
 
 .nav-item {

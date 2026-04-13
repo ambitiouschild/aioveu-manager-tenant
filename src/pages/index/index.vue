@@ -32,7 +32,7 @@
 <!--    wd-grid-item→ uni-grid-item-->
 <!--    使用自定义样式实现导航布局-->
     <view class="nav-grid mt-2">
-      <uni-grid :column="4" :highlight="false" :square="false">
+      <uni-grid :column="4" :highlight="false" :show-border="false" :square="false">
       <uni-grid-item v-for="(item, index) in navList" :key="index">
         <view class="nav-item" @click="navigateTo(item.jumpPath)">
           <image class="nav-icon" :src="item.homeIcon" mode="aspectFit" />
