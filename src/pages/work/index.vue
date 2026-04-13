@@ -31,7 +31,12 @@
 <script lang="ts" setup>
 import {reactive, computed, ref} from 'vue';
 import AuthAPI from "@/api/auth";
-
+import {
+  onShareAppMessage,
+  onShareTimeline,
+  onNavigationBarSearchInputClicked,
+  onNavigationBarButtonTap,
+} from "@dcloudio/uni-app";
 
 const loading = ref(false);
 
@@ -178,6 +183,31 @@ const gridList1 = reactive([
   },
 ]);
 
+
+// 分享功能
+onShareAppMessage(() => ({
+  title: "可我不敌心软~",
+  path: "/pages/index/index",
+  imageUrl: "********************",
+  success: (res?:any) => {
+    console.log("分享成功", res);
+  },
+  fail: (err?:any) => {
+    console.log("分享失败", err);
+  },
+}));
+
+onShareTimeline(() => ({
+  title: "可我不敌心软~",
+  query: "key=value",
+  imageUrl: "https://cdn.aioveu.com/aioveu-server/avatar/avatar.png",
+  success: (res?:any) => {
+    console.log("分享到朋友圈成功", res);
+  },
+  fail: (err?:any) => {
+    console.log("分享到朋友圈失败", err);
+  },
+}));
 
 // 生命周期
 // 页面显示时触发

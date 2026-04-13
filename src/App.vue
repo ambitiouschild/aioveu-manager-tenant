@@ -16,6 +16,9 @@ onLaunch(async() => {
   // 定时检查token（每30分钟检查一次）
   setInterval(checkTokenStatus, 30 * 60 * 1000);
 
+  // 动态设置状态栏高度
+  setStatusBarHeight();
+
   // // 2. 加载用户权限数据
   // try {
   //   // 加载用户信息（包含权限数据）
@@ -30,6 +33,18 @@ onLaunch(async() => {
   // }
 
 });
+
+const setStatusBarHeight = () => {
+  // #ifdef APP-PLUS
+  const statusBarHeight = plus.navigator.getStatusbarHeight();
+  document.documentElement.style.setProperty('--status-bar-height', `${statusBarHeight}px`);
+  // #endif
+
+  // #ifdef MP-WEIXIN
+  const systemInfo = uni.getSystemInfoSync();
+  document.documentElement.style.setProperty('--status-bar-height', `${systemInfo.statusBarHeight}px`);
+  // #endif
+}
 
 
 const checkTokenStatus = async () => {
@@ -56,6 +71,10 @@ onHide(() => {
 </script>
 
 <style lang="scss">
+
+/* 引入 uni.css */
+@import '@/common/uni.css';
+
 /* H5 环境样式变量设置 */
 :root {
   --primary-color: #165dff;

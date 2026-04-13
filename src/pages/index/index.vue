@@ -59,6 +59,10 @@
       </uni-notice-bar>
     </view>
 
+<!--    <view>-->
+<!--      <button @click="handleShare">设置分享</button>-->
+<!--    </view>-->
+
     <!-- 数据统计 -->
 <!--    数据统计区域：-->
 <!--    移除了 wd-grid，使用 uni-grid重新布局-->
@@ -164,6 +168,46 @@ import { listSeckillingSpus } from "@/api/pms/goods";
 import SmsHomeAdvertAPI, { SmsHomeAdvertPageVO } from "@/api/sms/sms-home-advert";
 import AuthAPI from "@/api/auth";
 
+
+import {
+  onShareAppMessage,
+  onShareTimeline,
+  onNavigationBarSearchInputClicked,
+  onNavigationBarButtonTap,
+} from "@dcloudio/uni-app";
+
+//-----------------------------------------------------
+// import { onLoad , onShow } from '@dcloudio/uni-app'
+// import { useShare } from '@/composables/useShare'
+//
+//
+// const { setupShare, updateShareConfig } = useShare({
+//   title: '初始标题',
+//   path: '/pages/index/index'
+// })
+//
+// onLoad(() => {
+//   // 初始化分享
+//   console.log('页面加载，设置分享')
+//   setupShare()
+// })
+//
+// onShow(() => {
+//   console.log('页面显示，重新设置分享')
+//   setupShare()
+// })
+//
+//
+// // 动态更新分享配置
+// const handleShare= () => {
+//   updateShareConfig({
+//     title: '更新后的标题',
+//     query: 'id=123&name=test'
+//   })
+// }
+
+//-----------------------------------------------------
+
 const current = ref<number>(0);
 const noticeText = ref("可我不敌可爱 恰同学少年，风华正茂；书生意气，挥斥方遒。指点江山，激扬文字，粪土当年万户侯。");
 const loading = ref(false);
@@ -199,6 +243,58 @@ const dateOptions = [
 // 扫描相关状态
 const showScanner = ref(false);
 const scannerKey = ref(0);
+
+
+//分享功能
+onShareAppMessage(() => ({
+  title: "可我不敌心软~",
+  path: "/pages/index/index",
+  imageUrl: "********************",
+  success: (res?:any) => {
+    console.log("分享成功", res);
+  },
+  fail: (err?:any) => {
+    console.log("分享失败", err);
+  },
+}));
+
+onShareTimeline(() => ({
+  title: "可我不敌心软~",
+  query: "key=value",
+  imageUrl: "https://cdn.aioveu.com/aioveu-server/avatar/avatar.png",
+  success: (res?:any) => {
+    console.log("分享到朋友圈成功", res);
+  },
+  fail: (err?:any) => {
+    console.log("分享到朋友圈失败", err);
+  },
+}));
+
+// 标题栏搜索点击
+onNavigationBarSearchInputClicked(async () => {
+  uni.$emit("showToast", { title: "点击了搜索框" });
+});
+
+// 标题栏按钮点击
+onNavigationBarButtonTap((e) => {
+  const index = e.index;
+  if (index === 0) {
+    uni.$emit("showToast", { title: "点击了扫描" });
+  } else if (index === 1) {
+    // #ifdef APP-PLUS
+    const pages = getCurrentPages();
+    const page = pages[pages.length - 1];
+    // 添加类型断言和安全判断
+    if (page && (page as any).$getAppWebview) {
+      const currentWebview = (page as any).$getAppWebview();
+      if (currentWebview && currentWebview.hideTitleNViewButtonRedDot) {
+        currentWebview.hideTitleNViewButtonRedDot({ index });
+      }
+    }
+    // #endif
+    uni.navigateTo({ url: "/pages/notice/notice" });
+  }
+});
 
 // 开始扫描
 const startQRCodeScan = async () => {
@@ -494,6 +590,20 @@ onReady(() => {
 </script>
 
 <style lang="scss">
+
+
+/* 确保 uni.css 被正确引入 */
+/* 通常在 App.vue 或页面中引入 */
+@import "@/common/uni.css";
+
+.status-bar {
+  height: var(--status-bar-height);
+  width: 100%;
+  background-color: transparent;
+}
+
+
+
 .home {
   padding: 20rpx;
 }
