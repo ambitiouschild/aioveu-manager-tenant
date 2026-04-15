@@ -1,7 +1,15 @@
 import request from "@/utils/request";
 import type { FileInfo, ApiResponse } from "@/types/api";
+import {getToken} from "@/utils/cache";
 
-const FILE_BASE_URL = "/aioveu-tenant/api/v1/files";
+
+// H5 使用 VITE_APP_BASE_API 作为代理路径，其他平台使用 VITE_APP_API_URL 作为请求路径
+let baseApi = import.meta.env.VITE_APP_API_URL;
+// #ifdef H5
+baseApi = import.meta.env.VITE_APP_BASE_API;
+// #endif
+
+const FILE_BASE_URL = baseApi + "/aioveu-tenant/api/v1/files";
 
 interface UploadOptions {
   category?: string;       // 文件分类
@@ -39,8 +47,9 @@ const FileAPI = {
           type: formData.type || 'common',
           fileName: formData.fileName || `file_${Date.now()}.${ext}`
         },
+
         header: {
-          'Authorization': 'Bearer ' + uni.getStorageSync('token'),
+          'Authorization': getToken() ? `Bearer ${getToken()}` : "",
           'Content-Type': 'multipart/form-data'
         },
         success: (uploadRes) => {
@@ -119,7 +128,7 @@ const FileAPI = {
       const xhr = new XMLHttpRequest();
 
       xhr.open('POST', FILE_BASE_URL);
-      xhr.setRequestHeader('Authorization', 'Bearer ' + uni.getStorageSync('token'));
+      xhr.setRequestHeader('Authorization', getToken() ? `Bearer ${getToken()}` : "");
 
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable && onProgress) {
