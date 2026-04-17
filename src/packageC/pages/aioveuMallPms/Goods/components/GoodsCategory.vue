@@ -225,14 +225,14 @@ class GoodsInfo {
   }
 }
 
-// // Props 和 Emit
-// const props = defineProps({
-//   // 商品信息
-//   goodsInfo: {
-//     type: Object,
-//     default: () => new GoodsInfo()
-//   }
-// });
+// Props 和 Emit
+const props = defineProps({
+  // 商品信息
+  goodsInfo: {
+    type: Object,
+    default: () => ({})
+  }
+});
 
 const emit = defineEmits([
   'next',      // 下一步事件
@@ -256,8 +256,18 @@ const systemInfo = uni.getSystemInfoSync();
 // 商品信息双向绑定
 const goodsInfo = computed({
   get: () => {
-    const data =  new GoodsInfo();  //props.goodsInfo ||
-    return data;
+    // const data =  new GoodsInfo();  //props.goodsInfo ||
+    // return data;
+
+    // 如果父组件传入了 goodsInfo，就使用它
+    // 否则返回一个空的 GoodsInfo 实例
+    // 直接返回 props.goodsInfo，确保使用的是父组件传入的数据
+    if (props.goodsInfo && Object.keys(props.goodsInfo).length > 0) {
+      return props.goodsInfo;
+    } else {
+      return new GoodsInfo();
+    }
+
   },
   set: (value) => {
     emit('update:goodsInfo', value);
@@ -431,23 +441,20 @@ const loadGoodsByCategory = async (categoryId) => {
   try {
     loadingGoods.value = true;
 
-    const response = await uni.request({
-      url: '/api/spu/page',
-      method: 'GET',
-      data: {
+
+    const response = await PmsSpuAPI.getPage(
+      {
         categoryId,
         pageNum: 1,
-        pageSize: 10
-      },
-      header: {
-        'Content-Type': 'application/json'
+        pageSize: 10,
       }
-    });
 
-    if (response.statusCode === 200 && response.data) {
-      const resData = response.data;
-      if (resData.code === 0 && resData.data && Array.isArray(resData.data.list)) {
-        goodsList.value = resData.data.list.map(item => new GoodsItem({
+    );
+
+    if (response) {
+      const resData = response;
+      if (resData && Array.isArray(resData.list)) {
+        goodsList.value = resData.list.map(item => new GoodsItem({
           id: item.id,
           name: item.name || '未命名商品',
           picUrl: item.picUrl,
@@ -582,7 +589,7 @@ const calculateListHeight = () => {
 };
 
 // 生命周期
-onLoad(async () => {
+onMounted(async () => {
   console.log('🔄 商品分类组件加载');
   await loadCategoryData();
 });

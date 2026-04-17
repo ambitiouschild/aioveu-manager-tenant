@@ -1,9 +1,14 @@
 <!-- 转换后的 UniApp 组件 GoodsStock.vue -->
 <template>
+
+  <!-- 滚动容器：留出底部空间给按钮区域 -->
   <scroll-view
     scroll-y
     class="component-container"
-    :style="{ height: scrollHeight + 'px' }"
+    :style="{
+    height: scrollHeight + 'px',
+    paddingBottom: '100rpx' // 按钮区域高度，根据实际调整
+  }"
     refresher-enabled
     :refresher-triggered="refreshing"
     @refresherrefresh="onRefresh"
@@ -343,33 +348,42 @@
       </view>
     </view>
 
-    <!-- 底部操作按钮 -->
-    <view class="component-container__footer">
-      <button
-        class="btn-prev"
-        @tap="handlePrev"
-        hover-class="btn-hover"
-        hover-start-time="20"
-        hover-stay-time="70"
-      >
-        上一步，设置商品属性
-      </button>
-      <button
-        class="btn-submit"
-        @tap="handleSubmit"
-        hover-class="btn-hover"
-        hover-start-time="20"
-        hover-stay-time="70"
-      >
-        提交商品
-      </button>
-    </view>
+
   </scroll-view>
+
+  <!-- 底部操作按钮 -->
+<!--  我们需要把按钮区域从原来的位置（可能在规格卡片下方）提取出来，放到整个滚动容器的最底部，-->
+<!--  使用 fixed定位或者 sticky定位固定在底部。考虑到滚动体验，这里用 fixed定位更合适，同时给滚动容器留出底部空间，避免内容被按钮遮挡。-->
+  <!-- 按钮区域：固定在底部 -->
+  <view class="action-bar">
+    <button
+      class="btn-prev"
+      @tap="handlePrev"
+      hover-class="btn-hover"
+      hover-start-time="20"
+      hover-stay-time="70"
+    >
+      上一步，设置商品属性
+    </button>
+    <button
+      class="btn-submit"
+      @tap="handleSubmit"
+      hover-class="btn-hover"
+      hover-start-time="20"
+      hover-stay-time="70"
+    >
+      提交商品
+    </button>
+  </view>
+
+
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { onLoad, onShow, onHide, onReady } from '@dcloudio/uni-app';
+import PmsSpuAPI, { PmsSpuPageVO} from "@/packageC/api/aioveuMallPms/aioveuMallPmsSpu/pms-spu";
+
 
 // 类型定义
 class SpecValue {
@@ -408,12 +422,12 @@ class SkuItem {
 }
 
 // Props 和 Emit
-// const props = defineProps({
-//   goodsInfo: {
-//     type: Object,
-//     default: () => ({})
-//   }
-// });
+const props = defineProps({
+  goodsInfo: {
+    type: Object,
+    default: () => ({})
+  }
+});
 
 const emit = defineEmits([
   'prev',
@@ -432,12 +446,16 @@ const scrollHeight = ref(500);
 const skuTableHeight = ref(300);
 const refreshing = ref(false);
 const TEMP_ID_PREFIX = 'temp_';
+// 计算滚动容器高度（适配不同设备）
 const systemInfo = uni.getSystemInfoSync();
 
 // 商品信息双向绑定
 const goodsInfo = computed({
   get: () => {
     const data = props.goodsInfo || {};
+
+    console.log("📝 商品信息双向绑定:{}",data);
+
     if (!data.specList || !Array.isArray(data.specList)) {
       data.specList = [];
     }
@@ -1157,34 +1175,53 @@ const handleSubmit = async () => {
     // 5. 调用API
     uni.showLoading({ title: '提交中...' });
 
-    let response;
+    let result;
     if (goodsInfo.value.id) {
       // 编辑
-      response = await uni.request({
-        url: `/api/spu/${goodsInfo.value.id}`,
-        method: 'PUT',
-        data: submitData,
-        header: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + uni.getStorageSync('token')
-        }
-      });
+      // response = await uni.request({
+      //   url: `/api/spu/${goodsInfo.value.id}`,
+      //   method: 'PUT',
+      //   data: submitData,
+      //   header: {
+      //     'Content-Type': 'application/json',
+      //     'Authorization': 'Bearer ' + uni.getStorageSync('token')
+      //   }
+      // });
+
+
+      // 编辑
+      result = await PmsSpuAPI.update(goodsInfo.value.id, submitData);
+
+      // console.log('📤 update API 原始返回:', result);
+      // console.log('📤 update API 返回类型:', typeof result);
+      // console.log('📤 update API 返回字符串:', JSON.stringify(result));
+
     } else {
       // 新增
-      response = await uni.request({
-        url: '/api/spu',
-        method: 'POST',
-        data: submitData,
-        header: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + uni.getStorageSync('token')
-        }
-      });
+      // response = await uni.request({
+      //   url: '/api/spu',
+      //   method: 'POST',
+      //   data: submitData,
+      //   header: {
+      //     'Content-Type': 'application/json',
+      //     'Authorization': 'Bearer ' + uni.getStorageSync('token')
+      //   }
+      // });
+
+      // 新增
+      result =  await PmsSpuAPI.add(submitData);
+
+      // console.log('📤 add API 原始返回:', result);
+      // console.log('📤 add API 返回类型:', typeof result);
+      // console.log('📤 add API 返回字符串:', JSON.stringify(result));
+
     }
+
+    console.info("商品上架提交结果:", result);
 
     uni.hideLoading();
 
-    if (response.statusCode === 200 && response.data.code === 0) {
+    if (result) {
       uni.showToast({
         title: goodsInfo.value.id ? '商品编辑成功' : '商品新增成功',
         icon: 'success',
@@ -1245,6 +1282,9 @@ const onRefresh = () => {
   refreshing.value = true;
   setTimeout(() => {
     refreshing.value = false;
+
+    // 这里添加刷新逻辑，比如重新拉取数据
+
   }, 1000);
 };
 
@@ -1888,44 +1928,46 @@ watch(() => props.goodsInfo, (newValue) => {
     }
   }
 
-  &__footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: space-between;
-    padding: 20rpx 30rpx;
-    background-color: #ffffff;
-    border-top: 2rpx solid #f0f0f0;
-    box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.05);
-    z-index: 100;
-    box-sizing: border-box;
-    padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
 
-    button {
-      flex: 1;
-      height: 80rpx;
-      line-height: 80rpx;
-      border-radius: 40rpx;
-      font-size: 30rpx;
+}
+
+.action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 20rpx 30rpx;
+  background-color: #ffffff;
+  border-top: 2rpx solid #f0f0f0;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.05);
+  z-index: 100;
+  box-sizing: border-box;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+
+  button {
+    flex: 1;
+    height: 80rpx;
+    line-height: 80rpx;
+    border-radius: 40rpx;
+    font-size: 30rpx;
+    border: none;
+
+    &::after {
       border: none;
+    }
 
-      &::after {
-        border: none;
-      }
+    &.btn-prev {
+      background-color: #ffffff;
+      color: #409eff;
+      border: 2rpx solid #409eff;
+      margin-right: 20rpx;
+    }
 
-      &.btn-prev {
-        background-color: #ffffff;
-        color: #409eff;
-        border: 2rpx solid #409eff;
-        margin-right: 20rpx;
-      }
-
-      &.btn-submit {
-        background: linear-gradient(135deg, #409eff, #66b1ff);
-        color: #ffffff;
-      }
+    &.btn-submit {
+      background: linear-gradient(135deg, #409eff, #66b1ff);
+      color: #ffffff;
     }
   }
 }

@@ -133,7 +133,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { onReady, onLoad, onShow, onHide } from '@dcloudio/uni-app';
-
+import PmsSpuAttributeAPI from "@/packageC/api/aioveuMallPms/aioveuMallPmsSpuAttribute/pms-spu-attribute";
 // ==================== 类型定义 ====================
 /**
  * 商品属性项接口
@@ -164,13 +164,13 @@ class GoodsInfo {
 }
 
 // ==================== Props和Emit ====================
-// const props = defineProps({
-//   // 商品信息
-//   goodsInfo: {
-//     type: Object,
-//     default: () => new GoodsInfo()
-//   }
-// });
+const props = defineProps({
+  // 商品信息
+  goodsInfo: {
+    type: Object,
+    default: () => ({})
+  }
+});
 
 const emit = defineEmits([
   'prev',      // 上一步事件
@@ -215,14 +215,18 @@ const watchCategoryChange = () => {
     async (newCategoryId) => {
       console.log('🔄 分类ID变化:', newCategoryId);
 
-      // 如果是编辑模式（有商品ID），不自动加载分类属性
+      // 如果是编辑模式（有商品ID），加载对应的属性
       if (goodsInfo.value.id) {
-        console.log('📝 编辑模式，不自动加载分类属性');
+        console.log('📝 编辑模式，加载商品对应的属性');
+        // 这里应该加载这个商品已经设置的属性
+        // 可能是从商品数据中获取，也可能是从分类中获取默认值
+        await loadCategoryAttributes(newCategoryId);
         return;
       }
 
-      // 新增模式，加载分类下的属性
+      // 新增模式，console.log('🆕 新增模式，加载分类的默认属性');
       if (newCategoryId) {
+        console.log('🆕 新增模式，加载分类的默认属性');
         await loadCategoryAttributes(newCategoryId);
       } else {
         // 没有选择分类，重置属性列表
@@ -245,25 +249,30 @@ const loadCategoryAttributes = async (categoryId) => {
     console.log(`📦 开始加载分类 ${categoryId} 的属性`);
 
     // UniApp API 调用
-    const response = await uni.request({
-      url: '/api/attribute/list',
-      method: 'GET',
-      data: {
-        categoryId,
-        type: 2
-      },
-      header: {
-        'Content-Type': 'application/json'
-      }
+    // const response = await uni.request({
+    //   url: '/api/attribute/list',
+    //   method: 'GET',
+    //   data: {
+    //     categoryId,
+    //     type: 2
+    //   },
+    //   header: {
+    //     'Content-Type': 'application/json'
+    //   }
+    // });
+
+    const response = await PmsSpuAttributeAPI.getAttributeList({
+      categoryId,
+      type: 2  // type=2 表示商品分类下的属性
     });
 
     console.log('API返回的属性数据:', response);
 
-    if (response.statusCode === 200 && response.data) {
-      const data = response.data;
-      if (data.code === 0 && Array.isArray(data.data)) {
+    if (response && Array.isArray(response)) {
+      const data = response;
+      if (response && Array.isArray(response)) {
         // 转换API数据格式
-        const attributes = data.data.map(item => new GoodsAttribute({
+        const attributes = data.map(item => new GoodsAttribute({
           id: item.id,
           name: item.name || '',
           value: item.value || '',

@@ -1,4 +1,5 @@
-import request from "@/utils/request";
+import request from "@/utils/request";  // default export
+import { request2 } from "@/utils/request";  // named export
 // import { SmsHomeCategoryPageVO } from "@/api/aioveuMall/aioveuMallSms/aioveuMallSmsHomeCategory/sms-home-category";
 import {BaseQueryParams, PageQuery} from "@/types";
 
@@ -56,7 +57,7 @@ const PmsSpuAPI = {
      * @param data 商品表单数据
      */
      update(id: number, data: PmsSpuForm) {
-        return request({
+        return request2({
             url: `${PMSSPU_BASE_URL}/admin/${id}`,
             method: "PUT",
             data,

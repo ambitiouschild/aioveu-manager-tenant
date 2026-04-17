@@ -26,9 +26,9 @@
     </view>
 
     <!-- 先测试简单的文本 -->
-    <view v-if="activeStep === 0" style="padding: 20rpx; background: red; color: white;">
-      <text>这是步骤1的内容区域，如果看到这个说明v-if生效了</text>
-    </view>
+<!--    <view v-if="activeStep === 0" style="padding: 20rpx; background: red; color: white;">-->
+<!--      <text>这是步骤1的内容区域，如果看到这个说明v-if生效了</text>-->
+<!--    </view>-->
 
     <!-- 步骤1：商品分类选择组件 -->
     <GoodsCategory
@@ -39,6 +39,11 @@
       @next="handleNextStep"
       @edit-goods="handleEditGoods"
     />
+
+    <!-- 先测试简单的文本 -->
+<!--    <view v-if="activeStep === 1" style="padding: 20rpx; background: red; color: white;">-->
+<!--      <text>这是步骤2的内容区域，如果看到这个说明v-if生效了</text>-->
+<!--    </view>-->
 
     <!-- 步骤2：商品信息填写组件 -->
     <GoodsInfo
@@ -156,23 +161,24 @@ const loadGoodsData = async () => {
       //   method: 'GET'
       // });
 
-      // 模拟API调用
-      // const response = await PmsSpuAPI.getSpuDetail(goodsId);
+      //调用API获取商品详情
+      const response = await PmsSpuAPI.getSpuDetail(goodsId);
+      console.log(`📦 编辑模式，加载商品信息:{}`, response);
 
       // 这里用模拟数据
-      // if (response && response.data) {
-      //   const data = response.data;
-      //   goodsInfo.value = {
-      //     ...data,
-      //     originPrice: data.originPrice ? Number(data.originPrice) / 100 : undefined,
-      //     price: data.price ? Number(data.price) / 100 : undefined
-      //   };
-      //   console.log('✅ 商品数据加载完成', goodsInfo.value);
-      // }
+      if (response) {
+        const data = response;
+        goodsInfo.value = {
+          ...data,
+          originPrice: data.originPrice ? Number(data.originPrice) / 100 : undefined,
+          price: data.price ? Number(data.price) / 100 : undefined
+        };
+        console.log('✅ 商品数据加载完成', goodsInfo.value);
+      }
     } else {
       console.log('🆕 新增商品模式，初始化空数据');
     }
-
+    // 标记数据已加载完成
     isDataLoaded.value = true;
   } catch (error) {
     console.error('❌ 加载商品数据失败:', error);
@@ -180,7 +186,7 @@ const loadGoodsData = async () => {
       title: '加载失败',
       icon: 'error'
     });
-    isDataLoaded.value = true;
+    isDataLoaded.value = true;  // 即使失败也标记为已加载，避免页面卡住
   }
 };
 

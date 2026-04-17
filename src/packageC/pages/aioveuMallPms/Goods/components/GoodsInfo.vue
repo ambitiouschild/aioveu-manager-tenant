@@ -1,5 +1,12 @@
 <!-- 转换后的 UniApp 组件 GoodsInfo.vue -->
 <template>
+
+  <!-- 调试：显示组件已加载 -->
+  <view style="padding: 20rpx; background: green; color: white; margin: 20rpx; border-radius: 10rpx;">
+    <text>✅ GoodsInfo 组件已加载！当前步骤：步骤2</text>
+  </view>
+
+
   <scroll-view
     scroll-y
     class="component-container"
@@ -275,33 +282,37 @@
       </form>
     </view>
 
-    <!-- 底部操作按钮 -->
-    <view class="component-container__footer">
-      <button
-        class="btn-prev"
-        @tap="handlePrev"
-        hover-class="btn-hover"
-        hover-start-time="20"
-        hover-stay-time="70"
-      >
-        上一步，选择商品分类
-      </button>
-      <button
-        class="btn-next"
-        @tap="handleNext"
-        hover-class="btn-hover"
-        hover-start-time="20"
-        hover-stay-time="70"
-      >
-        下一步，设置商品属性
-      </button>
-    </view>
+
   </scroll-view>
+
+  <!-- 底部操作按钮 -->
+<!--  <view class="component-container__footer">-->
+<!--    <button-->
+<!--      class="btn-prev"-->
+<!--      @tap="handlePrev"-->
+<!--      hover-class="btn-hover"-->
+<!--      hover-start-time="20"-->
+<!--      hover-stay-time="70"-->
+<!--    >-->
+<!--      上一步，选择商品分类-->
+<!--    </button>-->
+<!--    <button-->
+<!--      class="btn-next"-->
+<!--      @tap="handleNext"-->
+<!--      hover-class="btn-hover"-->
+<!--      hover-start-time="20"-->
+<!--      hover-stay-time="70"-->
+<!--    >-->
+<!--      下一步，设置商品属性-->
+<!--    </button>-->
+<!--  </view>-->
+
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { onLoad, onShow, onHide, onReady } from '@dcloudio/uni-app';
+import PmsBrandAPI from "@/packageC/api/aioveuMallPms/aioveuMallPmsBrand/pms-brand";
 
 // 类型定义
 class BrandOption {
@@ -315,12 +326,17 @@ class BrandOption {
 }
 
 // Props 和 Emit
-// const props = defineProps({
-//   goodsInfo: {
-//     type: Object,
-//     default: () => ({})
-//   }
-// });
+const props = defineProps({
+  goodsInfo: {
+    type: Object,
+    default: () => ({})
+  }
+});
+
+console.log('🎯 GoodsInfo 组件 script setup 执行');
+console.log('📦 GoodsInfo props:', props.goodsInfo);
+
+
 
 const emit = defineEmits([
   'prev',
@@ -364,18 +380,12 @@ const loadBrandData = async () => {
   try {
     console.log('📦 开始加载品牌数据');
 
-    const response = await uni.request({
-      url: '/api/brand/list',
-      method: 'GET',
-      header: {
-        'Content-Type': 'application/json'
-      }
-    });
+    const response = await PmsBrandAPI.getBrandList();
 
-    if (response.statusCode === 200 && response.data) {
-      const resData = response.data;
-      if (resData.code === 0 && Array.isArray(resData.data)) {
-        brandOptions.value = resData.data.map(item => new BrandOption({
+    if (response && Array.isArray(response)) {
+      const resData = response;
+      if (response && Array.isArray(response)) {
+        brandOptions.value = resData.map(item => new BrandOption({
           id: item.id,
           name: item.name,
           logoUrl: item.logoUrl
@@ -550,28 +560,30 @@ const chooseMainImage = async () => {
   }
 };
 
+import FileAPI from "@/packageC/api/file/file";
 // 上传主图
 const uploadMainImage = async (tempFilePath) => {
   uni.showLoading({ title: '上传中...' });
 
   try {
-    const uploadResult = await uni.uploadFile({
-      url: '/api/upload/image',
+    console.log('📤 开始上传主图:', tempFilePath);
+
+    const uploadResult = await FileAPI.uploadUniFile({
       filePath: tempFilePath,
-      name: 'file',
-      formData: {
-        category: 'product',
-        type: 'main'
-      },
-      header: {
-        'Authorization': 'Bearer ' + uni.getStorageSync('token')
+      category: 'product',
+      type: 'main',
+      fileName: `product_main_${Date.now()}.jpg`,
+      onProgress: (percent) => {
+        console.log(`📈 上传进度: ${percent}%`);
+        // 可以在这里更新进度条
       }
     });
 
-    if (uploadResult.statusCode === 200) {
-      const data = JSON.parse(uploadResult.data);
-      if (data.code === 0 && data.data && data.data.url) {
-        goodsInfo.value.picUrl = data.data.url;
+    console.log('✅ 上传成功，结果:', uploadResult);
+
+    if (uploadResult.code === "00000" && uploadResult.data && uploadResult.data.url) {
+      if (uploadResult) {
+        goodsInfo.value.picUrl = uploadResult.data.url;
         delete errors.value.picUrl;
 
         uni.showToast({
@@ -579,19 +591,39 @@ const uploadMainImage = async (tempFilePath) => {
           icon: 'success',
           duration: 2000
         });
+
+        return uploadResult.data.url;
       } else {
-        throw new Error(data.msg || '上传失败');
+        throw new Error(uploadResult.msg || '上传失败');
       }
     } else {
       throw new Error('上传失败');
     }
   } catch (error) {
     console.error('上传图片失败:', error);
-    uni.showToast({
-      title: '上传失败，请重试',
-      icon: 'error',
-      duration: 2000
-    });
+
+
+    // 处理特定错误
+    if (error.message.includes('401')) {
+      uni.showModal({
+        title: '认证失败',
+        content: '请重新登录',
+        success: (res) => {
+          if (res.confirm) {
+            uni.navigateTo({ url: '/packageA/pages/login/login' });
+          }
+        }
+      });
+    } else {
+      uni.showToast({
+        title: error.message || '上传失败',
+        icon: 'error',
+        duration: 2000
+      });
+    }
+
+    throw error;
+
   } finally {
     uni.hideLoading();
   }
@@ -656,46 +688,46 @@ const chooseAlbumImages = async () => {
 
 // 上传轮播图
 const uploadAlbumImages = async (tempFilePaths) => {
-  uni.showLoading({ title: '上传中...' });
+  uni.showLoading({ title: '批量上传中...' });
 
   try {
-    const uploadPromises = tempFilePaths.map(tempFilePath =>
-      uni.uploadFile({
-        url: '/api/upload/image',
-        filePath: tempFilePath,
-        name: 'file',
-        formData: {
-          category: 'product',
-          type: 'album'
-        },
-        header: {
-          'Authorization': 'Bearer ' + uni.getStorageSync('token')
-        }
-      })
-    );
+    console.log('🖼️ 开始批量上传，数量:', tempFilePaths.length);
 
-    const results = await Promise.all(uploadPromises);
-    const newAlbumUrls = [];
-
-    for (const result of results) {
-      if (result.statusCode === 200) {
-        const data = JSON.parse(result.data);
-        if (data.code === 0 && data.data && data.data.url) {
-          newAlbumUrls.push(data.data.url);
-        }
+    const { successful, failed } = await FileAPI.uploadMultiple(tempFilePaths, {
+      category: 'product',
+      type: 'album',
+      onProgress: (percent) => {
+        console.log(`📈 整体进度: ${percent}%`);
       }
-    }
+    });
 
-    if (newAlbumUrls.length > 0) {
+    console.log('📊 上传统计:', {
+      成功: successful.length,
+      失败: failed.length
+    });
+
+    if (successful.length > 0) {
       if (!goodsInfo.value.album) {
         goodsInfo.value.album = [];
       }
-      goodsInfo.value.album = [...goodsInfo.value.album, ...newAlbumUrls];
+      // 获取成功的 URL
+      const newUrls = successful.map(file => file.url);
+      goodsInfo.value.album = [...goodsInfo.value.album, ...newUrls];
+
+      let message = `成功上传 ${successful.length} 张图片`;
+      if (failed.length > 0) {
+        message += `，${failed.length} 张失败`;
+
+        // 记录失败的图片
+        failed.forEach(item => {
+          console.warn(`❌ 图片上传失败:`, item.file, item.error);
+        });
+      }
 
       uni.showToast({
-        title: `成功上传${newAlbumUrls.length}张图片`,
-        icon: 'success',
-        duration: 2000
+        title: message,
+        icon: successful.length === tempFilePaths.length ? 'success' : 'none',
+        duration: 3000
       });
     }
   } catch (error) {
@@ -845,8 +877,10 @@ watch(() => goodsInfo.value.brandId, (newBrandId) => {
 });
 
 // 生命周期
-onLoad(() => {
-  console.log('🔄 GoodsInfo 组件加载');
+//您的 GoodsInfo.vue是一个组件，不是页面，所以它没有 onLoad生命周期！
+onMounted(() => {
+  console.log('🏗️ GoodsInfo 组件 mounted 触发');
+  console.log('✅ GoodsInfo 组件确实加载了！');
   loadBrandData();
 });
 
@@ -875,10 +909,13 @@ onUnmounted(() => {
   background-color: #f8f9fa;
   overflow: hidden;
   box-sizing: border-box;
-  padding-bottom: env(safe-area-inset-bottom);
+  flex: 1; /* 占据剩余空间 */
+
+  /* 修改 padding-bottom 为按钮留出空间 */
+  padding-bottom: 120rpx; /* 按钮高度 + 间距 */
 
   &__main {
-    padding: 20rpx 30rpx 120rpx;
+    padding: 20rpx 30rpx 120rpx;  /* 底部留出按钮空间 */
     box-sizing: border-box;
 
     .goods-form {
@@ -902,25 +939,46 @@ onUnmounted(() => {
         }
 
         .form-label {
-          display: flex;
-          align-items: center;
-          margin-bottom: 20rpx;
+          /* 强制Flex布局，确保子元素横向排列 */
+          display: flex !important;  /* 确保是 Flex 布局 */
+          align-items: center;       /* 垂直居中对齐 */
+          flex-wrap: nowrap !important; /* 禁止换行 */
+          white-space: nowrap !important; /* 禁止文本换行 */
+          width: 100%;              /* 确保宽度完整 */
+          margin-bottom: 20rpx;     /* 保持间距 */
 
           .label-text {
             font-size: 32rpx;
             font-weight: 600;
             color: #303133;
-            margin-right: 8rpx;
+            /* 移除原margin-right: 8rpx（已被gap替代） */
           }
 
           .required {
             color: #f56c6c;
             font-size: 28rpx;
+            line-height: 1;           /* 确保行高不影响对齐 */
+            display: inline-flex;     /* 让星号也参与Flex对齐 */
+            align-items: center;      /* 星号垂直居中 */
           }
         }
 
         .form-control {
-          .form-input,
+
+          /* 输入框 */
+          .form-input {
+            height: 64rpx;
+            line-height: 64rpx;
+            font-size: 28rpx;
+            padding: 0 20rpx;
+            border: 1rpx solid #dcdfe6;
+            border-radius: 8rpx;
+            background-color: #fff;
+          }
+
+
+
+
           .price-input,
           .description-textarea,
           .detail-textarea {
@@ -948,21 +1006,22 @@ onUnmounted(() => {
             overflow: hidden;
 
             .price-prefix {
-              padding: 0 20rpx;
-              background-color: #e4e7ed;
-              height: 80rpx;
-              line-height: 80rpx;
-              color: #606266;
-              font-size: 30rpx;
-              font-weight: 500;
-              flex-shrink: 0;
+              padding: 0 16rpx;
+              font-size: 28rpx;
+              color: #303133;
+              background-color: #f5f7fa;
+              height: 64rpx;
+              line-height: 64rpx;
             }
 
             .price-input {
               flex: 1;
-              border: none;
-              background-color: transparent;
-              padding: 20rpx;
+              height: 64rpx;
+              line-height: 64rpx;
+              font-size: 28rpx;
+              padding: 0 20rpx;
+              border: none; /* 移除内部输入框边框 */
+              background-color: #fff;
             }
           }
 
@@ -1251,6 +1310,57 @@ onUnmounted(() => {
   font-size: 30rpx;
 }
 
+
+/* 底部按钮样式优化 */
+.component-container__footer {
+  position: fixed; /* 页面级固定 */
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 20rpx 30rpx;
+  background-color: #ffffff;
+  border-top: 2rpx solid #f0f0f0;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.05);
+  z-index: 100;
+  box-sizing: border-box;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+
+  button {
+    flex: 1;
+    height: 80rpx;
+    line-height: 80rpx;
+    border-radius: 40rpx;
+    font-size: 30rpx;
+    border: none;
+
+    &::after {
+      border: none;
+    }
+
+    &.btn-prev {
+      background-color: #ffffff;
+      color: #409eff;
+      border: 2rpx solid #409eff;
+      margin-right: 20rpx;
+    }
+
+    &.btn-next {
+      background: linear-gradient(135deg, #409eff, #66b1ff);
+      color: #ffffff;
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
 // 响应式设计
 @media (max-width: 768px) {
   .component-container {
@@ -1279,8 +1389,24 @@ onUnmounted(() => {
             }
 
             .price-input-group {
+
+              display: flex;
+              align-items: center;
+              border: 1rpx solid #dcdfe6;
+              border-radius: 8rpx;
+              overflow: hidden;
+
+
+
+
               .price-input {
-                padding: 15rpx;
+                flex: 1;
+                height: 64rpx;
+                line-height: 64rpx;
+                font-size: 28rpx;
+                padding: 0 20rpx;
+                border: none; /* 移除内部输入框边框 */
+                background-color: #fff;
               }
             }
 
