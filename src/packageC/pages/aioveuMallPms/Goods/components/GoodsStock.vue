@@ -177,7 +177,7 @@
       <!-- 库存设置卡片 -->
       <view
         class="stock-card"
-        v-if="specForm.specList.some(spec => spec.values.length > 0)"
+        v-if="hasValidSpecs"
       >
         <view class="card-header">
           <text class="card-title">商品库存</text>
@@ -379,7 +379,7 @@
 
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { onLoad, onShow, onHide, onReady } from '@dcloudio/uni-app';
 import PmsSpuAPI, { PmsSpuPageVO} from "@/packageC/api/aioveuMallPms/aioveuMallPmsSpu/pms-spu";
@@ -387,9 +387,9 @@ import PmsSpuAPI, { PmsSpuPageVO} from "@/packageC/api/aioveuMallPms/aioveuMallP
 
 // 类型定义
 class SpecValue {
-  id = '';
-  value = '';
-  picUrl = '';
+  id: string = '';
+  value: string = '';
+  picUrl: string = '';
 
   constructor(data = {}) {
     Object.assign(this, data);
@@ -397,9 +397,9 @@ class SpecValue {
 }
 
 class Specification {
-  id = '';
-  name = '';
-  values = [];
+  id: string = '';
+  name: string = '';
+  values: SpecValue[] = [];  // ✅ 添加类型
 
   constructor(data = {}) {
     Object.assign(this, data);
@@ -407,14 +407,18 @@ class Specification {
 }
 
 class SkuItem {
-  id = undefined;
-  skuSn = '';
-  price = 0;
-  stock = 0;
-  Lockedstock = 0;
-  specIds = '';
-  specValues = '';
-  picUrl = '';
+  id?: number = undefined;
+  skuSn: string = '';
+  price: number = 0;
+  stock: number = 0;
+  Lockedstock: number = 0;
+  specIds: string = '';
+  specValues: string = '';
+  picUrl: string = '';
+
+
+  // 动态规格值属性
+  [key: `specValue${number}`]: string;
 
   constructor(data = {}) {
     Object.assign(this, data);
@@ -422,29 +426,54 @@ class SkuItem {
 }
 
 // Props 和 Emit
-const props = defineProps({
-  goodsInfo: {
-    type: Object,
-    default: () => ({})
-  }
+interface Props {
+  goodsInfo?: Record<string, any>;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  goodsInfo: () => ({})
 });
 
-const emit = defineEmits([
-  'prev',
-  'update:goodsInfo',
-  'submit-success'
-]);
+const emit = defineEmits<{
+  (e: 'prev'): void;
+  (e: 'update:goodsInfo', value: Record<string, any>): void;
+  (e: 'submit-success', categoryId?: number): void;
+}>();
 
 // 响应式数据
-const specForm = ref({ specList: [] });
-const skuForm = ref({ skuList: [] });
-const specTitles = ref([]);
-const specErrors = ref([]);
-const skuErrors = ref([]);
-const tagInputs = ref([]);
-const scrollHeight = ref(500);
-const skuTableHeight = ref(300);
-const refreshing = ref(false);
+// 规格表单数据
+
+// 响应式数据
+// 规格表单数据
+interface SpecFormData {
+  specList: Specification[];
+}
+
+interface SkuFormData {
+  skuList: SkuItem[];
+}
+
+interface TagInput {
+  value?: string;
+  visible: boolean;
+}
+
+const specForm = ref<SpecFormData>({
+  specList: [],
+});
+
+const skuForm = ref<SkuFormData>({
+  skuList: []
+});
+
+
+const specTitles = ref<string[]>([]);
+const specErrors = ref<string[]>([]);
+const skuErrors = ref<Array<Record<string, string>>>([]);
+const tagInputs = ref<TagInput[]>([]);
+const scrollHeight = ref<number>(500);
+const skuTableHeight = ref<number>(300);
+const refreshing = ref<boolean>(false);
 const TEMP_ID_PREFIX = 'temp_';
 // 计算滚动容器高度（适配不同设备）
 const systemInfo = uni.getSystemInfoSync();
@@ -464,14 +493,21 @@ const goodsInfo = computed({
     }
     return data;
   },
-  set: (value) => {
+  set: (value: Record<string, any>) => {
     emit('update:goodsInfo', value);
   }
 });
 
+
 // 计算属性
-const getFirstSpecImage = (spec) => {
-  return spec.values[0]?.picUrl;
+const hasValidSpecs = computed(() => {
+  return specForm.value.specList.some(spec => spec.values.length > 0);
+});
+
+
+// 计算属性
+const getFirstSpecImage = (spec: Specification): string => {
+  return spec.values[0]?.picUrl || '';
 };
 
 // 工具函数
@@ -479,11 +515,11 @@ const generateTempId = () => {
   return `${TEMP_ID_PREFIX}${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 };
 
-const isTempId = (id) => {
-  return id?.startsWith(TEMP_ID_PREFIX);
+const isTempId = (id?: string): boolean => {
+  return id?.startsWith(TEMP_ID_PREFIX) || false;
 };
 
-const getTagColor = (index) => {
+const getTagColor = (index: number): string => {
   const colors = ['#409eff', '#67c23a', '#e6a23c', '#f56c6c', '#909399'];
   return colors[index % colors.length];
 };
@@ -534,9 +570,9 @@ const loadGoodsData = async () => {
 };
 
 // 处理规格列表
-const processSpecList = async (specList) => {
-  const specs = [];
-  const specMap = new Map();
+const processSpecList = async (specList: any[]) => {
+  const specs: Specification[] = [];
+  const specMap = new Map<string, Specification>();
 
   // 按规格名称分组
   specList.forEach((item) => {
@@ -549,11 +585,13 @@ const processSpecList = async (specList) => {
     }
 
     const spec = specMap.get(item.name);
-    spec.values.push(new SpecValue({
-      id: item.id ? String(item.id) : generateTempId(),
-      value: item.value || '',
-      picUrl: item.picUrl
-    }));
+    if (spec) {
+      spec.values.push(new SpecValue({
+        id: item.id ? String(item.id) : generateTempId(),
+        value: item.value || '',
+        picUrl: item.picUrl
+      }));
+    }
   });
 
   // 转换为数组
@@ -570,7 +608,7 @@ const processSpecList = async (specList) => {
 };
 
 // 处理SKU列表
-const processSkuList = async (skuList) => {
+const processSkuList = async (skuList: any[])=> {
   const processedSkus = skuList.map((sku) => {
     const skuItem = new SkuItem({
       id: sku.id,
@@ -585,9 +623,9 @@ const processSkuList = async (skuList) => {
 
     // 解析规格值
     if (sku.specValues) {
-      const values = sku.specValues.split('_');
-      values.forEach((value, index) => {
-        skuItem[`specValue${index + 1}`] = value;
+      const values: string[] = sku.specValues.split('_');
+      values.forEach((value: string, index: number) => {
+        (skuItem as any)[`specValue${index + 1}`] = value;  // 现在可以直接赋值
       });
     }
 
@@ -633,7 +671,7 @@ const handleAddSpec = () => {
 };
 
 // 删除规格
-const handleRemoveSpec = (index) => {
+const handleRemoveSpec = (index: number) => {
   if (specForm.value.specList.length <= 1) {
     uni.showToast({
       title: '至少需要保留一个规格',
@@ -653,7 +691,7 @@ const handleRemoveSpec = (index) => {
 };
 
 // 验证规格名称
-const validateSpecName = (index) => {
+const validateSpecName = (index: number) => {
   const spec = specForm.value.specList[index];
   let error = '';
 
@@ -668,20 +706,24 @@ const validateSpecName = (index) => {
 };
 
 // 显示规格值输入框
-const showSpecInput = (index) => {
+const showSpecInput = (index: number) => {
   tagInputs.value[index] = { value: undefined, visible: true };
-  nextTick(() => {
-    const inputs = uni.createSelectorQuery().in(this).selectAll('.spec-value-input');
-    inputs.fields({ dataset: true }, (res) => {
-      if (res[index]) {
-        uni.createSelectorQuery().in(this).select(`.spec-value-input:nth-child(${index + 1})`).focus();
-      }
-    }).exec();
-  });
+
+  //在 UniApp 的 Vue 模板中，当 input从隐藏变为显示时，通常会自动获取焦点。你可以直接
+
+  // nextTick(() => {
+  //   const inputs = uni.createSelectorQuery().in(this).selectAll('.spec-value-input');
+  //   inputs.fields({ dataset: true }, (res: any) => {
+  //     if (res[index]) {
+  //       uni.createSelectorQuery().in(this).select(`.spec-value-input:nth-child(${index + 1})`).focus();
+  //     }
+  //   }).exec();
+  // });
+
 };
 
 // 处理规格值输入
-const handleInputSpecValue = (index) => {
+const handleInputSpecValue = (index: number) => {
   const inputValue = tagInputs.value[index].value?.trim();
 
   if (!inputValue) {
@@ -715,7 +757,7 @@ const handleInputSpecValue = (index) => {
 };
 
 // 删除规格值
-const handleRemoveSpecValue = (specIndex, valueId) => {
+const handleRemoveSpecValue = (specIndex : number, valueId: string) => {
   const spec = specForm.value.specList[specIndex];
   const valueIndex = spec.values.findIndex(v => v.id === valueId);
 
@@ -748,7 +790,7 @@ const generateSkuList = () => {
   }
 
   // 计算笛卡尔积
-  const cartesianProduct = (...arrays) => {
+  const cartesianProduct = (...arrays: any[][]): any[][]  => {
     return arrays.reduce(
       (acc, curr) => acc.flatMap(x => curr.map(y => [...x, y])),
       [[]]
@@ -758,8 +800,9 @@ const generateSkuList = () => {
   const valueCombinations = cartesianProduct(...validSpecs.map(spec => spec.values));
 
   const newSkus = valueCombinations.map((values, index) => {
-    const specValues = values.map(v => v.value).join('_');
-    const specIds = values.map(v => v.id).join('_');
+    const specValues = values.map(v => v.value).join('|');
+    // 数据库中的 specIds可能是下划线分隔，而您生成的 specIds是竖线分隔
+    const specIds = values.map(v => v.id).join('|');
 
     const existingSku = skuForm.value.skuList.find(sku => sku.specIds === specIds);
 
@@ -787,7 +830,7 @@ const generateSkuList = () => {
 };
 
 // 验证SKU编码
-const validateSkuSn = (index) => {
+const validateSkuSn = (index: number) => {
   const sku = skuForm.value.skuList[index];
   let error = '';
 
@@ -805,11 +848,11 @@ const validateSkuSn = (index) => {
 };
 
 // 验证价格
-const validatePrice = (index) => {
+const validatePrice = (index: number) => {
   const sku = skuForm.value.skuList[index];
   let error = '';
 
-  if (sku.price === undefined || sku.price === null || sku.price === '') {
+  if (sku.price === undefined || sku.price === null) {
     error = '请输入价格';
   } else if (isNaN(Number(sku.price))) {
     error = '价格必须是数字';
@@ -827,11 +870,11 @@ const validatePrice = (index) => {
 };
 
 // 验证库存
-const validateStock = (index) => {
+const validateStock = (index: number) => {
   const sku = skuForm.value.skuList[index];
   let error = '';
 
-  if (sku.stock === undefined || sku.stock === null || sku.stock === '') {
+  if (sku.stock === undefined || sku.stock === null) {
     error = '请输入库存';
   } else if (isNaN(Number(sku.stock))) {
     error = '库存必须是数字';
@@ -851,7 +894,7 @@ const validateStock = (index) => {
 };
 
 // 处理价格变化
-const handlePriceChange = (sku, index) => {
+const handlePriceChange = (sku: SkuItem, index: number) => {
   if (sku.price < 0) {
     sku.price = 0;
     uni.showToast({
@@ -864,7 +907,7 @@ const handlePriceChange = (sku, index) => {
 };
 
 // 上传规格图片
-const uploadSpecImage = async (specIndex) => {
+const uploadSpecImage = async (specIndex: number) => {
   try {
     const res = await uni.chooseImage({
       count: 1,
@@ -936,7 +979,7 @@ const uploadSpecImage = async (specIndex) => {
 };
 
 // 预览规格图片
-const previewSpecImage = (imageUrl) => {
+const previewSpecImage = (imageUrl: string) => {
   if (imageUrl) {
     uni.previewImage({
       current: imageUrl,
@@ -946,7 +989,7 @@ const previewSpecImage = (imageUrl) => {
 };
 
 // 上传SKU图片
-const uploadSkuImage = async (skuIndex) => {
+const uploadSkuImage = async (skuIndex: number) => {
   try {
     const res = await uni.chooseImage({
       count: 1,
@@ -1012,7 +1055,7 @@ const uploadSkuImage = async (skuIndex) => {
 };
 
 // 预览SKU图片
-const previewSkuImage = (imageUrl) => {
+const previewSkuImage = (imageUrl: string) => {
   if (imageUrl) {
     uni.previewImage({
       current: imageUrl,
@@ -1022,7 +1065,7 @@ const previewSkuImage = (imageUrl) => {
 };
 
 // 删除SKU图片
-const removeSkuImage = (skuIndex) => {
+const removeSkuImage = (skuIndex: number) => {
   uni.showModal({
     title: '提示',
     content: '确定要删除这张图片吗？',
@@ -1129,10 +1172,10 @@ const handleSubmit = async () => {
     const submitData = { ...goodsInfo.value };
 
     // 处理规格数据
-    const processedSpecs = [];
+    const processedSpecs: any[] = [];
     specForm.value.specList.forEach(spec => {
       spec.values.forEach(value => {
-        const specObj = {
+        const specObj : any = {
           name: spec.name || '',
           value: value.value || '',
           picUrl: value.picUrl || ''
@@ -1175,7 +1218,7 @@ const handleSubmit = async () => {
     // 5. 调用API
     uni.showLoading({ title: '提交中...' });
 
-    let result;
+    let result: any;
     if (goodsInfo.value.id) {
       // 编辑
       // response = await uni.request({
@@ -1248,10 +1291,10 @@ const handleSubmit = async () => {
       emit('submit-success', goodsInfo.value.categoryId);
 
     } else {
-      throw new Error(response.data?.msg || '提交失败');
+      throw new Error(result.data?.msg || '提交失败');
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ 提交失败:', error);
     uni.hideLoading();
     uni.showToast({
@@ -1263,9 +1306,9 @@ const handleSubmit = async () => {
 };
 
 // 计算高度
-const calculateHeights = () => {
+const calculateHeights = () : void  => {
   const query = uni.createSelectorQuery().in(this);
-  query.select('.component-container').boundingClientRect(data => {
+  query.select('.component-container').boundingClientRect((data: any) => {
     if (data) {
       const windowHeight = systemInfo.windowHeight;
       const containerTop = data.top;

@@ -93,7 +93,7 @@
   </view>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { onLoad, onShow, onHide, onUnload } from '@dcloudio/uni-app';
 
@@ -104,11 +104,21 @@ import GoodsInfo from './components/GoodsInfo.vue';
 import GoodsAttribute from './components/GoodsAttribute.vue';
 import GoodsStock from './components/GoodsStock.vue';
 
+
+// 类型定义
+interface StepInfo {
+  title: string;
+  desc: string;
+}
+
+
 // 导入API接口
-import PmsSpuAPI from '@/packageC/api/aioveuMallPms/aioveuMallPmsSpu/pms-spu';
+import PmsSpuAPI ,{
+  type PmsSpuPageVO
+}from '@/packageC/api/aioveuMallPms/aioveuMallPmsSpu/pms-spu';
 
 // 步骤数据
-const steps = [
+const steps: StepInfo[] = [
   { title: '选择商品分类', desc: '选择商品所属的分类' },
   { title: '填写商品信息', desc: '填写商品基本信息' },
   { title: '设置商品属性', desc: '设置商品规格属性' },
@@ -116,11 +126,11 @@ const steps = [
 ];
 
 // 步骤状态
-const activeStep = ref(0);
-const isDataLoaded = ref(false);
+const activeStep = ref<number>(0);
+const isDataLoaded = ref<boolean>(false);
 
 // 商品信息数据
-const goodsInfo = ref({
+const goodsInfo = ref<PmsSpuPageVO>({
   id: undefined,
   name: '',
   categoryId: undefined,
@@ -140,8 +150,21 @@ const goodsInfo = ref({
 });
 
 // 商品信息更新
-const handleGoodsInfoUpdate = (newGoodsInfo) => {
-  goodsInfo.value = { ...goodsInfo.value, ...newGoodsInfo };
+const handleGoodsInfoUpdate = (newGoodsInfo: PmsSpuPageVO) => {
+  console.log("📥 父组件收到 update:modelValue 事件:", {
+    时间: new Date().toLocaleTimeString(),
+    当前步骤: activeStep.value,
+    name: newGoodsInfo.name,
+    price: newGoodsInfo.price,
+    originPrice: newGoodsInfo.originPrice,
+    categoryId: newGoodsInfo.categoryId
+  });
+
+  // 更新父组件的 goodsInfo
+  goodsInfo.value = {
+    ...goodsInfo.value,  // 保留原有数据
+    ...newGoodsInfo  // 合并新数据
+  };
 };
 
 /**
@@ -162,7 +185,7 @@ const loadGoodsData = async () => {
       // });
 
       //调用API获取商品详情
-      const response = await PmsSpuAPI.getSpuDetail(goodsId);
+      const response = await PmsSpuAPI.getSpuDetail(goodsId) as any;
       console.log(`📦 编辑模式，加载商品信息:{}`, response);
 
       // 这里用模拟数据
@@ -239,7 +262,7 @@ const handleNextStep = () => {
 /**
  * 处理提交成功
  */
-const handleSubmitSuccess = (categoryId) => {
+const handleSubmitSuccess = (categoryId ?: number) => {
   console.log('✅ 商品提交成功，分类ID:', categoryId);
 
   if (categoryId) {
@@ -258,7 +281,7 @@ const handleSubmitSuccess = (categoryId) => {
 /**
  * 处理编辑商品
  */
-const handleEditGoods = async (goodsId) => {
+const handleEditGoods = async (goodsId: number) => {
   console.log('🎯 父组件收到编辑商品请求，ID:', goodsId);
 
   goodsInfo.value.id = goodsId;
@@ -268,8 +291,15 @@ const handleEditGoods = async (goodsId) => {
   activeStep.value = 1;
 };
 
+// 页面参数类型
+interface PageOptions {
+  id?: string;
+  step?: string;
+  [key: string]: any;
+}
+
 // UniApp 生命周期
-onLoad(async (options) => {
+onLoad(async (options?: any) => {
   console.log('🔄 商品详情页面开始加载');
   console.log('✅ GoodsDetail 页面激活');
 

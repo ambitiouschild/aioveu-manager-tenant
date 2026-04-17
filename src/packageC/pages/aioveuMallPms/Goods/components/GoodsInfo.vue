@@ -309,28 +309,59 @@
 
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { onLoad, onShow, onHide, onReady } from '@dcloudio/uni-app';
 import PmsBrandAPI from "@/packageC/api/aioveuMallPms/aioveuMallPmsBrand/pms-brand";
 
-// 类型定义
-class BrandOption {
-  id = undefined;
-  name = '';
-  logoUrl = '';
 
-  constructor(data = {}) {
+// 类型定义
+interface BrandOptionData {
+  id?: number;
+  name: string;
+  logoUrl: string;
+}
+
+class BrandOption {
+  id?: number = undefined;
+  name: string = '';
+  logoUrl: string = '';
+
+  constructor(data: Partial<BrandOptionData> = {}) {
     Object.assign(this, data);
   }
 }
 
+interface GoodsInfoData {
+  name: string;
+  brandId?: number;
+  originPrice?: number;
+  price?: number;
+  picUrl: string;
+  album: string[];
+  description: string;
+  detail: string;
+  [key: string]: any;
+}
+
+
+
 // Props 和 Emit
-const props = defineProps({
-  goodsInfo: {
-    type: Object,
-    default: () => ({})
-  }
+interface Props {
+  goodsInfo?: GoodsInfoData;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  goodsInfo: () => ({
+    name: '',
+    brandId: undefined,
+    originPrice: undefined,
+    price: undefined,
+    picUrl: '',
+    album: [],
+    description: '',
+    detail: ''
+  })
 });
 
 console.log('🎯 GoodsInfo 组件 script setup 执行');
@@ -338,37 +369,52 @@ console.log('📦 GoodsInfo props:', props.goodsInfo);
 
 
 
-const emit = defineEmits([
-  'prev',
-  'next',
-  'update:goodsInfo'
-]);
+const emit = defineEmits<{
+  (e: 'prev'): void;
+  (e: 'next'): void;
+  (e: 'update:goodsInfo', value: GoodsInfoData): void;
+}>();
 
 // 响应式数据
-const errors = ref({});               // 表单错误信息
-const brandOptions = ref([]);         // 品牌选项
-const selectedBrandIndex = ref(-1);   // 选中的品牌索引
-const scrollHeight = ref(500);        // 滚动区域高度
-const refreshing = ref(false);        // 下拉刷新状态
+interface ErrorState {
+  [key: string]: string;
+}
+
+
+// 响应式数据
+const errors = ref<ErrorState>({});               // 表单错误信息
+const brandOptions = ref<BrandOptionData[]>([]);  // 品牌选项
+const selectedBrandIndex = ref<number>(-1);       // 选中的品牌索引
+const scrollHeight = ref<number>(500);            // 滚动区域高度
+const refreshing = ref<boolean>(false);           // 下拉刷新状态
 const systemInfo = uni.getSystemInfoSync();
 
 // 商品信息双向绑定
 const goodsInfo = computed({
-  get: () => {
+  get: (): GoodsInfoData => {
     const data = props.goodsInfo || {};
     // 确保必要字段存在
     if (!data.album || !Array.isArray(data.album)) {
       data.album = [];
     }
-    return data;
+    return {
+      name: data.name || '',
+      brandId: data.brandId,
+      originPrice: data.originPrice,
+      price: data.price,
+      picUrl: data.picUrl || '',
+      album: data.album || [],
+      description: data.description || '',
+      detail: data.detail || ''
+    };
   },
-  set: (value) => {
+  set: (value: GoodsInfoData) => {
     emit('update:goodsInfo', value);
   }
 });
 
 // 计算属性
-const selectedBrand = computed(() => {
+const selectedBrand = computed((): BrandOptionData | null => {
   if (selectedBrandIndex.value >= 0 && brandOptions.value[selectedBrandIndex.value]) {
     return brandOptions.value[selectedBrandIndex.value];
   }
@@ -383,8 +429,8 @@ const loadBrandData = async () => {
     const response = await PmsBrandAPI.getBrandList();
 
     if (response && Array.isArray(response)) {
-      const resData = response;
-      if (response && Array.isArray(response)) {
+      const resData : any[] = response;
+      if (Array.isArray(resData)) {
         brandOptions.value = resData.map(item => new BrandOption({
           id: item.id,
           name: item.name,
@@ -420,9 +466,9 @@ const loadBrandData = async () => {
 };
 
 // 表单验证
-const validateField = (field) => {
+const validateField = (field: keyof GoodsInfoData | 'brandId') : void => {
   let error = '';
-  const value = goodsInfo.value[field];
+  const value = goodsInfo.value[field as keyof GoodsInfoData];
 
   switch (field) {
     case 'name':
@@ -476,7 +522,7 @@ const validateField = (field) => {
 };
 
 // 验证所有字段
-const validateAllFields = () => {
+const validateAllFields = () : boolean=> {
   validateField('name');
   validateField('brandId');
   validateField('originPrice');
@@ -488,13 +534,15 @@ const validateAllFields = () => {
 };
 
 // 处理商品名称输入
-const handleNameInput = (e) => {
+const handleNameInput = (e: any) : void => {
   goodsInfo.value.name = e.detail.value;
-  delete errors.value.name;
+  const newErrors = { ...errors.value };
+  delete newErrors.name;
+  errors.value = newErrors;
 };
 
 // 处理品牌选择
-const handleBrandChange = (e) => {
+const handleBrandChange = (e: any): void => {
   const index = e.detail.value;
   selectedBrandIndex.value = index;
 
@@ -508,13 +556,13 @@ const handleBrandChange = (e) => {
 };
 
 // 处理价格输入
-const handlePriceInput = (field) => {
+const handlePriceInput = (field: 'originPrice' | 'price') => {
   const value = goodsInfo.value[field];
   // 限制两位小数
-  if (value && value.includes('.')) {
-    const parts = value.split('.');
+  if (value && value.toString().includes('.')) {
+    const parts = value.toString().split('.');
     if (parts[1] && parts[1].length > 2) {
-      goodsInfo.value[field] = parts[0] + '.' + parts[1].substring(0, 2);
+      goodsInfo.value[field] = Number(parts[0] + '.' + parts[1].substring(0, 2));
     }
   }
   delete errors.value[field];
@@ -548,21 +596,21 @@ const chooseMainImage = async () => {
           await uploadMainImage(tempFilePath);
         }
       },
-      fail: (err) => {
+      fail: (err: any) => {
         console.error('选择图片失败:', err);
         if (err.errMsg.includes('cancel')) {
           console.log('用户取消选择');
         }
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('选择图片出错:', error);
   }
 };
 
 import FileAPI from "@/packageC/api/file/file";
 // 上传主图
-const uploadMainImage = async (tempFilePath) => {
+const uploadMainImage = async (tempFilePath: string) => {
   uni.showLoading({ title: '上传中...' });
 
   try {
@@ -582,9 +630,14 @@ const uploadMainImage = async (tempFilePath) => {
     console.log('✅ 上传成功，结果:', uploadResult);
 
     if (uploadResult.code === "00000" && uploadResult.data && uploadResult.data.url) {
-      if (uploadResult) {
+
         goodsInfo.value.picUrl = uploadResult.data.url;
-        delete errors.value.picUrl;
+
+
+        // 移除错误
+        const newErrors = { ...errors.value };
+        delete newErrors.picUrl;
+        errors.value = newErrors;
 
         uni.showToast({
           title: '上传成功',
@@ -593,13 +646,10 @@ const uploadMainImage = async (tempFilePath) => {
         });
 
         return uploadResult.data.url;
-      } else {
-        throw new Error(uploadResult.msg || '上传失败');
-      }
     } else {
       throw new Error('上传失败');
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('上传图片失败:', error);
 
 
@@ -659,8 +709,12 @@ const chooseAlbumImages = async () => {
       sizeType: ['compressed'],
       sourceType: ['album', 'camera'],
       success: async (chooseResult) => {
-        if (chooseResult.tempFilePaths.length > 0) {
+        if (chooseResult.tempFilePaths && chooseResult.tempFilePaths.length > 0) {
           // 验证每张图片大小
+
+          // ✅ 修复：类型断言
+          const tempFilePaths = chooseResult.tempFilePaths as string[];
+
           for (const tempFilePath of chooseResult.tempFilePaths) {
             const fileInfo = await uni.getFileInfo({ filePath: tempFilePath });
             if (fileInfo.size > 2 * 1024 * 1024) {
@@ -674,7 +728,7 @@ const chooseAlbumImages = async () => {
           }
 
           // 上传所有图片
-          await uploadAlbumImages(chooseResult.tempFilePaths);
+          await uploadAlbumImages(tempFilePaths);
         }
       },
       fail: (err) => {
@@ -687,7 +741,7 @@ const chooseAlbumImages = async () => {
 };
 
 // 上传轮播图
-const uploadAlbumImages = async (tempFilePaths) => {
+const uploadAlbumImages = async (tempFilePaths: string[]) => {
   uni.showLoading({ title: '批量上传中...' });
 
   try {
@@ -743,7 +797,7 @@ const uploadAlbumImages = async (tempFilePaths) => {
 };
 
 // 预览轮播图
-const previewAlbumImage = (index) => {
+const previewAlbumImage = (index: number) => {
   if (goodsInfo.value.album && goodsInfo.value.album.length > index) {
     uni.previewImage({
       current: goodsInfo.value.album[index],
@@ -753,7 +807,7 @@ const previewAlbumImage = (index) => {
 };
 
 // 删除轮播图
-const removeAlbumImage = (index) => {
+const removeAlbumImage = (index: number) => {
   if (goodsInfo.value.album && goodsInfo.value.album.length > index) {
     uni.showModal({
       title: '提示',
@@ -775,19 +829,19 @@ const removeAlbumImage = (index) => {
 };
 
 // 处理商品简介输入
-const handleDescriptionInput = (e) => {
+const handleDescriptionInput = (e: any) => {
   goodsInfo.value.description = e.detail.value;
 };
 
 // 处理商品详情输入
-const handleDetailInput = (e) => {
+const handleDetailInput = (e: any) => {
   goodsInfo.value.detail = e.detail.value;
   delete errors.value.detail;
 };
 
 // 格式化价格
-const formatPrice = (price) => {
-  if (!price || isNaN(price)) return '0.00';
+const formatPrice = (price: number | string | undefined) => {
+  if (!price || isNaN(Number(price))) return '0.00';
   return Number(price).toFixed(2);
 };
 
@@ -839,7 +893,7 @@ const handleNext = async () => {
 // 计算滚动区域高度
 const calculateScrollHeight = () => {
   const query = uni.createSelectorQuery().in(this);
-  query.select('.component-container').boundingClientRect(data => {
+  query.select('.component-container').boundingClientRect((data: any) => {
     if (data) {
       const windowHeight = systemInfo.windowHeight;
       const containerTop = data.top;

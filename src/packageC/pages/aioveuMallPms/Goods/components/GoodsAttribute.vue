@@ -130,7 +130,7 @@
   </view>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { onReady, onLoad, onShow, onHide } from '@dcloudio/uni-app';
 import PmsSpuAttributeAPI from "@/packageC/api/aioveuMallPms/aioveuMallPmsSpuAttribute/pms-spu-attribute";
@@ -138,14 +138,23 @@ import PmsSpuAttributeAPI from "@/packageC/api/aioveuMallPms/aioveuMallPmsSpuAtt
 /**
  * 商品属性项接口
  */
-class GoodsAttribute {
-  id = undefined;          // 属性ID（编辑时使用）
-  name = '';              // 属性名称
-  value = '';             // 属性值
-  type = undefined;       // 属性类型
-  categoryId = undefined; // 分类ID
+interface GoodsAttributeData {
+  id?: number;
+  name: string;
+  value: string;
+  type?: number;
+  categoryId?: number;
+}
 
-  constructor(data = {}) {
+
+class GoodsAttribute {
+  id?: number = undefined;
+  name: string = '';
+  value: string = '';
+  type?: number = undefined;
+  categoryId?: number = undefined;
+
+  constructor(data: Partial<GoodsAttributeData> = {}) {
     Object.assign(this, data);
   }
 }
@@ -153,54 +162,76 @@ class GoodsAttribute {
 /**
  * 商品信息接口
  */
-class GoodsInfo {
-  id = undefined;          // 商品ID
-  categoryId = undefined;  // 分类ID
-  attrList = [];           // 属性列表
+interface GoodsInfoData {
+  id?: number;
+  categoryId?: number;
+  attrList: GoodsAttributeData[];
+  [key: string]: any;
+}
 
-  constructor(data = {}) {
+class GoodsInfo {
+  id?: number = undefined;
+  categoryId?: number = undefined;
+  attrList: GoodsAttributeData[] = [];
+
+  constructor(data: Partial<GoodsInfoData> = {}) {
     Object.assign(this, data);
   }
 }
 
+// 错误信息类型
+interface AttributeError {
+  name?: string;
+  value?: string;
+}
+
 // ==================== Props和Emit ====================
-const props = defineProps({
-  // 商品信息
-  goodsInfo: {
-    type: Object,
-    default: () => ({})
-  }
+interface Props {
+  goodsInfo?: GoodsInfoData;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  goodsInfo: () => ({
+    id: undefined,
+    categoryId: undefined,
+    attrList: []
+  })
 });
 
-const emit = defineEmits([
-  'prev',      // 上一步事件
-  'next',      // 下一步事件
-  'update:goodsInfo'  // 更新商品信息
-]);
+const emit = defineEmits<{
+  (e: 'prev'): void;  // 上一步事件
+  (e: 'next'): void;  // 下一步事件
+  (e: 'update:goodsInfo', value: GoodsInfoData): void; // 更新商品信息
+}>();
+
 
 // ==================== 响应式数据 ====================
 // 表单验证错误信息
-const errors = ref([]);
+const errors = ref<AttributeError[]>([]);
 
 // 表格高度
-const tableHeight = ref(300);
+const tableHeight = ref<number>(300);
 
 // 商品信息双向绑定
 const goodsInfo = computed({
-  get: () => {
-    const data = props.goodsInfo;
+  get: (): GoodsInfoData => {
+    const data = props.goodsInfo || {};
     if (!data.attrList || !Array.isArray(data.attrList)) {
       data.attrList = [new GoodsAttribute()];
     }
-    return data;
+    return {
+      id: data.id,
+      categoryId: data.categoryId,
+      attrList: data.attrList.map(attr => new GoodsAttribute(attr))
+    };
   },
-  set: (value) => {
+  set: (value: GoodsInfoData) => {
     emit('update:goodsInfo', value);
   }
 });
 
 // 加载状态
-const loading = ref(false);
+const loading = ref<boolean>(false);
 
 // 系统信息
 const systemInfo = uni.getSystemInfoSync();
@@ -209,7 +240,7 @@ const systemInfo = uni.getSystemInfoSync();
 /**
  * 监听分类变化，加载对应分类的属性
  */
-const watchCategoryChange = () => {
+const watchCategoryChange = (): void => {
   watch(
     () => goodsInfo.value.categoryId,
     async (newCategoryId) => {
@@ -220,7 +251,7 @@ const watchCategoryChange = () => {
         console.log('📝 编辑模式，加载商品对应的属性');
         // 这里应该加载这个商品已经设置的属性
         // 可能是从商品数据中获取，也可能是从分类中获取默认值
-        await loadCategoryAttributes(newCategoryId);
+        await loadCategoryAttributes(newCategoryId || 0);
         return;
       }
 
@@ -243,7 +274,7 @@ const watchCategoryChange = () => {
 /**
  * 加载分类属性
  */
-const loadCategoryAttributes = async (categoryId) => {
+const loadCategoryAttributes = async (categoryId: number) => {
   try {
     loading.value = true;
     console.log(`📦 开始加载分类 ${categoryId} 的属性`);
@@ -269,7 +300,7 @@ const loadCategoryAttributes = async (categoryId) => {
     console.log('API返回的属性数据:', response);
 
     if (response && Array.isArray(response)) {
-      const data = response;
+      const data: any[] = response;
       if (response && Array.isArray(response)) {
         // 转换API数据格式
         const attributes = data.map(item => new GoodsAttribute({
@@ -281,7 +312,8 @@ const loadCategoryAttributes = async (categoryId) => {
 
         // 如果有数据，使用API数据，否则添加一个空行
         if (attributes.length > 0) {
-          goodsInfo.value.attrList = attributes;
+          const newGoodsInfo = { ...goodsInfo.value, attrList: attributes };
+          goodsInfo.value = newGoodsInfo;
           console.log(`✅ 加载成功，共 ${attributes.length} 个属性`);
 
           // 清空错误信息
@@ -298,7 +330,7 @@ const loadCategoryAttributes = async (categoryId) => {
       resetAttributeList();
       console.warn('⚠️ API请求失败');
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ 加载分类属性失败:', error);
     uni.showToast({
       title: '加载属性失败',
@@ -314,8 +346,9 @@ const loadCategoryAttributes = async (categoryId) => {
 /**
  * 重置属性列表
  */
-const resetAttributeList = () => {
-  goodsInfo.value.attrList = [new GoodsAttribute()];
+const resetAttributeList = (): void => {
+  const newGoodsInfo = { ...goodsInfo.value, attrList: [new GoodsAttribute()] };
+  goodsInfo.value = newGoodsInfo;
   errors.value = [{}];
   console.log('🔄 重置属性列表');
 };
@@ -323,20 +356,19 @@ const resetAttributeList = () => {
 /**
  * 添加属性行
  */
-const handleAddAttribute = () => {
-  if (!goodsInfo.value.attrList) {
-    goodsInfo.value.attrList = [];
-  }
+const handleAddAttribute = (): void => {
+  const newAttrList = [...(goodsInfo.value.attrList || []), new GoodsAttribute()];
+  const newGoodsInfo = { ...goodsInfo.value, attrList: newAttrList };
+  goodsInfo.value = newGoodsInfo;
 
-  goodsInfo.value.attrList.push(new GoodsAttribute());
   errors.value.push({});
 
-  console.log('➕ 添加属性行，当前总数:', goodsInfo.value.attrList.length);
+  console.log('➕ 添加属性行，当前总数:', newAttrList.length);
 
   // 滚动到最后一行
   nextTick(() => {
     const query = uni.createSelectorQuery().in(this);
-    query.select('.attribute-table').boundingClientRect(data => {
+    query.select('.attribute-table').boundingClientRect((data: any) => {
       if (data) {
         uni.pageScrollTo({
           duration: 300,
@@ -350,7 +382,7 @@ const handleAddAttribute = () => {
 /**
  * 删除属性行
  */
-const handleRemoveAttribute = (index) => {
+const handleRemoveAttribute = (index: number): void => {
   if (goodsInfo.value.attrList.length <= 1) {
     uni.showToast({
       title: '至少需要保留一个属性',
@@ -360,32 +392,48 @@ const handleRemoveAttribute = (index) => {
     return;
   }
 
-  const removedItem = goodsInfo.value.attrList[index];
+  const newAttrList = [...goodsInfo.value.attrList];
+  const removedItem = newAttrList[index];
   console.log('🗑️ 删除属性:', removedItem);
 
-  goodsInfo.value.attrList.splice(index, 1);
+  newAttrList.splice(index, 1);
+  const newGoodsInfo = { ...goodsInfo.value, attrList: newAttrList };
+  goodsInfo.value = newGoodsInfo;
+
+
   errors.value.splice(index, 1);
-  console.log('删除后剩余:', goodsInfo.value.attrList.length, '个属性');
+  console.log('删除后剩余:', newAttrList.length, '个属性');
 };
 
 /**
  * 处理属性输入
  */
-const handleAttributeInput = (e, index, field) => {
+const handleAttributeInput = (e: any, index: number, field: 'name' | 'value'): void => {
   const value = e.detail ? e.detail.value : e.target.value;
-  goodsInfo.value.attrList[index][field] = value;
+
+
+  const newAttrList = [...goodsInfo.value.attrList];
+  newAttrList[index] = { ...newAttrList[index], [field]: value };
+
+  const newGoodsInfo = { ...goodsInfo.value, attrList: newAttrList };
+  goodsInfo.value = newGoodsInfo;
+
+
   console.log(`📝 属性${field}变化:`, value);
 
   // 清除该字段的错误信息
   if (errors.value[index]) {
-    errors.value[index][field] = '';
+    const newErrors = [...errors.value];
+    newErrors[index] = { ...newErrors[index] };
+    delete newErrors[index][field];
+    errors.value = newErrors;
   }
 };
 
 /**
  * 验证字段
  */
-const validateField = (field, index) => {
+const validateField = (field: 'name' | 'value', index: number): void => {
   const value = goodsInfo.value.attrList[index][field];
   let error = '';
 
@@ -412,12 +460,12 @@ const validateField = (field, index) => {
 /**
  * 验证所有字段
  */
-const validateAllFields = () => {
+const validateAllFields = (): boolean  => {
   let isValid = true;
-  const newErrors = [];
+  const newErrors: AttributeError[] = [];
 
   goodsInfo.value.attrList.forEach((attr, index) => {
-    const error = {};
+    const error: AttributeError = {};
 
     // 验证名称
     if (!attr.name || attr.name.trim() === '') {
@@ -523,7 +571,7 @@ const handleNext = async () => {
  */
 const calculateTableHeight = () => {
   const query = uni.createSelectorQuery().in(this);
-  query.select('.component-container').boundingClientRect(data => {
+  query.select('.component-container').boundingClientRect((data: any) => {
     if (data) {
       const windowHeight = systemInfo.windowHeight;
       const containerTop = data.top;
