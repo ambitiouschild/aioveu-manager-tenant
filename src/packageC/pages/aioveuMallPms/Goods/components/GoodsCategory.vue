@@ -396,6 +396,14 @@ const handlePickerChange = async (e) => {
   const secondOption = multiOptions.value[1][value[1]];
   const thirdOption = multiOptions.value[2][value[2]];
 
+  console.log('🔍 选中的分类选项:', {
+    firstOption: firstOption?.label,
+    secondOption: secondOption?.label,
+    thirdOption: thirdOption?.label,
+    hasThirdOption: !!thirdOption
+  });
+
+
   if (!firstOption) return;
 
   // 构建路径标签
@@ -405,35 +413,44 @@ const handlePickerChange = async (e) => {
 
   pathLabels.value = labels;
 
-  // 获取选中的分类ID
-  let selectedCategoryId = null;
-  if (thirdOption && thirdOption.id) {
-    selectedCategoryId = thirdOption.id;
+  console.log('🔍 路径标签:', labels);
+  console.log('🔍 标签长度:', labels.length);
+
+
+  // ✅ 修改：只有选择三级分类时才设置 categoryId
+  if (labels.length === 3 && thirdOption && thirdOption.id) {
+    const selectedCategoryId = thirdOption.id;
     selectedThirdLevelName.value = thirdOption.label;
-  } else if (secondOption && secondOption.id) {
-    selectedCategoryId = secondOption.id;
-    selectedThirdLevelName.value = secondOption.label;
-  } else {
-    selectedCategoryId = firstOption.id;
-    selectedThirdLevelName.value = firstOption.label;
-  }
 
-  // 更新商品信息
-  goodsInfo.value.categoryId = selectedCategoryId;
-  goodsInfo.value.id = undefined; // 重置商品ID（新增模式）
+    // 更新商品信息
+    goodsInfo.value.categoryId = selectedCategoryId;
+    goodsInfo.value.id = undefined; // 重置商品ID（新增模式）
 
-  console.log('📋 选择的分类:', {
-    id: selectedCategoryId,
-    path: labels.join(' > '),
-    level: labels.length
-  });
+    console.log('✅ 确认是三级分类，ID:', selectedCategoryId);
+    console.log('✅ 设置 goodsInfo.categoryId:', goodsInfo.value.categoryId);
+    console.log('✅ 分类名称:', selectedThirdLevelName.value);
 
-  // 如果是第三级分类，加载商品列表
-  if (labels.length === 3) {
+    // 加载三级分类下的商品
+    console.log('🔍 开始加载商品列表...');
     await loadGoodsByCategory(selectedCategoryId);
+
   } else {
+    // 选择了一级或二级分类
+    console.log('⚠️ 不是三级分类:', {
+      labelsLength: labels.length,
+      hasThirdOption: !!thirdOption,
+      thirdOptionId: thirdOption?.id
+    });
+
+    // ✅ 重要：清空 categoryId，让用户知道需要选择三级分类
+    goodsInfo.value.categoryId = undefined;
+    goodsInfo.value.id = undefined;
+    selectedThirdLevelName.value = '';
+
+    // 清空商品列表
     goodsList.value = [];
   }
+
 };
 
 // 加载分类下的商品
@@ -450,6 +467,9 @@ const loadGoodsByCategory = async (categoryId) => {
       }
 
     );
+
+    console.log('📝 加载分类下的商品：',response);
+
 
     if (response) {
       const resData = response;
