@@ -53,6 +53,7 @@
                 maxlength="20"
                 @input="handleSpecChange"
                 @blur="validateSpecName(specIndex)"
+                :disabled="false"
               />
               <view v-if="specErrors[specIndex]" class="error-text">
                 {{ specErrors[specIndex] }}
@@ -82,9 +83,11 @@
                   >
                     🖼️
                   </view>
+                  <!-- 新增模式下显示删除按钮 -->
                   <view
                     class="tag-close"
                     @tap.stop="handleRemoveSpecValue(specIndex, value.id)"
+                    v-if="!hasSkuData(value.id)"
                   >
                     ×
                   </view>
@@ -147,6 +150,7 @@
                 hover-class="btn-hover"
                 hover-start-time="20"
                 hover-stay-time="70"
+                v-if="!hasSkuDataForSpec(spec.id)"
               >
                 删除规格
               </button>
@@ -175,6 +179,180 @@
       </view>
 
       <!-- 库存设置卡片 -->
+<!--      <view-->
+<!--        class="stock-card"-->
+<!--        v-if="hasValidSpecs"-->
+<!--      >-->
+<!--        <view class="card-header">-->
+<!--          <text class="card-title">商品库存</text>-->
+<!--          <text class="sku-count">共 {{ skuForm.skuList.length }} 个SKU</text>-->
+<!--        </view>-->
+
+<!--        &lt;!&ndash; SKU表格 &ndash;&gt;-->
+<!--        <view class="sku-form" v-if="skuForm.skuList.length > 0">-->
+<!--          <scroll-view-->
+<!--            scroll-x-->
+<!--            class="sku-table-wrapper"-->
+<!--            :style="{ height: skuTableHeight + 'px' }"-->
+<!--          >-->
+<!--            <view class="sku-table">-->
+<!--              &lt;!&ndash; 表头 &ndash;&gt;-->
+<!--              <view class="table-header">-->
+<!--                &lt;!&ndash; 动态规格列 &ndash;&gt;-->
+<!--                <view-->
+<!--                  v-for="(title, index) in specTitles"-->
+<!--                  :key="index"-->
+<!--                  class="header-cell spec-header"-->
+<!--                >-->
+<!--                  <text class="header-text">{{ title }}</text>-->
+<!--                </view>-->
+
+<!--                &lt;!&ndash; SKU编码 &ndash;&gt;-->
+<!--                <view class="header-cell sku-sn-header">-->
+<!--                  <text class="header-text">SKU编码</text>-->
+<!--                </view>-->
+
+<!--                &lt;!&ndash; 价格 &ndash;&gt;-->
+<!--                <view class="header-cell price-header">-->
+<!--                  <text class="header-text">价格(元)</text>-->
+<!--                </view>-->
+
+<!--                &lt;!&ndash; 库存 &ndash;&gt;-->
+<!--                <view class="header-cell stock-header">-->
+<!--                  <text class="header-text">库存</text>-->
+<!--                </view>-->
+
+<!--                &lt;!&ndash; 规格图片 &ndash;&gt;-->
+<!--                <view class="header-cell image-header">-->
+<!--                  <text class="header-text">规格图片</text>-->
+<!--                </view>-->
+<!--              </view>-->
+
+<!--              &lt;!&ndash; 表格内容 &ndash;&gt;-->
+<!--              <view-->
+<!--                v-for="(sku, skuIndex) in skuForm.skuList"-->
+<!--                :key="skuIndex"-->
+<!--                class="table-row"-->
+<!--              >-->
+<!--                &lt;!&ndash; 动态规格值 &ndash;&gt;-->
+<!--                <view-->
+<!--                  v-for="i in specTitles.length"-->
+<!--                  :key="i"-->
+<!--                  class="table-cell spec-cell"-->
+<!--                >-->
+<!--                  <text class="spec-value-text">{{ sku[`specValue${i}`] }}</text>-->
+<!--                </view>-->
+
+<!--                &lt;!&ndash; SKU编码 &ndash;&gt;-->
+<!--                <view class="table-cell sku-sn-cell">-->
+<!--                  <input-->
+<!--                    v-model="sku.skuSn"-->
+<!--                    placeholder="如: SKU001"-->
+<!--                    class="sku-input"-->
+<!--                    placeholder-class="placeholder"-->
+<!--                    maxlength="50"-->
+<!--                    @blur="validateSkuSn(skuIndex)"-->
+<!--                  />-->
+<!--                  <view v-if="skuErrors[skuIndex]?.skuSn" class="error-text">-->
+<!--                    {{ skuErrors[skuIndex].skuSn }}-->
+<!--                  </view>-->
+<!--                </view>-->
+
+<!--                &lt;!&ndash; 价格 &ndash;&gt;-->
+<!--                <view class="table-cell price-cell">-->
+<!--                  <view class="price-input-group">-->
+<!--                    <text class="price-prefix">¥</text>-->
+<!--                    <input-->
+<!--                      v-model.number="sku.price"-->
+<!--                      type="digit"-->
+<!--                      placeholder="0.00"-->
+<!--                      class="price-input"-->
+<!--                      placeholder-class="placeholder"-->
+<!--                      @input="handlePriceChange(sku, skuIndex)"-->
+<!--                      @blur="validatePrice(skuIndex)"-->
+<!--                    />-->
+<!--                  </view>-->
+<!--                  <view v-if="skuErrors[skuIndex]?.price" class="error-text">-->
+<!--                    {{ skuErrors[skuIndex].price }}-->
+<!--                  </view>-->
+<!--                </view>-->
+
+<!--                &lt;!&ndash; 库存 &ndash;&gt;-->
+<!--                <view class="table-cell stock-cell">-->
+<!--                  <input-->
+<!--                    v-model.number="sku.stock"-->
+<!--                    type="number"-->
+<!--                    placeholder="0"-->
+<!--                    class="stock-input"-->
+<!--                    placeholder-class="placeholder"-->
+<!--                    @blur="validateStock(skuIndex)"-->
+<!--                  />-->
+<!--                  <view v-if="skuErrors[skuIndex]?.stock" class="error-text">-->
+<!--                    {{ skuErrors[skuIndex].stock }}-->
+<!--                  </view>-->
+<!--                </view>-->
+
+<!--                &lt;!&ndash; SKU图片 &ndash;&gt;-->
+<!--                <view class="table-cell image-cell">-->
+<!--                  <view class="sku-image-container">-->
+<!--                    <view-->
+<!--                      v-if="sku.picUrl"-->
+<!--                      class="sku-image-preview"-->
+<!--                      @tap="previewSkuImage(sku.picUrl)"-->
+<!--                    >-->
+<!--                      <image-->
+<!--                        :src="sku.picUrl"-->
+<!--                        mode="aspectFill"-->
+<!--                        class="sku-image"-->
+<!--                      />-->
+<!--                      <view class="image-action">-->
+<!--                        <view-->
+<!--                          class="btn-replace"-->
+<!--                          @tap.stop="uploadSkuImage(skuIndex)"-->
+<!--                        >-->
+<!--                          更换-->
+<!--                        </view>-->
+<!--                        <view-->
+<!--                          class="btn-delete"-->
+<!--                          @tap.stop="removeSkuImage(skuIndex)"-->
+<!--                        >-->
+<!--                          删除-->
+<!--                        </view>-->
+<!--                      </view>-->
+<!--                    </view>-->
+<!--                    <view-->
+<!--                      v-else-->
+<!--                      class="sku-image-upload"-->
+<!--                      @tap="uploadSkuImage(skuIndex)"-->
+<!--                    >-->
+<!--                      <view class="upload-icon">+</view>-->
+<!--                      <view class="upload-text">上传图片</view>-->
+<!--                    </view>-->
+<!--                  </view>-->
+<!--                </view>-->
+<!--              </view>-->
+<!--            </view>-->
+<!--          </scroll-view>-->
+
+<!--          &lt;!&ndash; 表格提示 &ndash;&gt;-->
+<!--          <view class="table-tips">-->
+<!--            <text>横向滑动查看更多列</text>-->
+<!--          </view>-->
+<!--        </view>-->
+
+<!--        &lt;!&ndash; SKU空状态 &ndash;&gt;-->
+<!--        <view v-else class="empty-state">-->
+<!--          <image-->
+<!--            src="/static/empty-sku.png"-->
+<!--            class="empty-image"-->
+<!--            mode="aspectFit"-->
+<!--          />-->
+<!--          <text class="empty-text">请先配置规格值</text>-->
+<!--        </view>-->
+<!--      </view>-->
+
+
+      <!-- SKU表格改为卡片式布局 -->
       <view
         class="stock-card"
         v-if="hasValidSpecs"
@@ -184,78 +362,77 @@
           <text class="sku-count">共 {{ skuForm.skuList.length }} 个SKU</text>
         </view>
 
-        <!-- SKU表格 -->
-        <view class="sku-form" v-if="skuForm.skuList.length > 0">
-          <scroll-view
-            scroll-x
-            class="sku-table-wrapper"
-            :style="{ height: skuTableHeight + 'px' }"
+        <!-- SKU卡片列表 -->
+        <view class="sku-list" v-if="skuForm.skuList.length > 0">
+          <view
+            v-for="(sku, skuIndex) in skuForm.skuList"
+            :key="skuIndex"
+            class="sku-card"
           >
-            <view class="sku-table">
-              <!-- 表头 -->
-              <view class="table-header">
-                <!-- 动态规格列 -->
-                <view
-                  v-for="(title, index) in specTitles"
-                  :key="index"
-                  class="header-cell spec-header"
+
+            <!-- 在SKU卡片开头添加 -->
+            <view style="border: 2rpx solid #00ff5d; padding: 10rpx; margin: 10rpx;">
+              <text style="color: #0051ff; font-size: 24rpx;">
+                调试: 价格={{sku.price}}, 类型={{typeof sku.price}}
+              </text>
+            </view>
+
+            <!-- 添加红色调试信息 -->
+            <view style="background: #ff0000; color: white; padding: 10rpx; margin: 10rpx; border-radius: 8rpx;">
+              <text style="font-size: 24rpx;">
+                SKU {{skuIndex+1}}: 价格={{sku.price}}, 库存={{sku.stock}}, 图片URL长度={{sku.picUrl ? sku.picUrl.length : 0}}
+              </text>
+
+              <text style="font-size: 24rpx;">
+                SKU {{skuIndex+1}}: 库存sn={{sku.skuSn}}}
+              </text>
+            </view>
+
+            <view class="sku-card-header">
+              <text class="sku-specs">
+                <text
+                  v-for="i in specTitles.length"
+                  :key="i"
+                  class="spec-item"
                 >
-                  <text class="header-text">{{ title }}</text>
-                </view>
+                  <text class="spec-name">{{ specTitles[i-1] }}:</text>
+                  <text class="spec-value">{{ sku[`specValue${i}`] }}</text>
+<!--                  通过动态属性来展示规格值的-->
+                  <text v-if="i < specTitles.length" class="separator"> / </text>
+                </text>
+              </text>
+              <view class="sku-status" v-if="sku.id">
+                <text class="status-text">已保存</text>
+              </view>
+            </view>
 
-                <!-- SKU编码 -->
-                <view class="header-cell sku-sn-header">
-                  <text class="header-text">SKU编码</text>
+            <view class="sku-card-content">
+              <!-- SKU编码 -->
+              <view class="form-item">
+                <view class="form-label">
+                  <text class="label-text">SKU编码</text>
+                  <text class="required">*</text>
                 </view>
-
-                <!-- 价格 -->
-                <view class="header-cell price-header">
-                  <text class="header-text">价格(元)</text>
-                </view>
-
-                <!-- 库存 -->
-                <view class="header-cell stock-header">
-                  <text class="header-text">库存</text>
-                </view>
-
-                <!-- 规格图片 -->
-                <view class="header-cell image-header">
-                  <text class="header-text">规格图片</text>
+                <input
+                  v-model="sku.skuSn"
+                  placeholder="如: SKU001"
+                  class="form-input"
+                  placeholder-class="placeholder"
+                  maxlength="50"
+                  @blur="validateSkuSn(skuIndex)"
+                />
+                <view v-if="skuErrors[skuIndex]?.skuSn" class="error-text">
+                  {{ skuErrors[skuIndex].skuSn }}
                 </view>
               </view>
 
-              <!-- 表格内容 -->
-              <view
-                v-for="(sku, skuIndex) in skuForm.skuList"
-                :key="skuIndex"
-                class="table-row"
-              >
-                <!-- 动态规格值 -->
-                <view
-                  v-for="i in specTitles.length"
-                  :key="i"
-                  class="table-cell spec-cell"
-                >
-                  <text class="spec-value-text">{{ sku[`specValue${i}`] }}</text>
-                </view>
-
-                <!-- SKU编码 -->
-                <view class="table-cell sku-sn-cell">
-                  <input
-                    v-model="sku.skuSn"
-                    placeholder="如: SKU001"
-                    class="sku-input"
-                    placeholder-class="placeholder"
-                    maxlength="50"
-                    @blur="validateSkuSn(skuIndex)"
-                  />
-                  <view v-if="skuErrors[skuIndex]?.skuSn" class="error-text">
-                    {{ skuErrors[skuIndex].skuSn }}
+              <!-- 价格和库存 -->
+              <view class="form-row">
+                <view class="form-item half">
+                  <view class="form-label">
+                    <text class="label-text">价格(元)</text>
+                    <text class="required">*</text>
                   </view>
-                </view>
-
-                <!-- 价格 -->
-                <view class="table-cell price-cell">
                   <view class="price-input-group">
                     <text class="price-prefix">¥</text>
                     <input
@@ -273,13 +450,16 @@
                   </view>
                 </view>
 
-                <!-- 库存 -->
-                <view class="table-cell stock-cell">
+                <view class="form-item half">
+                  <view class="form-label">
+                    <text class="label-text">库存</text>
+                    <text class="required">*</text>
+                  </view>
                   <input
                     v-model.number="sku.stock"
                     type="number"
                     placeholder="0"
-                    class="stock-input"
+                    class="form-input"
                     placeholder-class="placeholder"
                     @blur="validateStock(skuIndex)"
                   />
@@ -287,52 +467,42 @@
                     {{ skuErrors[skuIndex].stock }}
                   </view>
                 </view>
+              </view>
 
-                <!-- SKU图片 -->
-                <view class="table-cell image-cell">
-                  <view class="sku-image-container">
-                    <view
-                      v-if="sku.picUrl"
-                      class="sku-image-preview"
-                      @tap="previewSkuImage(sku.picUrl)"
-                    >
-                      <image
-                        :src="sku.picUrl"
-                        mode="aspectFill"
-                        class="sku-image"
-                      />
-                      <view class="image-action">
-                        <view
-                          class="btn-replace"
-                          @tap.stop="uploadSkuImage(skuIndex)"
-                        >
-                          更换
-                        </view>
-                        <view
-                          class="btn-delete"
-                          @tap.stop="removeSkuImage(skuIndex)"
-                        >
-                          删除
-                        </view>
+              <!-- SKU图片 -->
+              <view class="form-item">
+                <view class="form-label">
+                  <text class="label-text">规格图片</text>
+                </view>
+                <view class="image-upload-area" @tap="uploadSkuImage(skuIndex)">
+                  <view v-if="sku.picUrl" class="image-preview">
+                    <image
+                      :src="sku.picUrl"
+                      mode="aspectFill"
+                      class="uploaded-image"
+                    />
+                    <view class="image-actions">
+                      <view
+                        class="btn-action replace"
+                        @tap.stop="uploadSkuImage(skuIndex)"
+                      >
+                        更换
+                      </view>
+                      <view
+                        class="btn-action delete"
+                        @tap.stop="removeSkuImage(skuIndex)"
+                      >
+                        删除
                       </view>
                     </view>
-                    <view
-                      v-else
-                      class="sku-image-upload"
-                      @tap="uploadSkuImage(skuIndex)"
-                    >
-                      <view class="upload-icon">+</view>
-                      <view class="upload-text">上传图片</view>
-                    </view>
+                  </view>
+                  <view v-else class="upload-placeholder">
+                    <view class="upload-icon">+</view>
+                    <view class="upload-text">点击上传图片</view>
                   </view>
                 </view>
               </view>
             </view>
-          </scroll-view>
-
-          <!-- 表格提示 -->
-          <view class="table-tips">
-            <text>横向滑动查看更多列</text>
           </view>
         </view>
 
@@ -346,6 +516,10 @@
           <text class="empty-text">请先配置规格值</text>
         </view>
       </view>
+
+
+
+
     </view>
 
 
@@ -483,7 +657,7 @@ const goodsInfo = computed({
   get: () => {
     const data = props.goodsInfo || {};
 
-    console.log("📝 商品信息双向绑定:{}",data);
+    console.log("📝 GoodsStock 商品信息 getter 执行:", data);
 
     if (!data.specList || !Array.isArray(data.specList)) {
       data.specList = [];
@@ -491,9 +665,26 @@ const goodsInfo = computed({
     if (!data.skuList || !Array.isArray(data.skuList)) {
       data.skuList = [];
     }
-    return data;
+
+    console.log("📝 查看返回的,商品信息双向绑定:{}",data);
+    // ✅ 关键：返回一个新的对象，确保每个字段都有值
+    return {
+      id: data.id,
+      categoryId: data.categoryId,
+      specList: Array.isArray(data.specList) ? data.specList : [],
+      skuList: Array.isArray(data.skuList) ? data.skuList : [],
+      attrList: Array.isArray(data.attrList) ? data.attrList : [],
+      name: data.name || '',
+      picUrl: data.picUrl || '',
+      price: data.price !== undefined ? data.price : undefined,
+      originPrice: data.originPrice !== undefined ? data.originPrice : undefined,
+      album: Array.isArray(data.album) ? data.album : [],
+      detail: data.detail || '',
+      // ... 其他字段
+    };
   },
   set: (value: Record<string, any>) => {
+    console.log("📝 GoodsStock 商品信息 setter 执行:", value);
     emit('update:goodsInfo', value);
   }
 });
@@ -528,6 +719,30 @@ const getTagColor = (index: number): string => {
 const loadGoodsData = async () => {
   try {
     const goodsId = goodsInfo.value.id;
+    const isEditMode = !!goodsId;  // 是否为编辑模式
+
+
+    console.log(`🔍 ${isEditMode ? '编辑' : '新增'}模式，开始加载商品数据`);
+
+    if (!isEditMode) {
+      // 新增模式：清空数据
+      specForm.value = { specList: [] };
+      skuForm.value = { skuList: [] };
+      console.log('📝 新增模式，初始化空数据');
+      return;
+    }
+
+    // 编辑模式：加载已有数据
+    console.log('📦 编辑模式，加载商品ID:', goodsId);
+
+    console.log('🔍 检查 goodsInfo 的结构:', {
+      原始值: props.goodsInfo,
+      computed值: goodsInfo.value,
+      specList: goodsInfo.value.specList,
+      skuList: goodsInfo.value.skuList,
+      isArray: Array.isArray(goodsInfo.value.skuList)
+    });
+
 
     console.log('🔍 加载商品规格数据，商品信息:', {
       id: goodsId,
@@ -554,10 +769,15 @@ const loadGoodsData = async () => {
       await processSkuList(goodsInfo.value.skuList);
     } else {
       console.log('📝 商品没有SKU数据');
-    }
 
-    // 重新生成SKU列表
-    generateSkuList();
+
+      // ❌ 编辑模式下绝对不要重新生成SKU列表
+      // ✅ 只在新增模式且没有SKU数据时才生成SKU列表
+      if (!isEditMode && specForm.value.specList.some(spec => spec.values.length > 0)) {
+        console.log('🔄 新增模式，生成初始SKU列表');
+        generateSkuList();
+      }
+    }
 
   } catch (error) {
     console.error('加载商品数据失败:', error);
@@ -605,36 +825,112 @@ const processSpecList = async (specList: any[]) => {
   updateSpecTitles();
 
   console.log('✅ 处理规格数据完成:', specs);
+
+  console.log('是否为编辑模式:', goodsInfo.value.id ? '是' : '否');
 };
 
 // 处理SKU列表
 const processSkuList = async (skuList: any[])=> {
-  const processedSkus = skuList.map((sku) => {
-    const skuItem = new SkuItem({
+
+  console.log('🔄 开始处理SKU列表，原始数据:', skuList);
+
+  const processedSkus = skuList.map((sku, index) => {
+
+    console.log(`处理第 ${index + 1} 个SKU:`, {
       id: sku.id,
-      skuSn: sku.skuSn || `SKU_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      price: sku.price ? sku.price / 100 : 0,
-      stock: sku.stock || 0,
-      Lockedstock: sku.Lockedstock || 0,
-      specIds: sku.specIds || '',
-      specValues: sku.specValues || '',
-      picUrl: sku.picUrl
+      skuSn: sku.skuSn,
+      price: sku.price,  // 原始价格（分）
+      stock: sku.stock,  // 库存
+      picUrl: sku.picUrl,  // 图片
+      specValues: sku.specValues,  // 规格值字符串
+      specIds: sku.specIds  // 规格ID   // 规格ID，如 "947_949"
     });
 
-    // 解析规格值
-    if (sku.specValues) {
+    //由于类型发生了改变，Vue 3 的 Object.assign无法让这几个新属性具备响应式特性，所以输入框和图片区域“看不见”这些数据。
+
+    // 分转元
+    const priceInYuan = sku.price ? Number(sku.price) / 100 : 0;
+    console.log(`价格转换: ${sku.price}分 = ${priceInYuan}元`);
+
+
+    // 直接返回纯对象，Vue 3 能完美追踪其变化
+    const skuItem = {
+      id: sku.id,
+      skuSn: sku.skuSn || `SKU_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      price: sku.price ? sku.price / 100 : 0,   // 分转元    // 变成了 number 类型
+      stock: sku.stock,   // 变成了 number 类型
+      Lockedstock: sku.Lockedstock,
+      specIds: sku.specIds,
+      specValues: sku.specValues,
+      picUrl: sku.picUrl    // 使用name字段作为规格值显示   // 变成了 string 或 undefined
+    };
+
+    console.log(`SKU转换后:`, {
+      id: skuItem.id,
+      skuSn: skuItem.skuSn,
+      price: skuItem.price,  // 应该是元
+      stock: skuItem.stock,
+      picUrl: skuItem.picUrl,
+      specValues: skuItem.specValues
+    });
+
+
+    // 解析规格值  // 方法1：从 specIds 反查规格值
+    // 方法1：从 specIds 反查规格值
+    if (sku.specIds) {
+      const specIdArray = sku.specIds.split('_');  // 如 ["947", "949"]
+      console.log(`规格ID数组:`, specIdArray);
+
+      specIdArray.forEach((specId: string, index: number) => {
+        // 在所有规格中查找这个ID对应的规格值
+        let specValue = '';
+
+        for (const spec of specForm.value.specList) {
+          const valueObj = spec.values.find(v => String(v.id) === specId);
+          if (valueObj) {
+            specValue = valueObj.value;
+            break;
+          }
+        }
+
+        if (specValue) {
+          (skuItem as any)[`specValue${index + 1}`] = specValue;
+          console.log(`设置 specValue${index + 1}:`, specValue);
+        } else {
+          console.warn(`未找到规格ID ${specId} 对应的规格值`);
+        }
+      });
+    }
+    // 方法2：从 specValues 解析
+    else if (sku.specValues) {    // 这里为 false，因为 specValues 是空字符串
       const values: string[] = sku.specValues.split('_');
       values.forEach((value: string, index: number) => {
-        (skuItem as any)[`specValue${index + 1}`] = value;  // 现在可以直接赋值
+        (skuItem as any)[`specValue${index + 1}`] = value;
       });
     }
 
     return skuItem;
   });
 
+  // 使用 reactive 包装整个数组
   skuForm.value.skuList = processedSkus;
   skuErrors.value = processedSkus.map(() => ({}));
-  console.log('✅ 处理SKU数据完成:', processedSkus);
+  console.log('✅ 处理SKU数据完成，最终数据:', processedSkus);
+
+
+  // 详细验证
+  skuForm.value.skuList.forEach((sku, index) => {
+    console.log(`验证SKU ${index + 1}的数据:`, {
+      id: sku.id,
+      skuSn: sku.skuSn,
+      price: sku.price,  // 检查是否是元
+      stock: sku.stock,
+      picUrl: sku.picUrl,
+      specValue1: sku.specValue1,
+      specValue2: sku.specValue2
+    });
+  });
+
 };
 
 // 更新规格标题
@@ -672,6 +968,18 @@ const handleAddSpec = () => {
 
 // 删除规格
 const handleRemoveSpec = (index: number) => {
+
+  // 编辑模式下检查是否被SKU使用
+  if (goodsInfo.value.id && hasSkuDataForSpec(specForm.value.specList[index].id)) {
+    uni.showModal({
+      title: '提示',
+      content: '此规格已被SKU使用，无法删除。请先删除相关SKU。',
+      showCancel: false
+    });
+    return;
+  }
+
+
   if (specForm.value.specList.length <= 1) {
     uni.showToast({
       title: '至少需要保留一个规格',
@@ -758,6 +1066,19 @@ const handleInputSpecValue = (index: number) => {
 
 // 删除规格值
 const handleRemoveSpecValue = (specIndex : number, valueId: string) => {
+
+  // 编辑模式下检查是否被SKU使用
+  if (goodsInfo.value.id && hasSkuData(valueId)) {
+    uni.showModal({
+      title: '提示',
+      content: '此规格值已被SKU使用，无法删除。请先删除相关SKU。',
+      showCancel: false
+    });
+    return;
+  }
+
+
+
   const spec = specForm.value.specList[specIndex];
   const valueIndex = spec.values.findIndex(v => v.id === valueId);
 
@@ -778,6 +1099,14 @@ const handleSpecChange = () => {
 
 // 生成SKU列表
 const generateSkuList = () => {
+
+  // ✅ 编辑模式下如果有SKU数据，不重新生成
+  if (goodsInfo.value.id && skuForm.value.skuList.length > 0) {
+    console.log('编辑模式，已有SKU数据，跳过重新生成');
+    return;
+  }
+
+
   console.log('🔄 开始生成SKU列表');
 
   const validSpecs = specForm.value.specList.filter(spec => spec.values.length > 0);
@@ -804,7 +1133,21 @@ const generateSkuList = () => {
     // 数据库中的 specIds可能是下划线分隔，而您生成的 specIds是竖线分隔
     const specIds = values.map(v => v.id).join('|');
 
-    const existingSku = skuForm.value.skuList.find(sku => sku.specIds === specIds);
+
+    // 编辑模式下：尝试找到对应的已有SKU
+    const existingSku = skuForm.value.skuList.find(sku => {
+      // 如果已有SKU的规格ID与当前组合匹配
+      if (sku.specIds && sku.specIds === specIds) {
+        return true;
+      }
+      // 或者规格值匹配
+      if (sku.specValues && sku.specValues === specValues) {
+        return true;
+      }
+      return false;
+    });
+
+    console.log('📝 编辑模式下,尝试找到对应的已有SKU',existingSku);
 
     const sku = new SkuItem({
       id: existingSku?.id,
@@ -826,7 +1169,19 @@ const generateSkuList = () => {
 
   skuForm.value.skuList = newSkus;
   skuErrors.value = newSkus.map(() => ({}));
-  console.log(`✅ 生成 ${newSkus.length} 个SKU`);
+
+  // 👇 添加这一行，强制刷新视图
+  nextTick(() => {
+    console.log('🔄 SKU列表已更新，强制刷新视图');
+  });
+
+
+
+  console.log(`✅ 生成 ${newSkus.length} 个SKU，其中${newSkus.filter(s => s.id).length}个是已有的`);
+
+
+
+
 };
 
 // 验证SKU编码
@@ -906,6 +1261,9 @@ const handlePriceChange = (sku: SkuItem, index: number) => {
   delete skuErrors.value[index]?.price;
 };
 
+
+import FileAPI from "@/packageC/api/file/file";
+
 // 上传规格图片
 const uploadSpecImage = async (specIndex: number) => {
   try {
@@ -932,27 +1290,30 @@ const uploadSpecImage = async (specIndex: number) => {
       // 上传图片
       uni.showLoading({ title: '上传中...' });
 
-      const uploadResult = await uni.uploadFile({
-        url: '/api/upload/image',
+
+      console.log('📤 开始上传规格主图:', tempFilePath);
+
+      const uploadResult = await FileAPI.uploadUniFile({
         filePath: tempFilePath,
-        name: 'file',
-        formData: {
-          category: 'product',
-          type: 'spec'
-        },
-        header: {
-          'Authorization': 'Bearer ' + uni.getStorageSync('token')
+        category: 'product',
+        type: 'main',
+        fileName: `product_main_${Date.now()}.jpg`,
+        onProgress: (percent) => {
+          console.log(`📈 上传进度: ${percent}%`);
+          // 可以在这里更新进度条
         }
       });
 
       uni.hideLoading();
 
-      if (uploadResult.statusCode === 200) {
-        const data = JSON.parse(uploadResult.data);
-        if (data.code === 0 && data.data?.url) {
+      console.log('✅ 上传成功，结果:', uploadResult);
+
+
+      if (uploadResult.code === "00000") {
+        if (uploadResult.data?.url) {
           const spec = specForm.value.specList[specIndex];
           if (spec.values[0]) {
-            spec.values[0].picUrl = data.data.url;
+            spec.values[0].picUrl = uploadResult.data.url;
             generateSkuList();
             uni.showToast({
               title: '图片上传成功',
@@ -961,7 +1322,7 @@ const uploadSpecImage = async (specIndex: number) => {
             });
           }
         } else {
-          throw new Error(data.msg || '上传失败');
+          throw new Error(uploadResult.msg || '上传失败');
         }
       } else {
         throw new Error('上传失败');
@@ -1012,32 +1373,33 @@ const uploadSkuImage = async (skuIndex: number) => {
 
       uni.showLoading({ title: '上传中...' });
 
-      const uploadResult = await uni.uploadFile({
-        url: '/api/upload/image',
+      uni.showLoading({ title: 'SKU图片上传中...' });
+
+      const uploadResult = await FileAPI.uploadUniFile({
         filePath: tempFilePath,
-        name: 'file',
-        formData: {
-          category: 'product',
-          type: 'sku'
-        },
-        header: {
-          'Authorization': 'Bearer ' + uni.getStorageSync('token')
+        category: 'SKU',
+        type: 'main',
+        fileName: `product_main_${Date.now()}.jpg`,
+        onProgress: (percent) => {
+          console.log(`📈 上传进度: ${percent}%`);
+          // 可以在这里更新进度条
         }
       });
 
       uni.hideLoading();
 
-      if (uploadResult.statusCode === 200) {
-        const data = JSON.parse(uploadResult.data);
-        if (data.code === 0 && data.data?.url) {
-          skuForm.value.skuList[skuIndex].picUrl = data.data.url;
+      console.log('✅ SKU图片上传成功，结果:', uploadResult);
+
+      if (uploadResult.code === "00000") {
+        if (uploadResult.data?.url) {
+          skuForm.value.skuList[skuIndex].picUrl = uploadResult.data.url;
           uni.showToast({
-            title: '图片上传成功',
+            title: 'SKU图片上传成功',
             icon: 'success',
             duration: 2000
           });
         } else {
-          throw new Error(data.msg || '上传失败');
+          throw new Error(uploadResult.msg || '上传失败');
         }
       } else {
         throw new Error('上传失败');
@@ -1063,6 +1425,35 @@ const previewSkuImage = (imageUrl: string) => {
     });
   }
 };
+
+// 检查规格值是否被SKU使用
+const hasSkuData = (valueId: string): boolean => {
+  if (!goodsInfo.value.id) return false; // 新增模式，肯定没被使用
+
+  return skuForm.value.skuList.some(sku => {
+    if (!sku.specIds) return false;
+    return sku.specIds.split('|').includes(valueId);
+  });
+};
+
+
+// 检查规格是否被SKU使用
+const hasSkuDataForSpec = (specId: string): boolean => {
+  if (!goodsInfo.value.id) return false; // 新增模式，肯定没被使用
+
+  // 获取此规格的所有规格值ID
+  const spec = specForm.value.specList.find(s => s.id === specId);
+  if (!spec) return false;
+
+  const specValueIds = spec.values.map(v => v.id);
+
+  return skuForm.value.skuList.some(sku => {
+    if (!sku.specIds) return false;
+    const skuSpecIds = sku.specIds.split('|');
+    return skuSpecIds.some(id => specValueIds.includes(id));
+  });
+};
+
 
 // 删除SKU图片
 const removeSkuImage = (skuIndex: number) => {
@@ -1361,14 +1752,26 @@ watch(() => specForm.value.specList, () => {
   generateSkuList();
 }, { deep: true });
 
+const hasLoaded = ref(false);
+
 // 监听商品信息变化
 watch(() => props.goodsInfo, (newValue) => {
   console.log('🔄 GoodsStock 监听到父组件数据变化');
   if (newValue.id) {
-    console.log('🔄 商品ID存在，重新加载数据');
-    loadGoodsData();
+    console.log('编辑模式，商品ID:', newValue.id);
+
+    // 只有首次加载时才处理数据
+    if (!hasLoaded.value) {
+      console.log('首次加载商品数据');
+      loadGoodsData();
+      hasLoaded.value = true;
+    }
+  } else {
+    // 新增模式
+    hasLoaded.value = false;
   }
 }, { deep: true, immediate: true });
+
 </script>
 
 <style lang="scss" scoped>
@@ -1377,6 +1780,246 @@ watch(() => props.goodsInfo, (newValue) => {
   overflow: hidden;
   box-sizing: border-box;
   padding-bottom: env(safe-area-inset-bottom);
+
+
+
+//--------------------------------
+
+  /* 方案1的样式 */
+  .sku-list {
+    padding: 20rpx;
+  }
+
+  .sku-card {
+    background: #ffffff;
+    border-radius: 16rpx;
+    margin-bottom: 20rpx;
+    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    border: 2rpx solid #f0f0f0;
+
+    &.has-error {
+      border-color: #f56c6c;
+    }
+  }
+
+  .sku-card-header {
+    padding: 20rpx 30rpx;
+    background: linear-gradient(135deg, #f8f9fa, #ffffff);
+    border-bottom: 2rpx solid #f5f5f5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .sku-specs {
+    font-size: 28rpx;
+    color: #303133;
+    line-height: 1.4;
+
+    .spec-item {
+      display: inline-block;
+
+      .spec-name {
+        color: #606266;
+        font-weight: 500;
+      }
+
+      .spec-value {
+        color: #409eff;
+        font-weight: 600;
+        margin-left: 8rpx;
+      }
+
+      .separator {
+        color: #909399;
+        margin: 0 10rpx;
+      }
+    }
+  }
+
+  .sku-status {
+    background: #67c23a;
+    border-radius: 20rpx;
+    padding: 4rpx 12rpx;
+
+    .status-text {
+      color: #ffffff;
+      font-size: 22rpx;
+    }
+  }
+
+  .sku-card-content {
+    padding: 30rpx;
+  }
+
+  .form-item {
+    margin-bottom: 30rpx;
+
+    &.half {
+      flex: 1;
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .form-label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15rpx;
+
+    .label-text {
+      font-size: 28rpx;
+      color: #303133;
+      font-weight: 500;
+    }
+
+    .required {
+      color: #f56c6c;
+      font-size: 24rpx;
+      margin-left: 5rpx;
+    }
+  }
+
+  .form-row {
+    display: flex;
+    gap: 20rpx;
+  }
+
+  .form-input, .price-input {
+    width: 100%;
+    height: 80rpx;
+    background: #ffffff !important;  /* 改为白色背景 */
+    border: 2rpx solid #409eff !important;  /* 蓝色边框 */
+    border-radius: 10rpx;
+    padding: 0 20rpx;
+    font-size: 28rpx;
+    color: #000000 !important;  /* 纯黑色文字 */
+    box-sizing: border-box;
+
+    &:focus {
+      border-color: #409eff;
+      background: #ffffff;
+    }
+  }
+
+  .price-input-group {
+    display: flex;
+    align-items: center;
+    background: #f5f7fa;
+    border: 2rpx solid #e4e7ed;
+    border-radius: 10rpx;
+    overflow: hidden;
+
+    .price-prefix {
+      padding: 0 20rpx;
+      background: #e4e7ed;
+      height: 80rpx;
+      line-height: 80rpx;
+      color: #606266;
+      font-size: 28rpx;
+      font-weight: 500;
+    }
+
+    .price-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+    }
+  }
+
+  .image-upload-area {
+    width: 100%;
+    height: 200rpx;
+    border: 2rpx dashed #dcdfe6;
+    border-radius: 10rpx;
+    overflow: hidden;
+    background: #f8f9fa;
+    position: relative;
+
+    .image-preview {
+      width: 100%;
+      height: 100%;
+      position: relative;
+
+      .uploaded-image {
+        width: 100%;
+        height: 100%;
+      }
+
+      .image-actions {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        padding: 15rpx;
+        gap: 10rpx;
+
+        .btn-action {
+          flex: 1;
+          height: 60rpx;
+          line-height: 60rpx;
+          text-align: center;
+          color: #ffffff;
+          font-size: 24rpx;
+          border-radius: 8rpx;
+
+          &.replace {
+            background: #409eff;
+          }
+
+          &.delete {
+            background: #f56c6c;
+          }
+        }
+      }
+    }
+
+    .upload-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+
+      .upload-icon {
+        font-size: 60rpx;
+        color: #909399;
+        margin-bottom: 10rpx;
+      }
+
+      .upload-text {
+        font-size: 28rpx;
+        color: #606266;
+      }
+    }
+  }
+
+  .error-text {
+    color: #f56c6c;
+    font-size: 24rpx;
+    margin-top: 8rpx;
+    min-height: 32rpx;
+  }
+
+
+
+
+  //------------------------
+
+
+
+
+
+
+
+
+
 
   &__main {
     padding: 20rpx 30rpx 120rpx;
@@ -1482,7 +2125,25 @@ watch(() => props.goodsInfo, (newValue) => {
           border-bottom: none;
         }
 
-        .spec-name-section,
+        .spec-name-section {
+
+          .spec-name-input {
+            width: 100%;
+            padding: 20rpx 30rpx;
+            background-color: #f5f7fa;
+            border: 2rpx solid #e4e7ed;
+            border-radius: 10rpx;
+            font-size: 30rpx;
+            color: #303133;
+            box-sizing: border-box;
+
+            &:focus {
+              border-color: #409eff;
+              background-color: #ffffff;
+            }
+          }
+
+        }
         .spec-values-section {
           margin-bottom: 30rpx;
 
@@ -1507,22 +2168,6 @@ watch(() => props.goodsInfo, (newValue) => {
               font-size: 24rpx;
               color: #909399;
               margin-left: 10rpx;
-            }
-          }
-
-          .spec-name-input {
-            width: 100%;
-            padding: 20rpx 30rpx;
-            background-color: #f5f7fa;
-            border: 2rpx solid #e4e7ed;
-            border-radius: 10rpx;
-            font-size: 30rpx;
-            color: #303133;
-            box-sizing: border-box;
-
-            &:focus {
-              border-color: #409eff;
-              background-color: #ffffff;
             }
           }
 
@@ -2198,4 +2843,19 @@ watch(() => props.goodsInfo, (newValue) => {
     }
   }
 }
+
+
+
+/* 修复：确保规格名输入框宽度100% */
+.spec-form .spec-item .spec-name-section .spec-name-input {
+  width: 100% !important;
+  box-sizing: border-box;
+  padding: 20rpx 30rpx;
+  background-color: #f5f7fa;
+  border: 2rpx solid #e4e7ed;
+  border-radius: 10rpx;
+  font-size: 30rpx;
+  color: #303133;
+}
+
 </style>

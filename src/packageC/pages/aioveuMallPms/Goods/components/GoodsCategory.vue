@@ -266,9 +266,32 @@ interface Props {
   goodsInfo?: GoodsInfoData;
 }
 
+// 使用内联对象字面量
 const props = withDefaults(defineProps<Props>(), {
-  goodsInfo: () => new GoodsInfo()
+  goodsInfo: () => ({
+    id: undefined,
+    categoryId: undefined,
+    name: '',
+    picUrl: '',
+    price: undefined,
+    originPrice: undefined,
+    album: [],
+    detail: '',
+    attrList: [],
+    specList: [],
+    skuList: [],
+    sales: 0,
+    stock: 0,
+    categoryName: '',
+    brandName: '',
+  } as GoodsInfoData)
+
 });
+
+
+// 修改这里 ↑↑↑
+
+
 
 const emit = defineEmits<{
   (e: 'next'): void; // 下一步事件

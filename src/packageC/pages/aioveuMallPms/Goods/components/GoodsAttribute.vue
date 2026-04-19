@@ -247,17 +247,19 @@ const watchCategoryChange = (): void => {
       console.log('🔄 分类ID变化:', newCategoryId);
 
       // 如果是编辑模式（有商品ID），加载对应的属性
-      if (goodsInfo.value.id) {
-        console.log('📝 编辑模式，加载商品对应的属性');
+      if (goodsInfo.value.id && goodsInfo.value.attrList && goodsInfo.value.attrList.length > 0) {
         // 这里应该加载这个商品已经设置的属性
         // 可能是从商品数据中获取，也可能是从分类中获取默认值
-        await loadCategoryAttributes(newCategoryId || 0);
+        console.log('📝 编辑模式，商品已有属性，保持原有属性');
+        // 编辑模式，保持商品原有属性
+        console.log('商品当前属性:', goodsInfo.value.attrList);
         return;
       }
 
       // 新增模式，console.log('🆕 新增模式，加载分类的默认属性');
+      // 新增模式 或 编辑模式但没有属性
       if (newCategoryId) {
-        console.log('🆕 新增模式，加载分类的默认属性');
+        console.log('🆕 加载分类的默认属性，分类ID:', newCategoryId);
         await loadCategoryAttributes(newCategoryId);
       } else {
         // 没有选择分类，重置属性列表
@@ -529,6 +531,9 @@ const handlePrev = () => {
  * 下一步
  */
 const handleNext = async () => {
+
+  console.log('➡️ 点击下一步按钮');
+
   try {
     // 验证所有字段
     const fieldsValid = validateAllFields();
@@ -554,6 +559,7 @@ const handleNext = async () => {
 
     console.log('✅ 属性验证通过');
     console.log('属性数据:', goodsInfo.value.attrList);
+    // 验证通过，触发下一步事件
     emit('next');
 
   } catch (error) {
@@ -608,8 +614,7 @@ onReady(() => {
   });
 });
 
-// 窗口尺寸变化
-onResize(() => {
+onShow(() => {
   calculateTableHeight();
 });
 
