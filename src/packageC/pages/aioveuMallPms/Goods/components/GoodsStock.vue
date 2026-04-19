@@ -140,6 +140,8 @@
                   最大图片大小：5MB，支持格式：JPG、JPEG、PNG
                 </view>
               </view>
+
+
             </view>
 
             <!-- 删除规格按钮 -->
@@ -371,22 +373,22 @@
           >
 
             <!-- 在SKU卡片开头添加 -->
-            <view style="border: 2rpx solid #00ff5d; padding: 10rpx; margin: 10rpx;">
-              <text style="color: #0051ff; font-size: 24rpx;">
-                调试: 价格={{sku.price}}, 类型={{typeof sku.price}}
-              </text>
-            </view>
+<!--            <view style="border: 2rpx solid #00ff5d; padding: 10rpx; margin: 10rpx;">-->
+<!--              <text style="color: #0051ff; font-size: 24rpx;">-->
+<!--                调试: 价格={{sku.price}}, 类型={{typeof sku.price}}-->
+<!--              </text>-->
+<!--            </view>-->
 
             <!-- 添加红色调试信息 -->
-            <view style="background: #ff0000; color: white; padding: 10rpx; margin: 10rpx; border-radius: 8rpx;">
-              <text style="font-size: 24rpx;">
-                SKU {{skuIndex+1}}: 价格={{sku.price}}, 库存={{sku.stock}}, 图片URL长度={{sku.picUrl ? sku.picUrl.length : 0}}
-              </text>
+<!--            <view style="background: #ff0000; color: white; padding: 10rpx; margin: 10rpx; border-radius: 8rpx;">-->
+<!--              <text style="font-size: 24rpx;">-->
+<!--                SKU {{skuIndex+1}}: 价格={{sku.price}}, 库存={{sku.stock}}, 图片URL长度={{sku.picUrl ? sku.picUrl.length : 0}}-->
+<!--              </text>-->
 
-              <text style="font-size: 24rpx;">
-                SKU {{skuIndex+1}}: 库存sn={{sku.skuSn}}}
-              </text>
-            </view>
+<!--              <text style="font-size: 24rpx;">-->
+<!--                SKU {{skuIndex+1}}: 库存sn={{sku.skuSn}}}-->
+<!--              </text>-->
+<!--            </view>-->
 
             <view class="sku-card-header">
               <text class="sku-specs">
@@ -1352,11 +1354,29 @@ const previewSpecImage = (imageUrl: string) => {
 // 上传SKU图片
 const uploadSkuImage = async (skuIndex: number) => {
   try {
+
+
+    // 1. 选择图片
     const res = await uni.chooseImage({
       count: 1,
       sizeType: ['compressed'],
       sourceType: ['album', 'camera']
+    }).catch(err => {
+      // 如果用户取消，直接返回
+      if (err.errMsg && err.errMsg.includes('cancel')) {
+        console.log('用户取消了图片选择');
+        return null;
+      }
+      throw err;
     });
+
+
+    if (!res) return; // 用户取消选择
+
+    if (res.tempFilePaths.length === 0) {
+      console.log('未选择图片');
+      return;
+    }
 
     if (res.tempFilePaths.length > 0) {
       const tempFilePath = res.tempFilePaths[0];
@@ -1405,14 +1425,27 @@ const uploadSkuImage = async (skuIndex: number) => {
         throw new Error('上传失败');
       }
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('上传SKU图片失败:', error);
     uni.hideLoading();
-    uni.showToast({
-      title: '上传失败，请重试',
-      icon: 'error',
-      duration: 2000
-    });
+
+
+    // 检查是否是用户取消操作
+    const isUserCancel = error.message && (
+      error.message.includes('cancel') ||
+      error.message.includes('取消')
+    );
+
+
+    if (!isUserCancel) {
+      uni.showToast({
+        title: '上传失败，请重试',
+        icon: 'error',
+        duration: 2000
+      });
+    }
+
+
   }
 };
 
@@ -1931,18 +1964,29 @@ watch(() => props.goodsInfo, (newValue) => {
   }
 
   .image-upload-area {
-    width: 100%;
-    height: 200rpx;
+    //width: 100%;
+    //height: 200rpx;
+    //border: 2rpx dashed #dcdfe6;
+    //border-radius: 10rpx;
+    //overflow: hidden;
+    //background: #f8f9fa;
+    //position: relative;
+    width: 100%;  /* 固定宽度，确保图片不会太窄 */
+    height: 520rpx;  /* 固定高度 320rpx */
     border: 2rpx dashed #dcdfe6;
-    border-radius: 10rpx;
-    overflow: hidden;
-    background: #f8f9fa;
+    border-radius: 12rpx;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #fafafa;
+    overflow: hidden; /* 裁剪超出部分 */
     position: relative;
 
     .image-preview {
       width: 100%;
       height: 100%;
       position: relative;
+      border-radius: 12rpx; /* 保持圆角 */
 
       .uploaded-image {
         width: 100%;
