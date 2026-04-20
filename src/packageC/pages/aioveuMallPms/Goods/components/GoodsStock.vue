@@ -1919,6 +1919,8 @@ watch(() => props.goodsInfo, (newValue) => {
   .form-row {
     display: flex;
     gap: 20rpx;
+    align-items: flex-start; /* 关键修改：防止子元素被拉伸下沉 */
+    /* 如果行高过大，也可以加上 line-height: 1; */
   }
 
   .form-input, .price-input {
@@ -1991,6 +1993,7 @@ watch(() => props.goodsInfo, (newValue) => {
       .uploaded-image {
         width: 100%;
         height: 100%;
+        object-fit: cover; /* 关键：图片自适应填充 */
       }
 
       .image-actions {
@@ -2173,17 +2176,31 @@ watch(() => props.goodsInfo, (newValue) => {
 
           .spec-name-input {
             width: 100%;
-            padding: 20rpx 30rpx;
+            height: 80rpx; /* 确保足够的高度 */
+            padding: 18rpx 30rpx; /* 调整上下的 padding，从 20rpx 改为 18rpx */
+            margin: 0; /* 关键修改：清除默认的外边距 */
+
             background-color: #f5f7fa;
             border: 2rpx solid #e4e7ed;
             border-radius: 10rpx;
-            font-size: 30rpx;
+            font-size: 30rpx;    /* 输入文字颜色 */
             color: #303133;
             box-sizing: border-box;
+            line-height: 44rpx; /* 添加行高，帮助文字居中 */
 
+
+            /* placeholder 样式 */
+            &::placeholder {
+              color: #c0c4cc; /* 占位符颜色 */
+              opacity: 1; /* 确保完全显示 */
+            }
+
+            /* 聚焦状态 */
             &:focus {
               border-color: #409eff;
-              background-color: #ffffff;
+              background-color: #f5f7fa; /* 保持不变，消除视觉跳动 */
+              /* 可选：如果需要，可以在聚焦时稍微放大一点，增强交互感 */
+              /* transform: scale(1.02); */
             }
           }
 
@@ -2888,18 +2905,5 @@ watch(() => props.goodsInfo, (newValue) => {
   }
 }
 
-
-
-/* 修复：确保规格名输入框宽度100% */
-.spec-form .spec-item .spec-name-section .spec-name-input {
-  width: 100% !important;
-  box-sizing: border-box;
-  padding: 20rpx 30rpx;
-  background-color: #f5f7fa;
-  border: 2rpx solid #e4e7ed;
-  border-radius: 10rpx;
-  font-size: 30rpx;
-  color: #303133;
-}
 
 </style>
