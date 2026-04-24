@@ -4,7 +4,9 @@
     "custom": {
 //      "^wd-(.*)": "wot-design-uni/components/wd-$1/wd-$1.vue",
       "^cu-(.*)": "@/components/cu-$1/index.vue",
-      "^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue"
+      "^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue",
+      // 这里写 src 目录下的相对路径
+      "^uni-tree-view$": "src/node_modules/uni-tree-view/src/components/uni-tree-view/uni-tree-view.vue"
       //如果不想全局注册，可以使用 easycom自动引入。在 pages.json中添加
       //我们之前已经配置了EasyCom按需引入，但是发现构建产物中仍然有全部的wot-design-uni组件。这是因为EasyCom只是省去了手动导入组件的步骤，但构建工具（如Webpack）在打包时，
       //仍然会将整个wot-design-uni库打包进来，因为我们在代码中使用了来自wot-design-uni的组件，而Webpack无法通过EasyCom的配置来Tree Shaking掉未使用的组件。
@@ -172,6 +174,12 @@
           "path": "pages/aioveuMallPms/Goods/index",
           "style": {
             "navigationBarTitleText": "商品上架"
+          }
+        },
+        {
+          "path": "pages/aioveuMallPms/CategoryTree/index",
+          "style": {
+            "navigationBarTitleText": "商品分类"
           }
         }
       ]

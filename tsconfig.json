@@ -17,6 +17,12 @@
     // 移除 "wot-design-uni/global"
     "types": ["@dcloudio/types"]
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],
+  "include": ["src/**/*.ts",
+    "src/**/*.d.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "subPackages/**/*.vue",    // 显式包含分包目录
+    "shims-vue.d.ts"           // 如果声明文件在根目录，必须加上这一行
+  ],
   "exclude": ["node_modules", "dist"]
 }
