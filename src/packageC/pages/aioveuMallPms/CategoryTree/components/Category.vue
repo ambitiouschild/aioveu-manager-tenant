@@ -4,11 +4,11 @@
   <view v-if="showCategoryTree" class="component-container">
 
     <!-- 调试标记 -->
-    <view style="background: #52c41a; padding: 20rpx; margin-bottom: 20rpx; border-radius: 8rpx;">
-      <text style="color: white; font-size: 28rpx;">
-        🎯 删除 Category/index.vue 中的重复代码，让它只做容器,Category容器
-      </text>
-    </view>
+<!--    <view style="background: #52c41a; padding: 20rpx; margin-bottom: 20rpx; border-radius: 8rpx;">-->
+<!--      <text style="color: white; font-size: 28rpx;">-->
+<!--        🎯 删除 Category/index.vue 中的重复代码，让它只做容器,Category容器-->
+<!--      </text>-->
+<!--    </view>-->
 
     <!-- 替代el-tree的自定义树形组件 -->
     <CategoryTree

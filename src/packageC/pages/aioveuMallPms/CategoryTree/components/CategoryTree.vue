@@ -45,7 +45,6 @@
         @close="closeDialog"
       >
         <view class="form-container">
-
           <!-- 在表单容器中添加层级提示 -->
           <!-- 当前层级提示 -->
           <view v-if="formData.level" class="level-tip">
@@ -85,14 +84,13 @@
                 :src="formData.iconUrl"
                 class="category-icon"
                 mode="aspectFit"
+                @click="chooseImage"
               />
               <view v-else class="upload-placeholder" @click="chooseImage">
                 <text class="icon">📷</text>
                 <text class="text">点击上传</text>
               </view>
-              <view class="upload-tips">
-                最大图片大小：5MB，支持格式：JPG、JPEG、PNG
-              </view>
+              <view class="upload-tips">最大图片大小：5MB，支持格式：JPG、JPEG、PNG</view>
             </view>
           </view>
 
@@ -144,128 +142,128 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed, watch } from 'vue'
-import FlatTree from './flat-tree.vue'
-import PmsCategoryAPI from '@/packageC/api/aioveuMallPms/aioveuMallPmsCategory/pms-category'
+import { ref, reactive, onMounted, computed, watch } from "vue";
+import FlatTree from "./flat-tree.vue";
+import PmsCategoryAPI from "@/packageC/api/aioveuMallPms/aioveuMallPmsCategory/pms-category";
 
 // 定义类型
 interface CategoryNode {
-  id: number
-  name: string
-  level: number
-  parentId?: number
-  iconUrl?: string
-  visible?: number
-  sort?: number
-  children?: CategoryNode[]
-  expanded?: boolean
-  [key: string]: any
+  id: number;
+  name: string;
+  level: number;
+  parentId?: number;
+  iconUrl?: string;
+  visible?: number;
+  sort?: number;
+  children?: CategoryNode[];
+  expanded?: boolean;
+  [key: string]: any;
 }
 
 interface FormData {
-  id?: number
-  name: string
-  parentId: number
-  level?: number
-  iconUrl: string
-  visible: number
-  sort: number
+  id?: number;
+  name: string;
+  parentId: number;
+  level?: number;
+  iconUrl: string;
+  visible: number;
+  sort: number;
 }
 
 interface ParentCategory {
-  id: number
-  name: string
-  level: number
+  id: number;
+  name: string;
+  level: number;
 }
 
 // 定义组件事件
 const emit = defineEmits<{
-  (e: 'category-click', data: CategoryNode | null): void
-}>()
+  (e: "category-click", data: CategoryNode | null): void;
+}>();
 
 // 响应式数据
-const showCategoryTree = ref<boolean>(true)
-const loading = ref<boolean>(true)
-const listHeight = ref<string>('600rpx')
-const rawCategoryList = ref<CategoryNode[]>([])
-const treeData = ref<CategoryNode[]>([])
+const showCategoryTree = ref<boolean>(true);
+const loading = ref<boolean>(true);
+const listHeight = ref<string>("600rpx");
+const rawCategoryList = ref<CategoryNode[]>([]);
+const treeData = ref<CategoryNode[]>([]);
 
 // 对话框控制
-const popupRef = ref<any>(null)
-const deletePopupRef = ref<any>(null)
-const dialogTitle = ref<string>('')
-const popupType = ref<string>('info')
+const popupRef = ref<any>(null);
+const deletePopupRef = ref<any>(null);
+const dialogTitle = ref<string>("");
+const popupType = ref<string>("info");
 
 // 表单数据
 const formData = reactive<FormData>({
   id: undefined,
-  name: '',
+  name: "",
   parentId: 0,
   level: undefined,
-  iconUrl: '',
+  iconUrl: "",
   visible: 1,
-  sort: 1
-})
+  sort: 1,
+});
 
 // 错误信息
 const errors = reactive<Record<string, string>>({
-  name: ''
-})
+  name: "",
+});
 
 // 父级分类
 const parentCategory = reactive<ParentCategory>({
   id: 0,
-  name: '全部分类',
-  level: 0
-})
+  name: "全部分类",
+  level: 0,
+});
 
 // 当前操作分类
-const currentCategory = ref<CategoryNode | null>(null)
-const categoryToDelete = ref<CategoryNode | null>(null)
+const currentCategory = ref<CategoryNode | null>(null);
+const categoryToDelete = ref<CategoryNode | null>(null);
 
 // 显示状态选项
 const visibleOptions = [
-  { label: '显示', value: 1 },
-  { label: '隐藏', value: 0 }
-]
+  { label: "显示", value: 1 },
+  { label: "隐藏", value: 0 },
+];
 
 /**
  * 计算总节点数
  */
 const getTotalNodes = (nodes: any[]): number => {
-  let count = 0
+  let count = 0;
   const countNodes = (list: any[]) => {
-    list.forEach(node => {
-      count++
+    list.forEach((node) => {
+      count++;
       if (node.children && node.children.length) {
-        countNodes(node.children)
+        countNodes(node.children);
       }
-    })
-  }
-  countNodes(nodes)
-  return count
-}
+    });
+  };
+  countNodes(nodes);
+  return count;
+};
 
 /**
  * ✅ 修复：构建树结构（支持多级）
  */
 function buildTree(list: CategoryNode[], parentId: number = 0, level: number = 0): CategoryNode[] {
   return list
-    .filter(item => item.parentId === parentId)
-    .map(item => {
+    .filter((item) => item.parentId === parentId)
+    .map((item) => {
       // ✅ 修复：递归调用，传入 item.id 而不是 0
       // ❌ 这里只递归了一次，且传入的是 item.id，但后续没有继续递归
-      const children = buildTree(list, item.id, level + 1)
+      const children = buildTree(list, item.id, level + 1);
 
       return {
         ...item,
-        level: level,  // 使用传入的 level
+        level: level, // 使用传入的 level
         expanded: false,
         // ✅ 修复：必须赋值 children，即使为空数组
-        children: children.length > 0 ? children : []
-      }
+        children: children.length > 0 ? children : [],
+      };
     })
-    .sort((a, b) => (a.sort || 0) - (b.sort || 0))
+    .sort((a, b) => (a.sort || 0) - (b.sort || 0));
 }
 /**
  * 计算列表高度
@@ -273,258 +271,257 @@ function buildTree(list: CategoryNode[], parentId: number = 0, level: number = 0
 const calculateListHeight = () => {
   uni.getSystemInfo({
     success: (res) => {
-      const windowHeight = res.windowHeight
-      const statusBarHeight = res.statusBarHeight || 0
-      const bottomSafeArea = 50
-      listHeight.value = `${windowHeight - statusBarHeight - bottomSafeArea}px`
-    }
-  })
-}
+      const windowHeight = res.windowHeight;
+      const statusBarHeight = res.statusBarHeight || 0;
+      const bottomSafeArea = 50;
+      listHeight.value = `${windowHeight - statusBarHeight - bottomSafeArea}px`;
+    },
+  });
+};
 
 /**
  * 获取层级文本
  */
 const getLevelText = (level: number) => {
-  const levelMap = {
-    1: '一级分类',
-    2: '二级分类',
-    3: '三级分类'
-  }
-  return levelMap[level] || `第${level}级分类`
-}
-
-
+  const levelMap: Record<number, string> = {
+    1: "一级分类",
+    2: "二级分类",
+    3: "三级分类",
+  };
+  return levelMap[level] || `第${level}级分类`;
+};
 
 /**
  * 查询分类数据
  */
 const handleQuery = async () => {
-  loading.value = true
+  loading.value = true;
   try {
-    const response = await PmsCategoryAPI.getListCategories({})
+    const response = await PmsCategoryAPI.getListCategories({});
 
-    console.log('📊 原始数据:', response)
+    console.log("📊 原始数据:", response);
 
     if (Array.isArray(response)) {
       // 存储原始数据
-      rawCategoryList.value = response
+      rawCategoryList.value = response;
 
       // ✅ 构建完整的树结构
       // ✅ 直接使用原始数据（已经是树形结构）
       // const rootChildren = buildTree(response, 0)
 
       // 构建根节点
-      treeData.value = [{
-        id: 0,
-        name: '全部分类',
-        parentId: 0,
-        level: 0,
-        expanded: true,
-        children: response.map(item => ({
-          ...item,
-          expanded: false
-        }))
-      }]
+      treeData.value = [
+        {
+          id: 0,
+          name: "全部分类",
+          parentId: 0,
+          level: 0,
+          expanded: true,
+          children: response.map((item) => ({
+            ...item,
+            expanded: false,
+          })),
+        },
+      ];
 
       // ✅ 调试：打印完整的树结构
-      console.log('🌳 最终树结构:', treeData.value[0])
-      console.log(JSON.stringify(treeData.value, null, 2))
+      console.log("🌳 最终树结构:", treeData.value[0]);
+      console.log(JSON.stringify(treeData.value, null, 2));
 
       // ✅ 检查每个节点是否有 children
-      const checkNode = (node: any, indent: string = '') => {
-        console.log(`${indent}${node.name} (id:${node.id}, level:${node.level}): 有 ${node.children?.length || 0} 个子节点`)
+      const checkNode = (node: any, indent: string = "") => {
+        console.log(
+          `${indent}${node.name} (id:${node.id}, level:${node.level}): 有 ${node.children?.length || 0} 个子节点`
+        );
         if (node.children) {
-          node.children.forEach((child: any) => checkNode(child, indent + '  '))
+          node.children.forEach((child: any) => checkNode(child, indent + "  "));
         }
-      }
-      checkNode(treeData.value[0])
-
+      };
+      checkNode(treeData.value[0]);
     } else {
-      console.error('返回数据格式不正确:', response)
-      treeData.value = []
+      console.error("返回数据格式不正确:", response);
+      treeData.value = [];
     }
   } catch (error) {
-    console.error('查询分类数据失败:', error)
+    console.error("查询分类数据失败:", error);
     uni.showToast({
-      title: '获取分类数据失败',
-      icon: 'none'
-    })
+      title: "获取分类数据失败",
+      icon: "none",
+    });
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 /**
  * 节点点击事件
  */
 const handleNodeClick = (node: any) => {
-  console.log('🌳 点击节点:', node)
+  console.log("🌳 点击节点:", node);
 
   // 如果是根节点，不执行业务逻辑
   if (node.id === 0) {
-    console.log('点击了根节点，跳过业务逻辑')
-    return
+    console.log("点击了根节点，跳过业务逻辑");
+    return;
   }
 
   // 执行业务逻辑
-  onNodeClick(node)
-}
+  onNodeClick(node);
+};
 
 /**
  * 原 onNodeClick 函数
  */
 const onNodeClick = (node: CategoryNode) => {
   // 保存当前分类信息
-  currentCategory.value = { ...node }
+  currentCategory.value = { ...node };
 
   // 设置父级分类信息
   if (node.id === 0) {
-    parentCategory.id = 0
-    parentCategory.name = '全部分类'
-    parentCategory.level = 0
+    parentCategory.id = 0;
+    parentCategory.name = "全部分类";
+    parentCategory.level = 0;
   } else {
     // 这里简化处理，实际项目中需要根据父级ID查找
-    parentCategory.id = node.parentId || 0
-    parentCategory.name = node.parentId === 0 ? '全部分类' : '上级分类'
-    parentCategory.level = node.level - 1
+    parentCategory.id = node.parentId || 0;
+    parentCategory.name = node.parentId === 0 ? "全部分类" : "上级分类";
+    parentCategory.level = node.level - 1;
   }
 
   // 向父组件发射事件
-  emit('category-click', node)
-}
+  emit("category-click", node);
+};
 
 /**
  * 切换节点展开状态
  */
 const onToggleExpand = (nodeId: number) => {
   const toggleNode = (nodes: CategoryNode[]) => {
-    nodes.forEach(node => {
+    nodes.forEach((node) => {
       if (node.id === nodeId) {
-        node.expanded = !node.expanded
-        console.log(`切换节点 ${node.name} 展开状态: ${node.expanded}`)
+        node.expanded = !node.expanded;
+        console.log(`切换节点 ${node.name} 展开状态: ${node.expanded}`);
       }
       if (node.children) {
-        toggleNode(node.children)
+        toggleNode(node.children);
       }
-    })
-  }
-  toggleNode(treeData.value)
-}
+    });
+  };
+  toggleNode(treeData.value);
+};
 
 /**
  * 新增分类
  */
 const onAdd = (node: CategoryNode) => {
-  dialogTitle.value = node.id === 0 ? '新增顶级分类' : '新增下级分类'
-  popupType.value = 'info'
-  resetForm()
-  formData.id = undefined
+  dialogTitle.value = node.id === 0 ? "新增顶级分类" : "新增下级分类";
+  popupType.value = "info";
+  resetForm();
+  formData.id = undefined;
 
   if (node.id === 0) {
     // 新增顶级分类
-    parentCategory.id = 0
-    parentCategory.name = '全部分类'
-    parentCategory.level = 0
-    formData.parentId = 0
-    formData.level = 1
+    parentCategory.id = 0;
+    parentCategory.name = "全部分类";
+    parentCategory.level = 0;
+    formData.parentId = 0;
+    formData.level = 1;
   } else {
     // 新增下级分类
-    parentCategory.id = node.id
-    parentCategory.name = node.name
-    parentCategory.level = node.level
-
+    parentCategory.id = node.id;
+    parentCategory.name = node.name;
+    parentCategory.level = node.level;
 
     // ✅ 关键：限制最多三级
     if (node.level >= 3) {
       uni.showToast({
-        title: '最多只能创建三级分类',
-        icon: 'none'
-      })
-      return
+        title: "最多只能创建三级分类",
+        icon: "none",
+      });
+      return;
     }
 
-    formData.parentId = node.id
-    formData.level = (node.level || 0) + 1
+    formData.parentId = node.id;
+    formData.level = (node.level || 0) + 1;
   }
 
-  popupRef.value?.open()
-}
+  popupRef.value?.open();
+};
 
 /**
  * 修改分类
  */
 const onUpdate = (node: CategoryNode) => {
-  onNodeClick(node)
-  dialogTitle.value = '修改商品分类'
-  popupType.value = 'info'
+  onNodeClick(node);
+  dialogTitle.value = "修改商品分类";
+  popupType.value = "info";
 
   Object.assign(formData, {
     id: node.id,
     name: node.name,
     parentId: node.parentId || 0,
     level: node.level,
-    iconUrl: node.iconUrl || '',
+    iconUrl: node.iconUrl || "",
     visible: node.visible || 1,
-    sort: node.sort || 1
-  })
+    sort: node.sort || 1,
+  });
 
-  popupRef.value?.open()
-}
+  popupRef.value?.open();
+};
 
 /**
  * 删除分类
  */
 const onDelete = (node: CategoryNode) => {
-  categoryToDelete.value = node
-  deletePopupRef.value?.open()
-}
+  categoryToDelete.value = node;
+  deletePopupRef.value?.open();
+};
 
 /**
  * 确认删除
  */
 const confirmDelete = async () => {
   try {
-    if (!categoryToDelete.value) return
+    if (!categoryToDelete.value) return;
 
     // ✅ 将数字转换为字符串
-    const idStr = categoryToDelete.value.id.toString()
+    const idStr = categoryToDelete.value.id.toString();
 
     // 这里调用删除API
-    await PmsCategoryAPI.deleteByIds(idStr)
+    await PmsCategoryAPI.deleteByIds(idStr);
 
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     uni.showToast({
-      title: '删除成功',
-      icon: 'success'
-    })
+      title: "删除成功",
+      icon: "success",
+    });
 
-    handleQuery()
+    handleQuery();
 
     // 2. ✅ 关键修复：关闭删除弹窗
-    deletePopupRef.value?.close()
+    deletePopupRef.value?.close();
 
     // 3. 可选：清空待删除对象
-    categoryToDelete.value = null
-
+    categoryToDelete.value = null;
   } catch (error) {
-    console.error('删除失败:', error)
+    console.error("删除失败:", error);
     uni.showToast({
-      title: '删除失败',
-      icon: 'none'
-    })
+      title: "删除失败",
+      icon: "none",
+    });
   } finally {
-    categoryToDelete.value = null
+    categoryToDelete.value = null;
   }
-}
+};
 
 /**
  * 取消删除
  */
 const cancelDelete = () => {
-  categoryToDelete.value = null
-  deletePopupRef.value?.close() // 确保取消时也关闭
-}
+  categoryToDelete.value = null;
+  deletePopupRef.value?.close(); // 确保取消时也关闭
+};
 
 /**
  * 选择图片
@@ -532,51 +529,51 @@ const cancelDelete = () => {
 const chooseImage = () => {
   uni.chooseImage({
     count: 1,
-    sizeType: ['compressed'],
-    sourceType: ['album', 'camera'],
+    sizeType: ["compressed"],
+    sourceType: ["album", "camera"],
     success: (res) => {
-      formData.iconUrl = res.tempFilePaths[0]
-    }
-  })
-}
+      formData.iconUrl = res.tempFilePaths[0];
+    },
+  });
+};
 
 /**
  * 提交表单
  */
 const submitForm = async () => {
   if (!formData.name) {
-    errors.name = '请输入分类名称'
-    return
+    errors.name = "请输入分类名称";
+    return;
   } else {
-    errors.name = ''
+    errors.name = "";
   }
 
   try {
     if (formData.id) {
       // 修改操作
-      // await PmsCategoryAPI.updateCategory(formData)
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      uni.showToast({ title: '修改成功', icon: 'success' })
+      await PmsCategoryAPI.update(formData.id, formData);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      uni.showToast({ title: "修改成功", icon: "success" });
     } else {
       // 新增操作
       const newData = {
         ...formData,
         parentId: parentCategory.id,
-        level: (parentCategory.level || 0) + 1
-      }
+        level: (parentCategory.level || 0) + 1,
+      };
 
-      // await PmsCategoryAPI.addCategory(newData)
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      uni.showToast({ title: '新增成功', icon: 'success' })
+      await PmsCategoryAPI.add(newData);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      uni.showToast({ title: "新增成功", icon: "success" });
     }
 
-    closeDialog()
-    handleQuery()
+    closeDialog();
+    handleQuery();
   } catch (error) {
-    console.error('提交表单失败:', error)
-    uni.showToast({ title: '提交失败', icon: 'none' })
+    console.error("提交表单失败:", error);
+    uni.showToast({ title: "提交失败", icon: "none" });
   }
-}
+};
 
 /**
  * 重置表单
@@ -584,48 +581,48 @@ const submitForm = async () => {
 const resetForm = () => {
   Object.assign(formData, {
     id: undefined,
-    name: '',
+    name: "",
     parentId: 0,
     level: undefined,
-    iconUrl: '',
+    iconUrl: "",
     visible: 1,
-    sort: 1
-  })
+    sort: 1,
+  });
 
   Object.assign(parentCategory, {
     id: 0,
-    name: '全部分类',
-    level: 0
-  })
+    name: "全部分类",
+    level: 0,
+  });
 
-  errors.name = ''
-}
+  errors.name = "";
+};
 
 /**
  * 关闭对话框
  */
 const closeDialog = () => {
-  popupRef.value?.close()
-  resetForm()
-}
+  popupRef.value?.close();
+  resetForm();
+};
 
 // 组件挂载
 onMounted(() => {
-  calculateListHeight()
-  handleQuery()
-})
+  calculateListHeight();
+  handleQuery();
+});
 
 // 监听窗口大小变化
 onMounted(() => {
   uni.onWindowResize(() => {
-    calculateListHeight()
-  })
-})
+    calculateListHeight();
+  });
+});
 
 // 暴露方法给父组件
 defineExpose({
-  handleQuery
-})
+  handleQuery,
+});
 </script>
 
 <style lang="scss" scoped>
@@ -797,6 +794,4 @@ defineExpose({
   font-size: 26rpx;
   color: #1890ff;
 }
-
-
 </style>
