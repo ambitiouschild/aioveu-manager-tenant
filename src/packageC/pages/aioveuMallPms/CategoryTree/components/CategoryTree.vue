@@ -526,15 +526,123 @@ const cancelDelete = () => {
 /**
  * 选择图片
  */
-const chooseImage = () => {
-  uni.chooseImage({
-    count: 1,
-    sizeType: ["compressed"],
-    sourceType: ["album", "camera"],
-    success: (res) => {
-      formData.iconUrl = res.tempFilePaths[0];
-    },
-  });
+// 选择主图
+const chooseImage = async () => {
+  try {
+    const res = await uni.chooseImage({
+      count: 1,
+      sizeType: ["compressed"],
+      sourceType: ["album", "camera"],
+      success: async (chooseResult) => {
+        if (chooseResult.tempFilePaths.length > 0) {
+          const tempFilePath = chooseResult.tempFilePaths[0];
+
+          // 获取文件信息
+          const fileInfo = await uni.getFileInfo({ filePath: tempFilePath });
+          const fileSize = fileInfo.size;
+
+          if (fileSize > 5 * 1024 * 1024) {
+            uni.showToast({
+              title: "图片大小不能超过5MB",
+              icon: "none",
+              duration: 2000,
+            });
+            return;
+          }
+
+          // 上传图片
+          await uploadMainImage(tempFilePath);
+        }
+      },
+      fail: (err: any) => {
+        console.error("选择图片失败:", err);
+        if (err.errMsg.includes("cancel")) {
+          console.log("用户取消选择");
+        }
+      },
+    });
+  } catch (error: any) {
+    console.error("选择图片出错:", error);
+  }
+};
+
+import FileAPI from "@/packageC/api/file/file";
+// 上传主图
+const uploadMainImage = async (tempFilePath: string) => {
+  uni.showLoading({ title: "上传中..." });
+
+  // 1. 修改 showLoading 为可更新的进度条
+  // let progress = 0;
+  // const loadingTimer = setInterval(() => {
+  //   progress += 5;
+  //   if (progress >= 95) progress = 95; // 最多显示95%，等实际完成
+  //
+  //   uni.showLoading({
+  //     title: `上传中 ${progress}%`,
+  //     mask: true,
+  //   });
+  // }, 500); // 每0.5秒更新一次
+
+  try {
+    console.log("📤 开始上传主图:", tempFilePath);
+
+    const uploadResult = await FileAPI.uploadUniFile({
+      filePath: tempFilePath,
+      category: "product",
+      type: "main",
+      fileName: `product_main_${Date.now()}.jpg`,
+      onProgress: (percent) => {
+        console.log(`📈 上传进度: ${percent}%`);
+        // 可以在这里更新进度条
+      },
+    });
+
+    console.log("✅ 上传成功，结果:", uploadResult);
+
+    if (uploadResult.code === "00000" && uploadResult.data && uploadResult.data.url) {
+      formData.iconUrl = uploadResult.data.url;
+
+      // 移除错误
+      // const newErrors = { ...errors.value };
+      // delete newErrors.picUrl;
+      // errors.value = newErrors;
+
+      uni.showToast({
+        title: "上传成功",
+        icon: "success",
+        duration: 2000,
+      });
+
+      return uploadResult.data.url;
+    } else {
+      throw new Error("上传失败");
+    }
+  } catch (error: any) {
+    console.error("上传图片失败:", error);
+
+    // 处理特定错误
+    if (error.message.includes("401")) {
+      uni.showModal({
+        title: "认证失败",
+        content: "请重新登录",
+        success: (res) => {
+          if (res.confirm) {
+            uni.navigateTo({ url: "/packageA/pages/login/login" });
+          }
+        },
+      });
+    } else {
+      uni.showToast({
+        title: error.message || "上传失败",
+        icon: "error",
+        duration: 2000,
+      });
+    }
+
+    throw error;
+  } finally {
+    uni.hideLoading();
+  }
 };
 
 /**
