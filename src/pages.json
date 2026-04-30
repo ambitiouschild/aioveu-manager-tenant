@@ -191,7 +191,14 @@
         {
           "path": "pages/aioveuMallOms/Order/index",
           "style": {
-            "navigationBarTitleText": "订单管理"
+            "navigationBarTitleText": "订单管理",
+            "enablePullDownRefresh": true
+          }
+        },
+        {
+          "path": "pages/aioveuMallOms/Order/detail",
+          "style": {
+            "navigationBarTitleText": "订单详情"
           }
         }
       ]

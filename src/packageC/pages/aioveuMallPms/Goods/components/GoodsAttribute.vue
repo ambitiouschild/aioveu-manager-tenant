@@ -28,11 +28,7 @@
             class="attribute-table"
             :style="{ height: tableHeight + 'px' }"
           >
-            <view
-              v-for="(item, index) in goodsInfo.attrList"
-              :key="index"
-              class="table-row"
-            >
+            <view v-for="(item, index) in goodsInfo.attrList" :key="index" class="table-row">
               <!-- 属性名称 -->
               <view class="table-cell name-cell">
                 <view class="form-item">
@@ -86,11 +82,7 @@
 
           <!-- 空状态提示 -->
           <view v-else class="empty-state">
-            <image
-              src="/static/empty.png"
-              class="empty-image"
-              mode="aspectFit"
-            />
+            <image src="/static/empty.png" class="empty-image" mode="aspectFit" />
             <text class="empty-text">暂无商品属性</text>
             <button
               class="btn-empty-add"
@@ -106,8 +98,8 @@
       </view>
     </view>
 
-    <!-- 底部操作按钮 -->
-    <view class="component-container__footer">
+    <!-- 底部操作按钮 <view class="component-container__footer">-->
+    <view class="action-bar">
       <button
         class="btn-prev"
         @tap="handlePrev"
@@ -131,8 +123,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
-import { onReady, onLoad, onShow, onHide } from '@dcloudio/uni-app';
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue";
+import { onReady, onLoad, onShow, onHide } from "@dcloudio/uni-app";
 import PmsSpuAttributeAPI from "@/packageC/api/aioveuMallPms/aioveuMallPmsSpuAttribute/pms-spu-attribute";
 // ==================== 类型定义 ====================
 /**
@@ -146,11 +138,10 @@ interface GoodsAttributeData {
   categoryId?: number;
 }
 
-
 class GoodsAttribute {
   id?: number = undefined;
-  name: string = '';
-  value: string = '';
+  name: string = "";
+  value: string = "";
   type?: number = undefined;
   categoryId?: number = undefined;
 
@@ -194,16 +185,15 @@ const props = withDefaults(defineProps<Props>(), {
   goodsInfo: () => ({
     id: undefined,
     categoryId: undefined,
-    attrList: []
-  })
+    attrList: [],
+  }),
 });
 
 const emit = defineEmits<{
-  (e: 'prev'): void;  // 上一步事件
-  (e: 'next'): void;  // 下一步事件
-  (e: 'update:goodsInfo', value: GoodsInfoData): void; // 更新商品信息
+  (e: "prev"): void; // 上一步事件
+  (e: "next"): void; // 下一步事件
+  (e: "update:goodsInfo", value: GoodsInfoData): void; // 更新商品信息
 }>();
-
 
 // ==================== 响应式数据 ====================
 // 表单验证错误信息
@@ -222,12 +212,12 @@ const goodsInfo = computed({
     return {
       id: data.id,
       categoryId: data.categoryId,
-      attrList: data.attrList.map(attr => new GoodsAttribute(attr))
+      attrList: data.attrList.map((attr) => new GoodsAttribute(attr)),
     };
   },
   set: (value: GoodsInfoData) => {
-    emit('update:goodsInfo', value);
-  }
+    emit("update:goodsInfo", value);
+  },
 });
 
 // 加载状态
@@ -244,22 +234,22 @@ const watchCategoryChange = (): void => {
   watch(
     () => goodsInfo.value.categoryId,
     async (newCategoryId) => {
-      console.log('🔄 分类ID变化:', newCategoryId);
+      console.log("🔄 分类ID变化:", newCategoryId);
 
       // 如果是编辑模式（有商品ID），加载对应的属性
       if (goodsInfo.value.id && goodsInfo.value.attrList && goodsInfo.value.attrList.length > 0) {
         // 这里应该加载这个商品已经设置的属性
         // 可能是从商品数据中获取，也可能是从分类中获取默认值
-        console.log('📝 编辑模式，商品已有属性，保持原有属性');
+        console.log("📝 编辑模式，商品已有属性，保持原有属性");
         // 编辑模式，保持商品原有属性
-        console.log('商品当前属性:', goodsInfo.value.attrList);
+        console.log("商品当前属性:", goodsInfo.value.attrList);
         return;
       }
 
       // 新增模式，console.log('🆕 新增模式，加载分类的默认属性');
       // 新增模式 或 编辑模式但没有属性
       if (newCategoryId) {
-        console.log('🆕 加载分类的默认属性，分类ID:', newCategoryId);
+        console.log("🆕 加载分类的默认属性，分类ID:", newCategoryId);
         await loadCategoryAttributes(newCategoryId);
       } else {
         // 没有选择分类，重置属性列表
@@ -267,8 +257,8 @@ const watchCategoryChange = (): void => {
       }
     },
     {
-      immediate: true,  // 立即执行一次
-      deep: true        // 深度监听
+      immediate: true, // 立即执行一次
+      deep: true, // 深度监听
     }
   );
 };
@@ -296,21 +286,24 @@ const loadCategoryAttributes = async (categoryId: number) => {
 
     const response = await PmsSpuAttributeAPI.getAttributeList({
       categoryId,
-      type: 2  // type=2 表示商品分类下的属性
+      type: 2, // type=2 表示商品分类下的属性
     });
 
-    console.log('API返回的属性数据:', response);
+    console.log("API返回的属性数据:", response);
 
     if (response && Array.isArray(response)) {
       const data: any[] = response;
       if (response && Array.isArray(response)) {
         // 转换API数据格式
-        const attributes = data.map(item => new GoodsAttribute({
-          id: item.id,
-          name: item.name || '',
-          value: item.value || '',
-          type: item.type
-        }));
+        const attributes = data.map(
+          (item) =>
+            new GoodsAttribute({
+              id: item.id,
+              name: item.name || "",
+              value: item.value || "",
+              type: item.type,
+            })
+        );
 
         // 如果有数据，使用API数据，否则添加一个空行
         if (attributes.length > 0) {
@@ -322,22 +315,22 @@ const loadCategoryAttributes = async (categoryId: number) => {
           errors.value = new Array(attributes.length).fill({});
         } else {
           resetAttributeList();
-          console.log('ℹ️ 该分类下无默认属性');
+          console.log("ℹ️ 该分类下无默认属性");
         }
       } else {
         resetAttributeList();
-        console.warn('⚠️ 属性数据格式错误');
+        console.warn("⚠️ 属性数据格式错误");
       }
     } else {
       resetAttributeList();
-      console.warn('⚠️ API请求失败');
+      console.warn("⚠️ API请求失败");
     }
   } catch (error: any) {
-    console.error('❌ 加载分类属性失败:', error);
+    console.error("❌ 加载分类属性失败:", error);
     uni.showToast({
-      title: '加载属性失败',
-      icon: 'error',
-      duration: 2000
+      title: "加载属性失败",
+      icon: "error",
+      duration: 2000,
     });
     resetAttributeList();
   } finally {
@@ -352,7 +345,7 @@ const resetAttributeList = (): void => {
   const newGoodsInfo = { ...goodsInfo.value, attrList: [new GoodsAttribute()] };
   goodsInfo.value = newGoodsInfo;
   errors.value = [{}];
-  console.log('🔄 重置属性列表');
+  console.log("🔄 重置属性列表");
 };
 
 /**
@@ -365,19 +358,22 @@ const handleAddAttribute = (): void => {
 
   errors.value.push({});
 
-  console.log('➕ 添加属性行，当前总数:', newAttrList.length);
+  console.log("➕ 添加属性行，当前总数:", newAttrList.length);
 
   // 滚动到最后一行
   nextTick(() => {
     const query = uni.createSelectorQuery().in(this);
-    query.select('.attribute-table').boundingClientRect((data: any) => {
-      if (data) {
-        uni.pageScrollTo({
-          duration: 300,
-          scrollTop: data.height
-        });
-      }
-    }).exec();
+    query
+      .select(".attribute-table")
+      .boundingClientRect((data: any) => {
+        if (data) {
+          uni.pageScrollTo({
+            duration: 300,
+            scrollTop: data.height,
+          });
+        }
+      })
+      .exec();
   });
 };
 
@@ -387,39 +383,36 @@ const handleAddAttribute = (): void => {
 const handleRemoveAttribute = (index: number): void => {
   if (goodsInfo.value.attrList.length <= 1) {
     uni.showToast({
-      title: '至少需要保留一个属性',
-      icon: 'none',
-      duration: 2000
+      title: "至少需要保留一个属性",
+      icon: "none",
+      duration: 2000,
     });
     return;
   }
 
   const newAttrList = [...goodsInfo.value.attrList];
   const removedItem = newAttrList[index];
-  console.log('🗑️ 删除属性:', removedItem);
+  console.log("🗑️ 删除属性:", removedItem);
 
   newAttrList.splice(index, 1);
   const newGoodsInfo = { ...goodsInfo.value, attrList: newAttrList };
   goodsInfo.value = newGoodsInfo;
 
-
   errors.value.splice(index, 1);
-  console.log('删除后剩余:', newAttrList.length, '个属性');
+  console.log("删除后剩余:", newAttrList.length, "个属性");
 };
 
 /**
  * 处理属性输入
  */
-const handleAttributeInput = (e: any, index: number, field: 'name' | 'value'): void => {
+const handleAttributeInput = (e: any, index: number, field: "name" | "value"): void => {
   const value = e.detail ? e.detail.value : e.target.value;
-
 
   const newAttrList = [...goodsInfo.value.attrList];
   newAttrList[index] = { ...newAttrList[index], [field]: value };
 
   const newGoodsInfo = { ...goodsInfo.value, attrList: newAttrList };
   goodsInfo.value = newGoodsInfo;
-
 
   console.log(`📝 属性${field}变化:`, value);
 
@@ -435,18 +428,18 @@ const handleAttributeInput = (e: any, index: number, field: 'name' | 'value'): v
 /**
  * 验证字段
  */
-const validateField = (field: 'name' | 'value', index: number): void => {
+const validateField = (field: "name" | "value", index: number): void => {
   const value = goodsInfo.value.attrList[index][field];
-  let error = '';
+  let error = "";
 
-  if (!value || value.trim() === '') {
-    error = `${field === 'name' ? '属性名称' : '属性值'}不能为空`;
+  if (!value || value.trim() === "") {
+    error = `${field === "name" ? "属性名称" : "属性值"}不能为空`;
   } else if (value.length < 1) {
-    error = `${field === 'name' ? '属性名称' : '属性值'}至少1个字符`;
-  } else if (field === 'name' && value.length > 50) {
-    error = '属性名称不能超过50个字符';
-  } else if (field === 'value' && value.length > 100) {
-    error = '属性值不能超过100个字符';
+    error = `${field === "name" ? "属性名称" : "属性值"}至少1个字符`;
+  } else if (field === "name" && value.length > 50) {
+    error = "属性名称不能超过50个字符";
+  } else if (field === "value" && value.length > 100) {
+    error = "属性值不能超过100个字符";
   }
 
   if (error) {
@@ -462,7 +455,7 @@ const validateField = (field: 'name' | 'value', index: number): void => {
 /**
  * 验证所有字段
  */
-const validateAllFields = (): boolean  => {
+const validateAllFields = (): boolean => {
   let isValid = true;
   const newErrors: AttributeError[] = [];
 
@@ -470,20 +463,20 @@ const validateAllFields = (): boolean  => {
     const error: AttributeError = {};
 
     // 验证名称
-    if (!attr.name || attr.name.trim() === '') {
-      error.name = '属性名称不能为空';
+    if (!attr.name || attr.name.trim() === "") {
+      error.name = "属性名称不能为空";
       isValid = false;
     } else if (attr.name.length > 50) {
-      error.name = '属性名称不能超过50个字符';
+      error.name = "属性名称不能超过50个字符";
       isValid = false;
     }
 
     // 验证值
-    if (!attr.value || attr.value.trim() === '') {
-      error.value = '属性值不能为空';
+    if (!attr.value || attr.value.trim() === "") {
+      error.value = "属性值不能为空";
       isValid = false;
     } else if (attr.value.length > 100) {
-      error.value = '属性值不能超过100个字符';
+      error.value = "属性值不能超过100个字符";
       isValid = false;
     }
 
@@ -523,25 +516,24 @@ const checkDuplicateNames = () => {
  * 上一步
  */
 const handlePrev = () => {
-  console.log('⬅️ 返回上一步');
-  emit('prev');
+  console.log("⬅️ 返回上一步");
+  emit("prev");
 };
 
 /**
  * 下一步
  */
 const handleNext = async () => {
-
-  console.log('➡️ 点击下一步按钮');
+  console.log("➡️ 点击下一步按钮");
 
   try {
     // 验证所有字段
     const fieldsValid = validateAllFields();
     if (!fieldsValid) {
       uni.showToast({
-        title: '请填写完整的属性信息',
-        icon: 'none',
-        duration: 2000
+        title: "请填写完整的属性信息",
+        icon: "none",
+        duration: 2000,
       });
       return;
     }
@@ -550,24 +542,23 @@ const handleNext = async () => {
     const noDuplicate = checkDuplicateNames();
     if (!noDuplicate) {
       uni.showToast({
-        title: '属性名称不能重复',
-        icon: 'none',
-        duration: 2000
+        title: "属性名称不能重复",
+        icon: "none",
+        duration: 2000,
       });
       return;
     }
 
-    console.log('✅ 属性验证通过');
-    console.log('属性数据:', goodsInfo.value.attrList);
+    console.log("✅ 属性验证通过");
+    console.log("属性数据:", goodsInfo.value.attrList);
     // 验证通过，触发下一步事件
-    emit('next');
-
+    emit("next");
   } catch (error) {
-    console.error('表单验证出错:', error);
+    console.error("表单验证出错:", error);
     uni.showToast({
-      title: '验证出错，请重试',
-      icon: 'error',
-      duration: 2000
+      title: "验证出错，请重试",
+      icon: "error",
+      duration: 2000,
     });
   }
 };
@@ -577,21 +568,24 @@ const handleNext = async () => {
  */
 const calculateTableHeight = () => {
   const query = uni.createSelectorQuery().in(this);
-  query.select('.component-container').boundingClientRect((data: any) => {
-    if (data) {
-      const windowHeight = systemInfo.windowHeight;
-      const containerTop = data.top;
-      const footerHeight = 100; // 底部按钮高度
-      const headerHeight = 100; // 头部高度
+  query
+    .select(".component-container")
+    .boundingClientRect((data: any) => {
+      if (data) {
+        const windowHeight = systemInfo.windowHeight;
+        const containerTop = data.top;
+        const footerHeight = 100; // 底部按钮高度
+        const headerHeight = 100; // 头部高度
 
-      tableHeight.value = windowHeight - containerTop - footerHeight - headerHeight - 20;
-    }
-  }).exec();
+        tableHeight.value = windowHeight - containerTop - footerHeight - headerHeight - 20;
+      }
+    })
+    .exec();
 };
 
 // ==================== 生命周期钩子 ====================
 onMounted(() => {
-  console.log('🔄 商品属性组件挂载');
+  console.log("🔄 商品属性组件挂载");
 
   // 初始化属性列表
   if (!goodsInfo.value.attrList || goodsInfo.value.attrList.length === 0) {
@@ -620,7 +614,7 @@ onShow(() => {
 
 // 页面卸载
 onUnmounted(() => {
-  console.log('🗑️ 商品属性组件卸载');
+  console.log("🗑️ 商品属性组件卸载");
 });
 
 // ==================== 暴露给父组件的方法 ====================
@@ -644,7 +638,7 @@ defineExpose({
    */
   clearAttributes: () => {
     resetAttributeList();
-  }
+  },
 });
 </script>
 
@@ -879,6 +873,56 @@ defineExpose({
         background: linear-gradient(135deg, #409eff, #66b1ff);
         color: #ffffff;
       }
+    }
+  }
+}
+
+/* ==========================================
+   2. 底部按钮栏 (独立出来，实现固定)
+   ========================================== */
+.action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100rpx; // 按钮区域高度
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 20rpx;
+  background-color: #ffffff;
+  border-top: 2rpx solid #f0f0f0;
+  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.03);
+  z-index: 999;
+
+  // 适配iPhone底部安全区
+  padding-bottom: calc(10rpx + env(safe-area-inset-bottom));
+
+  button {
+    height: 64rpx;
+    line-height: 64rpx;
+    border-radius: 32rpx;
+    font-size: 28rpx;
+    border: none;
+    font-weight: 500;
+    margin: 0;
+
+    &::after {
+      border: none;
+    }
+
+    &.btn-prev {
+      width: 300rpx;
+      background-color: #ffffff;
+      color: #409eff;
+      border: 2rpx solid #409eff;
+      margin-right: 20rpx;
+    }
+
+    &.btn-submit {
+      width: 300rpx;
+      background: linear-gradient(135deg, #409eff, #66b1ff);
+      color: #ffffff;
     }
   }
 }

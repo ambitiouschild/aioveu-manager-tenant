@@ -74,22 +74,24 @@
     />
 
     <!-- 操作按钮区域 -->
-    <view class="action-buttons" v-if="activeStep > 0">
-      <button
-        class="btn-prev"
-        @tap="handlePrevStep"
-        :disabled="activeStep === 0"
-      >
-        上一步
-      </button>
-      <button
-        class="btn-next"
-        @tap="handleNextStep"
-        v-if="activeStep < 3"
-      >
-        下一步
-      </button>
-    </view>
+<!--    <view class="action-buttons" v-if="activeStep > 0">-->
+<!--      <button-->
+<!--        class="btn-prev"-->
+<!--        @tap="handlePrevStep"-->
+<!--        :disabled="activeStep === 0"-->
+<!--      >-->
+<!--        上一步-->
+<!--      </button>-->
+<!--      <button-->
+<!--        class="btn-next"-->
+<!--        @tap="handleNextStep"-->
+<!--        v-if="activeStep < 3"-->
+<!--      >-->
+<!--        下一步-->
+<!--      </button>-->
+<!--    </view>-->
+
+
   </view>
 </template>
 

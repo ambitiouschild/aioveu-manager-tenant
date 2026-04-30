@@ -138,8 +138,8 @@
       </view>
     </view>
 
-    <!-- 底部按钮 -->
-    <view class="component-container__footer">
+    <!-- 底部按钮     <view class="component-container__footer">-->
+    <view class="action-bar">
       <button
         class="btn-next"
         :disabled="pathLabels.length !== 3 || !goodsInfo.categoryId"
@@ -1037,6 +1037,56 @@ onUnmounted(() => {
         background: linear-gradient(135deg, #c0c4cc, #dcdfe6);
         opacity: 0.6;
       }
+    }
+  }
+}
+
+/* ==========================================
+   2. 底部按钮栏 (独立出来，实现固定)
+   ========================================== */
+.action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100rpx; // 按钮区域高度
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 20rpx;
+  background-color: #ffffff;
+  border-top: 2rpx solid #f0f0f0;
+  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.03);
+  z-index: 999;
+
+  // 适配iPhone底部安全区
+  padding-bottom: calc(10rpx + env(safe-area-inset-bottom));
+
+  button {
+    height: 64rpx;
+    line-height: 64rpx;
+    border-radius: 32rpx;
+    font-size: 28rpx;
+    border: none;
+    font-weight: 500;
+    margin: 0;
+
+    &::after {
+      border: none;
+    }
+
+    &.btn-prev {
+      width: 300rpx;
+      background-color: #ffffff;
+      color: #409eff;
+      border: 2rpx solid #409eff;
+      margin-right: 20rpx;
+    }
+
+    &.btn-next {
+      width: 400rpx;
+      background: linear-gradient(135deg, #409eff, #66b1ff);
+      color: #ffffff;
     }
   }
 }

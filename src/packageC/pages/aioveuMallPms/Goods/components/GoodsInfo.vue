@@ -1,11 +1,11 @@
 <!-- 转换后的 UniApp 组件 GoodsInfo.vue -->
 <template>
-
   <!-- 调试：显示组件已加载 -->
-  <view style="padding: 20rpx; background: green; color: white; margin: 20rpx; border-radius: 10rpx;">
-    <text>✅ GoodsInfo 组件已加载！当前步骤：步骤2</text>
-  </view>
-
+  <!--  <view-->
+  <!--    style="padding: 20rpx; background: green; color: white; margin: 20rpx; border-radius: 10rpx"-->
+  <!--  >-->
+  <!--    <text>✅ GoodsInfo 组件已加载！当前步骤：步骤2</text>-->
+  <!--  </view>-->
 
   <scroll-view
     scroll-y
@@ -21,8 +21,11 @@
         <!-- 商品名称 -->
         <view class="form-item" :class="{ 'has-error': errors.name }">
           <view class="form-label">
-            <text class="label-text">商品名称</text>
-            <text class="required">*</text>
+            <!-- 🔥 合并成一个 Text 标签，这样它们就永远是一体的，绝不会换行 -->
+            <text class="label-text">
+              商品名称
+              <text class="required">*</text>
+            </text>
           </view>
           <view class="form-control">
             <input
@@ -46,8 +49,11 @@
         <!-- 商品品牌 -->
         <view class="form-item" :class="{ 'has-error': errors.brandId }">
           <view class="form-label">
-            <text class="label-text">商品品牌</text>
-            <text class="required">*</text>
+            <!-- 🔥 合并成一个 Text 标签，这样它们就永远是一体的，绝不会换行 -->
+            <text class="label-text">
+              商品品牌
+              <text class="required">*</text>
+            </text>
           </view>
           <view class="form-control">
             <picker
@@ -77,8 +83,11 @@
         <!-- 零售价 -->
         <view class="form-item" :class="{ 'has-error': errors.originPrice }">
           <view class="form-label">
-            <text class="label-text">零售价</text>
-            <text class="required">*</text>
+            <!-- 🔥 合并成一个 Text 标签，这样它们就永远是一体的，绝不会换行 -->
+            <text class="label-text">
+              零售价
+              <text class="required">*</text>
+            </text>
           </view>
           <view class="form-control">
             <view class="price-input-group">
@@ -105,8 +114,11 @@
         <!-- 促销价 -->
         <view class="form-item" :class="{ 'has-error': errors.price }">
           <view class="form-label">
-            <text class="label-text">促销价</text>
-            <text class="required">*</text>
+            <!-- 🔥 合并成一个 Text 标签，这样它们就永远是一体的，绝不会换行 -->
+            <text class="label-text">
+              促销价
+              <text class="required">*</text>
+            </text>
           </view>
           <view class="form-control">
             <view class="price-input-group">
@@ -126,7 +138,10 @@
             </view>
             <view v-if="goodsInfo.price && goodsInfo.originPrice" class="price-hint">
               促销价：¥{{ formatPrice(goodsInfo.price) }}
-              <text v-if="Number(goodsInfo.price) > Number(goodsInfo.originPrice)" class="price-warning">
+              <text
+                v-if="Number(goodsInfo.price) > Number(goodsInfo.originPrice)"
+                class="price-warning"
+              >
                 （促销价不能高于零售价）
               </text>
             </view>
@@ -136,31 +151,26 @@
         <!-- 商品主图 -->
         <view class="form-item" :class="{ 'has-error': errors.picUrl }">
           <view class="form-label">
-            <text class="label-text">商品主图</text>
-            <text class="required">*</text>
+            <!-- 🔥 合并成一个 Text 标签，这样它们就永远是一体的，绝不会换行 -->
+            <text class="label-text">
+              商品主图
+              <text class="required">*</text>
+            </text>
           </view>
           <view class="form-control">
             <view class="image-upload-container">
-              <view
-                v-if="goodsInfo.picUrl"
-                class="main-image-preview"
-                @tap="previewMainImage"
-              >
-                <image
-                  :src="goodsInfo.picUrl"
-                  mode="aspectFill"
-                  class="main-image"
-                />
+              <view v-if="goodsInfo.picUrl" class="main-image-preview" @tap="previewMainImage">
+                <image :src="goodsInfo.picUrl" mode="aspectFill" class="main-image" />
+
+                <!-- 添加删除按钮（和轮播图一样的结构） -->
+                <view class="delete-btn" @tap.stop="removeMainImage">×</view>
+
                 <view class="image-overlay">
                   <text class="overlay-text">预览</text>
                 </view>
               </view>
 
-              <view
-                v-else
-                class="upload-trigger"
-                @tap="chooseMainImage"
-              >
+              <view v-else class="upload-trigger" @tap="chooseMainImage">
                 <view class="upload-icon">+</view>
                 <view class="upload-text">选择图片</view>
               </view>
@@ -168,9 +178,7 @@
             <view v-if="errors.picUrl" class="error-text">
               {{ errors.picUrl }}
             </view>
-            <view class="upload-tip">
-              建议尺寸：800×800px，最大5MB，支持格式：JPG、JPEG、PNG
-            </view>
+            <view class="upload-tip">建议尺寸：800×800px，最大5MB，支持格式：JPG、JPEG、PNG</view>
           </view>
         </view>
 
@@ -182,17 +190,9 @@
           <view class="form-control">
             <view class="album-upload-container">
               <!-- 已有的轮播图 -->
-              <view
-                v-if="goodsInfo.album && goodsInfo.album.length > 0"
-                class="album-preview"
-              >
-                <view class="album-title">
-                  当前轮播图 ({{ goodsInfo.album.length }})
-                </view>
-                <scroll-view
-                  scroll-x
-                  class="album-scroll"
-                >
+              <view v-if="goodsInfo.album && goodsInfo.album.length > 0" class="album-preview">
+                <view class="album-title">当前轮播图 ({{ goodsInfo.album.length }})</view>
+                <scroll-view scroll-x class="album-scroll">
                   <view class="album-images">
                     <view
                       v-for="(url, index) in goodsInfo.album"
@@ -200,18 +200,9 @@
                       class="album-image-item"
                       @tap="previewAlbumImage(index)"
                     >
-                      <image
-                        :src="url"
-                        mode="aspectFill"
-                        class="album-image"
-                      />
+                      <image :src="url" mode="aspectFill" class="album-image" />
                       <view class="image-index">{{ index + 1 }}</view>
-                      <view
-                        class="delete-btn"
-                        @tap.stop="removeAlbumImage(index)"
-                      >
-                        ×
-                      </view>
+                      <view class="delete-btn" @tap.stop="removeAlbumImage(index)">×</view>
                     </view>
                   </view>
                 </scroll-view>
@@ -228,9 +219,7 @@
                 <view class="add-tip">最多10张</view>
               </view>
             </view>
-            <view class="upload-tip">
-              支持格式：JPG、JPEG、PNG，每张最大2MB
-            </view>
+            <view class="upload-tip">支持格式：JPG、JPEG、PNG，每张最大2MB</view>
           </view>
         </view>
 
@@ -250,7 +239,7 @@
               @input="handleDescriptionInput"
             />
             <view class="textarea-hint">
-              <text>{{ (goodsInfo.description || '').length }}/500</text>
+              <text>{{ (goodsInfo.description || "").length }}/500</text>
             </view>
           </view>
         </view>
@@ -258,8 +247,11 @@
         <!-- 商品详情 -->
         <view class="form-item" :class="{ 'has-error': errors.detail }">
           <view class="form-label">
-            <text class="label-text">商品详情</text>
-            <text class="required">*</text>
+            <!-- 🔥 合并成一个 Text 标签，这样它们就永远是一体的，绝不会换行 -->
+            <text class="label-text">
+              商品详情
+              <text class="required">*</text>
+            </text>
           </view>
           <view class="form-control">
             <textarea
@@ -275,45 +267,49 @@
               {{ errors.detail }}
             </view>
             <view class="textarea-hint">
-              <text>{{ (goodsInfo.detail || '').length }} 字符</text>
+              <text>{{ (goodsInfo.detail || "").length }} 字符</text>
+            </view>
+
+            <!-- 商品图文详情 -->
+            <view class="detail-desc">
+              <view class="d-header">
+                <text>图文详情预览，如需编辑请到电脑端</text>
+              </view>
+              <rich-text :nodes="formattedSpuDetail"></rich-text>
             </view>
           </view>
         </view>
       </form>
     </view>
-
-
   </scroll-view>
 
-  <!-- 底部操作按钮 -->
-<!--  <view class="component-container__footer">-->
-<!--    <button-->
-<!--      class="btn-prev"-->
-<!--      @tap="handlePrev"-->
-<!--      hover-class="btn-hover"-->
-<!--      hover-start-time="20"-->
-<!--      hover-stay-time="70"-->
-<!--    >-->
-<!--      上一步，选择商品分类-->
-<!--    </button>-->
-<!--    <button-->
-<!--      class="btn-next"-->
-<!--      @tap="handleNext"-->
-<!--      hover-class="btn-hover"-->
-<!--      hover-start-time="20"-->
-<!--      hover-stay-time="70"-->
-<!--    >-->
-<!--      下一步，设置商品属性-->
-<!--    </button>-->
-<!--  </view>-->
-
+  <!-- 底部操作按钮   <view class="component-container__footer"> -->
+  <view class="action-bar">
+    <button
+      class="btn-prev"
+      @tap="handlePrev"
+      hover-class="btn-hover"
+      hover-start-time="20"
+      hover-stay-time="70"
+    >
+      上一步，选择商品分类
+    </button>
+    <button
+      class="btn-next"
+      @tap="handleNext"
+      hover-class="btn-hover"
+      hover-start-time="20"
+      hover-stay-time="70"
+    >
+      下一步，设置商品属性
+    </button>
+  </view>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
-import { onLoad, onShow, onHide, onReady } from '@dcloudio/uni-app';
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue";
+import { onLoad, onShow, onHide, onReady } from "@dcloudio/uni-app";
 import PmsBrandAPI from "@/packageC/api/aioveuMallPms/aioveuMallPmsBrand/pms-brand";
-
 
 // 类型定义
 interface BrandOptionData {
@@ -324,8 +320,8 @@ interface BrandOptionData {
 
 class BrandOption {
   id?: number = undefined;
-  name: string = '';
-  logoUrl: string = '';
+  name: string = "";
+  logoUrl: string = "";
 
   constructor(data: Partial<BrandOptionData> = {}) {
     Object.assign(this, data);
@@ -344,8 +340,6 @@ interface GoodsInfoData {
   [key: string]: any;
 }
 
-
-
 // Props 和 Emit
 interface Props {
   goodsInfo?: GoodsInfoData;
@@ -353,40 +347,47 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   goodsInfo: () => ({
-    name: '',
+    name: "",
     brandId: undefined,
     originPrice: undefined,
     price: undefined,
-    picUrl: '',
+    picUrl: "",
     album: [],
-    description: '',
-    detail: ''
-  })
+    description: "",
+    detail: "",
+  }),
 });
 
-console.log('🎯 GoodsInfo 组件 script setup 执行');
-console.log('📦 GoodsInfo props:', props.goodsInfo);
-
-
+console.log("🎯 GoodsInfo 组件 script setup 执行");
+console.log("📦 GoodsInfo props:", props.goodsInfo);
 
 const emit = defineEmits<{
-  (e: 'prev'): void;
-  (e: 'next'): void;
-  (e: 'update:goodsInfo', value: GoodsInfoData): void;
+  (e: "prev"): void;
+  (e: "next"): void;
+  (e: "update:goodsInfo", value: GoodsInfoData): void;
 }>();
+
+// 辅助函数：更新商品信息
+//为了避免重复代码，可以在文件顶部创建一个辅助函数
+const updateGoodsField = (field: keyof GoodsInfoData, value: any) => {
+  const updated = {
+    ...goodsInfo.value,
+    [field]: value,
+  };
+  emit("update:goodsInfo", updated);
+};
 
 // 响应式数据
 interface ErrorState {
   [key: string]: string;
 }
 
-
 // 响应式数据
-const errors = ref<ErrorState>({});               // 表单错误信息
-const brandOptions = ref<BrandOptionData[]>([]);  // 品牌选项
-const selectedBrandIndex = ref<number>(-1);       // 选中的品牌索引
-const scrollHeight = ref<number>(500);            // 滚动区域高度
-const refreshing = ref<boolean>(false);           // 下拉刷新状态
+const errors = ref<ErrorState>({}); // 表单错误信息
+const brandOptions = ref<BrandOptionData[]>([]); // 品牌选项
+const selectedBrandIndex = ref<number>(-1); // 选中的品牌索引
+const scrollHeight = ref<number>(500); // 滚动区域高度
+const refreshing = ref<boolean>(false); // 下拉刷新状态
 const systemInfo = uni.getSystemInfoSync();
 
 // 商品信息双向绑定
@@ -398,19 +399,19 @@ const goodsInfo = computed({
       data.album = [];
     }
     return {
-      name: data.name || '',
+      name: data.name || "",
       brandId: data.brandId,
       originPrice: data.originPrice,
       price: data.price,
-      picUrl: data.picUrl || '',
+      picUrl: data.picUrl || "",
       album: data.album || [],
-      description: data.description || '',
-      detail: data.detail || ''
+      description: data.description || "",
+      detail: data.detail || "",
     };
   },
   set: (value: GoodsInfoData) => {
-    emit('update:goodsInfo', value);
-  }
+    emit("update:goodsInfo", value);
+  },
 });
 
 // 计算属性
@@ -424,92 +425,100 @@ const selectedBrand = computed((): BrandOptionData | null => {
 // 加载品牌数据
 const loadBrandData = async () => {
   try {
-    console.log('📦 开始加载品牌数据');
+    console.log("📦 开始加载品牌数据");
 
     const response = await PmsBrandAPI.getBrandList();
 
     if (response && Array.isArray(response)) {
-      const resData : any[] = response;
+      const resData: any[] = response;
       if (Array.isArray(resData)) {
-        brandOptions.value = resData.map(item => new BrandOption({
-          id: item.id,
-          name: item.name,
-          logoUrl: item.logoUrl
-        }));
+        brandOptions.value = resData.map(
+          (item) =>
+            new BrandOption({
+              id: item.id,
+              name: item.name,
+              logoUrl: item.logoUrl,
+            })
+        );
 
         console.log(`✅ 品牌数据加载成功，共 ${brandOptions.value.length} 条`);
 
         // 如果商品有品牌ID，设置选中
         if (goodsInfo.value.brandId) {
-          const index = brandOptions.value.findIndex(brand => brand.id === goodsInfo.value.brandId);
+          const index = brandOptions.value.findIndex(
+            (brand) => brand.id === goodsInfo.value.brandId
+          );
           if (index >= 0) {
             selectedBrandIndex.value = index;
           }
         }
       } else {
-        console.warn('⚠️ 品牌数据格式错误');
+        console.warn("⚠️ 品牌数据格式错误");
         uni.showToast({
-          title: '品牌数据加载失败',
-          icon: 'none',
-          duration: 2000
+          title: "品牌数据加载失败",
+          icon: "none",
+          duration: 2000,
         });
       }
     }
   } catch (error) {
-    console.error('❌ 加载品牌数据失败:', error);
+    console.error("❌ 加载品牌数据失败:", error);
     uni.showToast({
-      title: '加载失败，请重试',
-      icon: 'error',
-      duration: 2000
+      title: "加载失败，请重试",
+      icon: "error",
+      duration: 2000,
     });
   }
 };
 
 // 表单验证
-const validateField = (field: keyof GoodsInfoData | 'brandId') : void => {
-  let error = '';
+const validateField = (field: keyof GoodsInfoData | "brandId"): void => {
+  let error = "";
   const value = goodsInfo.value[field as keyof GoodsInfoData];
 
   switch (field) {
-    case 'name':
-      if (!value || value.trim() === '') {
-        error = '请填写商品名称';
+    case "name":
+      if (!value || value.trim() === "") {
+        error = "请填写商品名称";
       } else if (value.length < 2) {
-        error = '商品名称至少2个字符';
+        error = "商品名称至少2个字符";
       } else if (value.length > 100) {
-        error = '商品名称不能超过100个字符';
+        error = "商品名称不能超过100个字符";
       }
       break;
 
-    case 'brandId':
+    case "brandId":
       if (!value) {
-        error = '请选择商品品牌';
+        error = "请选择商品品牌";
       }
       break;
 
-    case 'originPrice':
+    case "originPrice":
       if (!value || isNaN(value) || Number(value) <= 0) {
-        error = '请输入有效的零售价';
+        error = "请输入有效的零售价";
       }
       break;
 
-    case 'price':
+    case "price":
       if (!value || isNaN(value) || Number(value) <= 0) {
-        error = '请输入有效的促销价';
-      } else if (goodsInfo.value.originPrice && Number(value) > Number(goodsInfo.value.originPrice)) {
-        error = '促销价不能高于零售价';
+        error = "请输入有效的促销价";
+      } else if (
+        goodsInfo.value.originPrice &&
+        Number(value) > Number(goodsInfo.value.originPrice)
+      ) {
+        error = "促销价不能高于零售价";
       }
       break;
 
-    case 'picUrl':
+    case "picUrl":
       if (!value) {
-        error = '请上传商品主图';
+        error = "请上传商品主图";
       }
       break;
 
-    case 'detail':
-      if (!value || value.trim() === '') {
-        error = '请填写商品详情';
+    case "detail":
+      if (!value || value.trim() === "") {
+        error = "请填写商品详情";
       }
       break;
   }
@@ -522,20 +531,20 @@ const validateField = (field: keyof GoodsInfoData | 'brandId') : void => {
 };
 
 // 验证所有字段
-const validateAllFields = () : boolean=> {
-  validateField('name');
-  validateField('brandId');
-  validateField('originPrice');
-  validateField('price');
-  validateField('picUrl');
-  validateField('detail');
+const validateAllFields = (): boolean => {
+  validateField("name");
+  validateField("brandId");
+  validateField("originPrice");
+  validateField("price");
+  validateField("picUrl");
+  validateField("detail");
 
   return Object.keys(errors.value).length === 0;
 };
 
 // 处理商品名称输入
-const handleNameInput = (e: any) : void => {
-  goodsInfo.value.name = e.detail.value;
+const handleNameInput = (e: any): void => {
+  updateGoodsField("name", e.detail.value);
   const newErrors = { ...errors.value };
   delete newErrors.name;
   errors.value = newErrors;
@@ -547,7 +556,8 @@ const handleBrandChange = (e: any): void => {
   selectedBrandIndex.value = index;
 
   if (index >= 0 && brandOptions.value[index]) {
-    goodsInfo.value.brandId = brandOptions.value[index].id;
+    // goodsInfo.value.brandId = brandOptions.value[index].id;
+    updateGoodsField("brandId", brandOptions.value[index].id);
   } else {
     goodsInfo.value.brandId = undefined;
   }
@@ -556,13 +566,18 @@ const handleBrandChange = (e: any): void => {
 };
 
 // 处理价格输入
-const handlePriceInput = (field: 'originPrice' | 'price') => {
+const handlePriceInput = (field: "originPrice" | "price") => {
   const value = goodsInfo.value[field];
   // 限制两位小数
-  if (value && value.toString().includes('.')) {
-    const parts = value.toString().split('.');
+  if (value && value.toString().includes(".")) {
+    const parts = value.toString().split(".");
     if (parts[1] && parts[1].length > 2) {
-      goodsInfo.value[field] = Number(parts[0] + '.' + parts[1].substring(0, 2));
+      const newValue = Number(parts[0] + "." + parts[1].substring(0, 2));
+      const updated = {
+        ...goodsInfo.value,
+        [field]: newValue,
+      };
+      emit("update:goodsInfo", updated);
     }
   }
   delete errors.value[field];
@@ -573,8 +588,8 @@ const chooseMainImage = async () => {
   try {
     const res = await uni.chooseImage({
       count: 1,
-      sizeType: ['compressed'],
-      sourceType: ['album', 'camera'],
+      sizeType: ["compressed"],
+      sourceType: ["album", "camera"],
       success: async (chooseResult) => {
         if (chooseResult.tempFilePaths.length > 0) {
           const tempFilePath = chooseResult.tempFilePaths[0];
@@ -585,9 +600,9 @@ const chooseMainImage = async () => {
 
           if (fileSize > 5 * 1024 * 1024) {
             uni.showToast({
-              title: '图片大小不能超过5MB',
-              icon: 'none',
-              duration: 2000
+              title: "图片大小不能超过5MB",
+              icon: "none",
+              duration: 2000,
             });
             return;
           }
@@ -597,83 +612,89 @@ const chooseMainImage = async () => {
         }
       },
       fail: (err: any) => {
-        console.error('选择图片失败:', err);
-        if (err.errMsg.includes('cancel')) {
-          console.log('用户取消选择');
+        console.error("选择图片失败:", err);
+        if (err.errMsg.includes("cancel")) {
+          console.log("用户取消选择");
         }
-      }
+      },
     });
   } catch (error: any) {
-    console.error('选择图片出错:', error);
+    console.error("选择图片出错:", error);
   }
 };
 
 import FileAPI from "@/packageC/api/file/file";
 // 上传主图
 const uploadMainImage = async (tempFilePath: string) => {
-  uni.showLoading({ title: '上传中...' });
+  uni.showLoading({ title: "上传中..." });
 
   try {
-    console.log('📤 开始上传主图:', tempFilePath);
+    console.log("📤 开始上传主图:", tempFilePath);
 
     const uploadResult = await FileAPI.uploadUniFile({
       filePath: tempFilePath,
-      category: 'product',
-      type: 'main',
+      category: "product",
+      type: "main",
       fileName: `product_main_${Date.now()}.jpg`,
       onProgress: (percent) => {
         console.log(`📈 上传进度: ${percent}%`);
         // 可以在这里更新进度条
-      }
+      },
     });
 
-    console.log('✅ 上传成功，结果:', uploadResult);
+    console.log("✅ 上传成功，结果:", uploadResult);
 
     if (uploadResult.code === "00000" && uploadResult.data && uploadResult.data.url) {
+      // goodsInfo.value.picUrl = uploadResult.data.url;
+      //oodsInfo.value.picUrl = uploadResult.data.url;这里直接修改了 computed的值，同样不会触发响应式更新。
 
-        goodsInfo.value.picUrl = uploadResult.data.url;
+      const imageUrl = uploadResult.data.url;
 
+      // ✅ 使用 emit 更新，而不是直接赋值
+      const updated = {
+        ...goodsInfo.value,
+        picUrl: imageUrl,
+      };
+      emit("update:goodsInfo", updated);
 
-        // 移除错误
-        const newErrors = { ...errors.value };
-        delete newErrors.picUrl;
-        errors.value = newErrors;
+      // 移除错误
+      const newErrors = { ...errors.value };
+      delete newErrors.picUrl;
+      errors.value = newErrors;
 
-        uni.showToast({
-          title: '上传成功',
-          icon: 'success',
-          duration: 2000
-        });
+      uni.showToast({
+        title: "上传成功",
+        icon: "success",
+        duration: 2000,
+      });
 
-        return uploadResult.data.url;
+      return uploadResult.data.url;
     } else {
-      throw new Error('上传失败');
+      throw new Error("上传失败");
     }
   } catch (error: any) {
-    console.error('上传图片失败:', error);
-
+    console.error("上传图片失败:", error);
 
     // 处理特定错误
-    if (error.message.includes('401')) {
+    if (error.message.includes("401")) {
       uni.showModal({
-        title: '认证失败',
-        content: '请重新登录',
+        title: "认证失败",
+        content: "请重新登录",
         success: (res) => {
           if (res.confirm) {
-            uni.navigateTo({ url: '/packageA/pages/login/login' });
+            uni.navigateTo({ url: "/packageA/pages/login/login" });
           }
-        }
+        },
       });
     } else {
       uni.showToast({
-        title: error.message || '上传失败',
-        icon: 'error',
-        duration: 2000
+        title: error.message || "上传失败",
+        icon: "error",
+        duration: 2000,
       });
     }
 
     throw error;
-
   } finally {
     uni.hideLoading();
   }
@@ -684,9 +705,38 @@ const previewMainImage = () => {
   if (goodsInfo.value.picUrl) {
     uni.previewImage({
       current: goodsInfo.value.picUrl,
-      urls: [goodsInfo.value.picUrl]
+      urls: [goodsInfo.value.picUrl],
     });
   }
+};
+
+// 删除主图
+const removeMainImage = () => {
+  uni.showModal({
+    title: "提示",
+    content: "确定要删除主图吗？",
+    success: (res) => {
+      if (res.confirm) {
+        // 1. 创建一个新的对象
+        const updatedGoodsInfo = {
+          ...goodsInfo.value,
+          picUrl: "", // 清空主图URL
+        };
+
+        // 2. 通过 emit 更新
+        emit("update:goodsInfo", updatedGoodsInfo);
+
+        // 清除错误提示
+        delete errors.value.picUrl;
+
+        uni.showToast({
+          title: "已删除",
+          icon: "success",
+          duration: 1500,
+        });
+      }
+    },
+  });
 };
 
 // 选择轮播图
@@ -696,9 +746,9 @@ const chooseAlbumImages = async () => {
 
   if (maxCount <= 0) {
     uni.showToast({
-      title: '最多只能上传10张轮播图',
-      icon: 'none',
-      duration: 2000
+      title: "最多只能上传10张轮播图",
+      icon: "none",
+      duration: 2000,
     });
     return;
   }
@@ -706,8 +756,8 @@ const chooseAlbumImages = async () => {
   try {
     const res = await uni.chooseImage({
       count: maxCount,
-      sizeType: ['compressed'],
-      sourceType: ['album', 'camera'],
+      sizeType: ["compressed"],
+      sourceType: ["album", "camera"],
       success: async (chooseResult) => {
         if (chooseResult.tempFilePaths && chooseResult.tempFilePaths.length > 0) {
           // 验证每张图片大小
@@ -719,9 +769,9 @@ const chooseAlbumImages = async () => {
             const fileInfo = await uni.getFileInfo({ filePath: tempFilePath });
             if (fileInfo.size > 2 * 1024 * 1024) {
               uni.showToast({
-                title: '每张图片不能超过2MB',
-                icon: 'none',
-                duration: 2000
+                title: "每张图片不能超过2MB",
+                icon: "none",
+                duration: 2000,
               });
               return;
             }
@@ -732,32 +782,32 @@ const chooseAlbumImages = async () => {
         }
       },
       fail: (err) => {
-        console.error('选择轮播图失败:', err);
-      }
+        console.error("选择轮播图失败:", err);
+      },
     });
   } catch (error) {
-    console.error('选择轮播图出错:', error);
+    console.error("选择轮播图出错:", error);
   }
 };
 
 // 上传轮播图
 const uploadAlbumImages = async (tempFilePaths: string[]) => {
-  uni.showLoading({ title: '批量上传中...' });
+  uni.showLoading({ title: "批量上传中..." });
 
   try {
-    console.log('🖼️ 开始批量上传，数量:', tempFilePaths.length);
+    console.log("🖼️ 开始批量上传，数量:", tempFilePaths.length);
 
     const { successful, failed } = await FileAPI.uploadMultiple(tempFilePaths, {
-      category: 'product',
-      type: 'album',
+      category: "product",
+      type: "album",
       onProgress: (percent) => {
         console.log(`📈 整体进度: ${percent}%`);
-      }
+      },
     });
 
-    console.log('📊 上传统计:', {
+    console.log("📊 上传统计:", {
       成功: successful.length,
-      失败: failed.length
+      失败: failed.length,
     });
 
     if (successful.length > 0) {
@@ -765,31 +815,43 @@ const uploadAlbumImages = async (tempFilePaths: string[]) => {
         goodsInfo.value.album = [];
       }
       // 获取成功的 URL
-      const newUrls = successful.map(file => file.url);
-      goodsInfo.value.album = [...goodsInfo.value.album, ...newUrls];
+      const newUrls = successful.map((file) => file.url);
+
+      // 创建新的数组
+      const currentAlbum = goodsInfo.value.album || [];
+      const updatedAlbum = [...currentAlbum, ...newUrls];
+
+      // 创建更新对象
+      const updated = {
+        ...goodsInfo.value,
+        album: updatedAlbum,
+      };
+
+      // 触发emit更新
+      emit("update:goodsInfo", updated);
 
       let message = `成功上传 ${successful.length} 张图片`;
       if (failed.length > 0) {
         message += `，${failed.length} 张失败`;
 
         // 记录失败的图片
-        failed.forEach(item => {
+        failed.forEach((item) => {
           console.warn(`❌ 图片上传失败:`, item.file, item.error);
         });
       }
 
       uni.showToast({
         title: message,
-        icon: successful.length === tempFilePaths.length ? 'success' : 'none',
-        duration: 3000
+        icon: successful.length === tempFilePaths.length ? "success" : "none",
+        duration: 3000,
       });
     }
   } catch (error) {
-    console.error('上传轮播图失败:', error);
+    console.error("上传轮播图失败:", error);
     uni.showToast({
-      title: '上传失败，请重试',
-      icon: 'error',
-      duration: 2000
+      title: "上传失败，请重试",
+      icon: "error",
+      duration: 2000,
     });
   } finally {
     uni.hideLoading();
@@ -801,54 +863,103 @@ const previewAlbumImage = (index: number) => {
   if (goodsInfo.value.album && goodsInfo.value.album.length > index) {
     uni.previewImage({
       current: goodsInfo.value.album[index],
-      urls: goodsInfo.value.album
+      urls: goodsInfo.value.album,
     });
   }
 };
 
 // 删除轮播图
+//轮播图的删除也有同样的问题。因为 goodsInfo是 computed属性，直接修改数组不会触发响应式更新。
 const removeAlbumImage = (index: number) => {
   if (goodsInfo.value.album && goodsInfo.value.album.length > index) {
     uni.showModal({
-      title: '提示',
-      content: '确定要删除这张图片吗？',
+      title: "提示",
+      content: "确定要删除这张图片吗？",
       success: (res) => {
         if (res.confirm) {
-          goodsInfo.value.album.splice(index, 1);
-          goodsInfo.value.album = [...goodsInfo.value.album]; // 触发更新
+          // goodsInfo.value.album.splice(index, 1);
+          // goodsInfo.value.album = [...goodsInfo.value.album]; // 触发更新
+
+          // 1. 创建新的数组（不修改原数组）
+          const newAlbum = [...goodsInfo.value.album];
+          newAlbum.splice(index, 1);
+
+          // 2. 创建完整的更新对象
+          const updated = {
+            ...goodsInfo.value, // 复制所有属性
+            album: newAlbum, // 更新album数组
+          };
+
+          // 3. 触发emit更新
+          emit("update:goodsInfo", updated);
 
           uni.showToast({
-            title: '删除成功',
-            icon: 'success',
-            duration: 1500
+            title: "删除成功",
+            icon: "success",
+            duration: 1500,
           });
         }
-      }
+      },
     });
   }
 };
 
 // 处理商品简介输入
 const handleDescriptionInput = (e: any) => {
-  goodsInfo.value.description = e.detail.value;
+  // goodsInfo.value.description = e.detail.value;
+  updateGoodsField("description", e.detail.value);
 };
 
 // 处理商品详情输入
 const handleDetailInput = (e: any) => {
-  goodsInfo.value.detail = e.detail.value;
+  // goodsInfo.value.detail = e.detail.value;
+  updateGoodsField("detail", e.detail.value);
   delete errors.value.detail;
 };
 
+// 计算属性：格式化商品详情
+const formattedSpuDetail = computed(() => {
+  return formatRichText(goodsInfo.value.detail);
+});
+
 // 格式化价格
 const formatPrice = (price: number | string | undefined) => {
-  if (!price || isNaN(Number(price))) return '0.00';
+  if (!price || isNaN(Number(price))) return "0.00";
   return Number(price).toFixed(2);
+};
+
+const formatRichText = (html: string) => {
+  if (!html) return "";
+
+  return (
+    html
+      // 处理没有style属性的img标签
+      .replace(
+        /<img\b(?![^>]*style)([^>]*)>/gi,
+        '<img style="max-width: 100% !important; height: auto !important;" $1>'
+      )
+      // 处理有style属性的img标签
+      .replace(/<img\b([^>]*)style=["']([^"']*)["']([^>]*)>/gi, (match, before, style, after) => {
+        // 清理原有样式中的尺寸设置
+        const cleanedStyle = style
+          .replace(/(max-)?width\s*:\s*[^;]+;?\s*/gi, "")
+          .replace(/(max-)?height\s*:\s*[^;]+;?\s*/gi, "")
+          .trim();
+
+        return `<img${before}style="${cleanedStyle}; max-width: 100% !important; height: auto !important;"${after}>`;
+      })
+      // 移除内联的width/height属性
+      .replace(/\b(width|height)\s*=\s*["'][^"']*["']/gi, "")
+      // 清理多余的空格
+      .replace(/\s{2,}/g, " ")
+      .trim()
+  );
 };
 
 // 上一步
 const handlePrev = () => {
-  console.log('⬅️ 返回上一步');
-  emit('prev');
+  console.log("⬅️ 返回上一步");
+  emit("prev");
 };
 
 // 下一步
@@ -858,34 +969,37 @@ const handleNext = async () => {
 
     if (!isValid) {
       uni.showToast({
-        title: '请填写完整的商品信息',
-        icon: 'none',
-        duration: 2000
+        title: "请填写完整的商品信息",
+        icon: "none",
+        duration: 2000,
       });
       return;
     }
 
     // 额外的业务验证
-    if (goodsInfo.value.price && goodsInfo.value.originPrice &&
-      Number(goodsInfo.value.price) > Number(goodsInfo.value.originPrice)) {
+    if (
+      goodsInfo.value.price &&
+      goodsInfo.value.originPrice &&
+      Number(goodsInfo.value.price) > Number(goodsInfo.value.originPrice)
+    ) {
       uni.showToast({
-        title: '促销价不能高于零售价',
-        icon: 'none',
-        duration: 2000
+        title: "促销价不能高于零售价",
+        icon: "none",
+        duration: 2000,
       });
       return;
     }
 
-    console.log('✅ 表单验证通过');
-    console.log('商品信息:', goodsInfo.value);
+    console.log("✅ 表单验证通过");
+    console.log("商品信息:", goodsInfo.value);
 
-    emit('next');
+    emit("next");
   } catch (error) {
-    console.error('验证出错:', error);
+    console.error("验证出错:", error);
     uni.showToast({
-      title: '验证出错，请重试',
-      icon: 'error',
-      duration: 2000
+      title: "验证出错，请重试",
+      icon: "error",
+      duration: 2000,
     });
   }
 };
@@ -893,15 +1007,18 @@ const handleNext = async () => {
 // 计算滚动区域高度
 const calculateScrollHeight = () => {
   const query = uni.createSelectorQuery().in(this);
-  query.select('.component-container').boundingClientRect((data: any) => {
-    if (data) {
-      const windowHeight = systemInfo.windowHeight;
-      const containerTop = data.top;
-      const footerHeight = 120; // 底部按钮高度
+  query
+    .select(".component-container")
+    .boundingClientRect((data: any) => {
+      if (data) {
+        const windowHeight = systemInfo.windowHeight;
+        const containerTop = data.top;
+        const footerHeight = 120; // 底部按钮高度
 
-      scrollHeight.value = windowHeight - containerTop - footerHeight;
-    }
-  }).exec();
+        scrollHeight.value = windowHeight - containerTop - footerHeight;
+      }
+    })
+    .exec();
 };
 
 // 下拉刷新
@@ -913,28 +1030,37 @@ const onRefresh = () => {
 };
 
 // 监听价格变化
-watch(() => [goodsInfo.value.price, goodsInfo.value.originPrice], () => {
-  if (goodsInfo.value.price && goodsInfo.value.originPrice &&
-    Number(goodsInfo.value.price) > Number(goodsInfo.value.originPrice)) {
-    delete errors.value.price;
-  }
-});
-
-// 监听品牌ID变化
-watch(() => goodsInfo.value.brandId, (newBrandId) => {
-  if (newBrandId) {
-    const index = brandOptions.value.findIndex(brand => brand.id === newBrandId);
-    if (index >= 0) {
-      selectedBrandIndex.value = index;
+watch(
+  () => [goodsInfo.value.price, goodsInfo.value.originPrice],
+  () => {
+    if (
+      goodsInfo.value.price &&
+      goodsInfo.value.originPrice &&
+      Number(goodsInfo.value.price) > Number(goodsInfo.value.originPrice)
+    ) {
+      delete errors.value.price;
     }
   }
-});
+);
+
+// 监听品牌ID变化
+watch(
+  () => goodsInfo.value.brandId,
+  (newBrandId) => {
+    if (newBrandId) {
+      const index = brandOptions.value.findIndex((brand) => brand.id === newBrandId);
+      if (index >= 0) {
+        selectedBrandIndex.value = index;
+      }
+    }
+  }
+);
 
 // 生命周期
 //您的 GoodsInfo.vue是一个组件，不是页面，所以它没有 onLoad生命周期！
 onMounted(() => {
-  console.log('🏗️ GoodsInfo 组件 mounted 触发');
-  console.log('✅ GoodsInfo 组件确实加载了！');
+  console.log("🏗️ GoodsInfo 组件 mounted 触发");
+  console.log("✅ GoodsInfo 组件确实加载了！");
   loadBrandData();
 });
 
@@ -945,31 +1071,32 @@ onReady(() => {
 });
 
 onShow(() => {
-  console.log('🔆 GoodsInfo 组件显示');
+  console.log("🔆 GoodsInfo 组件显示");
   calculateScrollHeight();
 });
 
 onHide(() => {
-  console.log('🌙 GoodsInfo 组件隐藏');
+  console.log("🌙 GoodsInfo 组件隐藏");
 });
 
 onUnmounted(() => {
-  console.log('🗑️ GoodsInfo 组件卸载');
+  console.log("🗑️ GoodsInfo 组件卸载");
 });
 </script>
 
 <style lang="scss" scoped>
 .component-container {
   background-color: #f8f9fa;
-  overflow: hidden;
+  min-height: 100vh; /* 确保占满屏幕 */
+  /* 删除这行：overflow: hidden; ❌ 会导致内部滚动被裁剪 */
   box-sizing: border-box;
-  flex: 1; /* 占据剩余空间 */
+  /* 删除这行：flex: 1; ❌ 可能导致布局错乱 */
 
   /* 修改 padding-bottom 为按钮留出空间 */
   padding-bottom: 120rpx; /* 按钮高度 + 间距 */
 
   &__main {
-    padding: 20rpx 30rpx 120rpx;  /* 底部留出按钮空间 */
+    padding: 20rpx 30rpx 120rpx; /* 底部留出按钮空间 */
     box-sizing: border-box;
 
     .goods-form {
@@ -981,6 +1108,8 @@ onUnmounted(() => {
       .form-item {
         margin-bottom: 40rpx;
         position: relative;
+        /* 核心：确保是块级元素，子元素能正常排列 */
+        display: block !important; /* 只需添加这一行 */
 
         &:last-child {
           margin-bottom: 0;
@@ -993,32 +1122,30 @@ onUnmounted(() => {
         }
 
         .form-label {
-          /* 强制Flex布局，确保子元素横向排列 */
-          display: flex !important;  /* 确保是 Flex 布局 */
-          align-items: center;       /* 垂直居中对齐 */
-          flex-wrap: nowrap !important; /* 禁止换行 */
-          white-space: nowrap !important; /* 禁止文本换行 */
-          width: 100%;              /* 确保宽度完整 */
-          margin-bottom: 20rpx;     /* 保持间距 */
+          //background-color: red; /* 临时调试 */
+          display: flex;
+          align-items: center;
+          width: 100%;
+          margin-bottom: 20rpx;
+          white-space: nowrap; /* 关键：禁止文本换行 */
 
           .label-text {
             font-size: 32rpx;
             font-weight: 600;
             color: #303133;
-            /* 移除原margin-right: 8rpx（已被gap替代） */
+            flex-shrink: 0; /* 关键：防止被压缩 */
+            margin-right: 8rpx;
           }
 
           .required {
             color: #f56c6c;
             font-size: 28rpx;
-            line-height: 1;           /* 确保行高不影响对齐 */
-            display: inline-flex;     /* 让星号也参与Flex对齐 */
-            align-items: center;      /* 星号垂直居中 */
+            line-height: 1;
+            flex-shrink: 0; /* 关键：防止被压缩 */
           }
         }
 
         .form-control {
-
           /* 输入框 */
           .form-input {
             height: 64rpx;
@@ -1029,9 +1156,6 @@ onUnmounted(() => {
             border-radius: 8rpx;
             background-color: #fff;
           }
-
-
-
 
           .price-input,
           .description-textarea,
@@ -1148,7 +1272,7 @@ onUnmounted(() => {
           // 图片上传样式
           .image-upload-container {
             .main-image-preview {
-              position: relative;
+              position: relative; /* 🔴 必须：确保子元素绝对定位的参照物 */
               width: 200rpx;
               height: 200rpx;
               border-radius: 10rpx;
@@ -1158,6 +1282,29 @@ onUnmounted(() => {
               .main-image {
                 width: 100%;
                 height: 100%;
+              }
+
+              /* 🔴 添加删除按钮样式（和轮播图保持一致） */
+              .delete-btn {
+                position: absolute;
+                top: 5rpx; /* 距顶部5rpx */
+                right: 5rpx; /* 距右侧5rpx */
+                width: 30rpx;
+                height: 30rpx;
+                background-color: rgba(245, 108, 108, 0.9);
+                color: #ffffff;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 24rpx;
+                cursor: pointer;
+                z-index: 10; /* 确保在最上层 */
+
+                /* 添加点击效果 */
+                &:active {
+                  transform: scale(0.9);
+                }
               }
 
               .image-overlay {
@@ -1364,7 +1511,6 @@ onUnmounted(() => {
   font-size: 30rpx;
 }
 
-
 /* 底部按钮样式优化 */
 .component-container__footer {
   position: fixed; /* 页面级固定 */
@@ -1383,9 +1529,9 @@ onUnmounted(() => {
 
   button {
     flex: 1;
-    height: 80rpx;
-    line-height: 80rpx;
-    border-radius: 40rpx;
+    height: 70rpx; /* 从 80rpx 减小到 70rpx */
+    line-height: 70rpx; /* 与 height 保持一致 */
+    border-radius: 35rpx; /* 高度一半，保持圆角比例 */
     font-size: 30rpx;
     border: none;
 
@@ -1407,13 +1553,55 @@ onUnmounted(() => {
   }
 }
 
+/* ==========================================
+   2. 底部按钮栏 (独立出来，实现固定)
+   ========================================== */
+.action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100rpx; // 按钮区域高度
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 20rpx;
+  background-color: #ffffff;
+  border-top: 2rpx solid #f0f0f0;
+  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.03);
+  z-index: 999;
 
+  // 适配iPhone底部安全区
+  padding-bottom: calc(10rpx + env(safe-area-inset-bottom));
 
+  button {
+    height: 64rpx;
+    line-height: 64rpx;
+    border-radius: 32rpx;
+    font-size: 28rpx;
+    border: none;
+    font-weight: 500;
+    margin: 0;
 
+    &::after {
+      border: none;
+    }
 
+    &.btn-prev {
+      width: 300rpx;
+      background-color: #ffffff;
+      color: #409eff;
+      border: 2rpx solid #409eff;
+      margin-right: 20rpx;
+    }
 
-
-
+    &.btn-submit {
+      width: 300rpx;
+      background: linear-gradient(135deg, #409eff, #66b1ff);
+      color: #ffffff;
+    }
+  }
+}
 
 // 响应式设计
 @media (max-width: 768px) {
@@ -1443,15 +1631,11 @@ onUnmounted(() => {
             }
 
             .price-input-group {
-
               display: flex;
               align-items: center;
               border: 1rpx solid #dcdfe6;
               border-radius: 8rpx;
               overflow: hidden;
-
-
-
 
               .price-input {
                 flex: 1;
@@ -1521,6 +1705,42 @@ onUnmounted(() => {
           }
         }
       }
+    }
+  }
+}
+
+/* 商品详情区域 */
+.detail-desc {
+  background-color: #fff;
+  margin: 20rpx 30rpx;
+  padding: 20rpx 24rpx;
+  border-radius: 12rpx;
+
+  .d-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 80rpx;
+    font-size: 28rpx;
+    color: #333;
+    position: relative;
+
+    text {
+      padding: 0 20rpx;
+      background-color: #fff;
+      position: relative;
+      z-index: 1;
+    }
+
+    &::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translateX(-50%);
+      width: 300rpx;
+      height: 1px;
+      background-color: #ddd; /* 水平线 */
     }
   }
 }
