@@ -17,9 +17,7 @@
           <view v-if="selectedCategoryLabel" class="selected-category">
             {{ selectedCategoryLabel }}
           </view>
-          <view v-else class="picker-placeholder">
-            请选择商品分类
-          </view>
+          <view v-else class="picker-placeholder">请选择商品分类</view>
           <view class="picker-arrow">▼</view>
         </view>
       </picker>
@@ -28,11 +26,7 @@
       <view class="path-display" v-if="pathLabels.length > 0">
         <text class="path-label">您选择的商品分类:</text>
         <view class="path-items">
-          <text
-            v-for="(item, index) in pathLabels"
-            :key="index"
-            class="path-item"
-          >
+          <text v-for="(item, index) in pathLabels" :key="index" class="path-item">
             {{ item }}
             <text v-if="index < pathLabels.length - 1" class="separator">></text>
           </text>
@@ -70,12 +64,7 @@
           >
             <!-- 商品图片 -->
             <view class="goods-image-container">
-              <image
-                v-if="item.picUrl"
-                :src="item.picUrl"
-                mode="aspectFill"
-                class="goods-image"
-              />
+              <image v-if="item.picUrl" :src="item.picUrl" mode="aspectFill" class="goods-image" />
               <view v-else class="goods-image-placeholder">无图</view>
             </view>
 
@@ -127,11 +116,7 @@
 
         <!-- 空状态 -->
         <view v-else-if="!loadingGoods" class="empty-goods">
-          <image
-            src="/static/empty-goods.png"
-            class="empty-image"
-            mode="aspectFit"
-          />
+          <image src="/static/empty-goods.png" class="empty-image" mode="aspectFit" />
           <text class="empty-text">该分类下暂无商品</text>
           <button
             class="btn-empty-add"
@@ -170,12 +155,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
-import { onLoad, onShow, onHide, onReady } from '@dcloudio/uni-app';
+import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
+import { onLoad, onShow, onHide, onReady } from "@dcloudio/uni-app";
 
 // 导入API
-import PmsCategoryAPI from '@/packageC/api/aioveuMallPms/aioveuMallPmsCategory/pms-category';
-import PmsSpuAPI from '@/packageC/api/aioveuMallPms/aioveuMallPmsSpu/pms-spu';
+import PmsCategoryAPI from "@/packageC/api/aioveuMallPms/aioveuMallPmsCategory/pms-category";
+import PmsSpuAPI from "@/packageC/api/aioveuMallPms/aioveuMallPmsSpu/pms-spu";
 
 interface CategoryOptionData {
   id?: number;
@@ -185,12 +170,11 @@ interface CategoryOptionData {
   children?: CategoryOptionData[];
 }
 
-
 // 类型定义
 class CategoryOption {
   id?: number = undefined;
-  name: string = '';
-  label: string = '';
+  name: string = "";
+  label: string = "";
   value?: number = undefined;
   children: CategoryOptionData[] = [];
 
@@ -210,8 +194,8 @@ interface GoodsItemData {
 
 class GoodsItem {
   id?: number = undefined;
-  name: string = '';
-  picUrl: string = '';
+  name: string = "";
+  picUrl: string = "";
   price: number = 0;
   stock: number = 0;
   status: number = 0;
@@ -242,19 +226,19 @@ interface GoodsInfoData {
 class GoodsInfo {
   id?: number = undefined;
   categoryId?: number = undefined;
-  name: string = '';
-  picUrl: string = '';
+  name: string = "";
+  picUrl: string = "";
   price?: number = undefined;
   originPrice?: number = undefined;
   album: any[] = [];
-  detail: string = '';
+  detail: string = "";
   attrList: any[] = [];
   specList: any[] = [];
   skuList: any[] = [];
   sales: number = 0;
   stock: number = 0;
-  categoryName: string = '';
-  brandName: string = '';
+  categoryName: string = "";
+  brandName: string = "";
 
   constructor(data: Partial<GoodsInfoData> = {}) {
     Object.assign(this, data);
@@ -268,47 +252,43 @@ interface Props {
 
 // 使用内联对象字面量
 const props = withDefaults(defineProps<Props>(), {
-  goodsInfo: () => ({
-    id: undefined,
-    categoryId: undefined,
-    name: '',
-    picUrl: '',
-    price: undefined,
-    originPrice: undefined,
-    album: [],
-    detail: '',
-    attrList: [],
-    specList: [],
-    skuList: [],
-    sales: 0,
-    stock: 0,
-    categoryName: '',
-    brandName: '',
-  } as GoodsInfoData)
-
+  goodsInfo: () =>
+    ({
+      id: undefined,
+      categoryId: undefined,
+      name: "",
+      picUrl: "",
+      price: undefined,
+      originPrice: undefined,
+      album: [],
+      detail: "",
+      attrList: [],
+      specList: [],
+      skuList: [],
+      sales: 0,
+      stock: 0,
+      categoryName: "",
+      brandName: "",
+    }) as GoodsInfoData,
 });
-
 
 // 修改这里 ↑↑↑
 
-
-
 const emit = defineEmits<{
-  (e: 'next'): void; // 下一步事件
-  (e: 'update:goodsInfo', value: GoodsInfoData): void; // 更新商品信息
-  (e: 'edit-goods', goodsId: number): void; // 编辑商品事件
+  (e: "next"): void; // 下一步事件
+  (e: "update:goodsInfo", value: GoodsInfoData): void; // 更新商品信息
+  (e: "edit-goods", goodsId: number): void; // 编辑商品事件
 }>();
 
-
 // 响应式数据
-const categoryOptions = ref<CategoryOptionData[]>([]);           // 原始分类数据
-const multiOptions = ref<CategoryOptionData[][]>([[], [], []]);  // 多列选择器数据
-const multiIndex = ref<number[]>([0, 0, 0]);                     // 多列选择器索引
-const pathLabels = ref<string[]>([]);                           // 分类路径标签
-const goodsList = ref<GoodsItemData[]>([]);                     // 商品列表
-const loadingGoods = ref<boolean>(false);                       // 商品加载状态
-const selectedThirdLevelName = ref<string>('');                 // 三级分类名称
-const listHeight = ref<number>(400);                            // 列表高度
+const categoryOptions = ref<CategoryOptionData[]>([]); // 原始分类数据
+const multiOptions = ref<CategoryOptionData[][]>([[], [], []]); // 多列选择器数据
+const multiIndex = ref<number[]>([0, 0, 0]); // 多列选择器索引
+const pathLabels = ref<string[]>([]); // 分类路径标签
+const goodsList = ref<GoodsItemData[]>([]); // 商品列表
+const loadingGoods = ref<boolean>(false); // 商品加载状态
+const selectedThirdLevelName = ref<string>(""); // 三级分类名称
+const listHeight = ref<number>(400); // 列表高度
 
 // 系统信息
 const systemInfo = uni.getSystemInfoSync();
@@ -327,11 +307,10 @@ const goodsInfo = computed({
     } else {
       return new GoodsInfo();
     }
-
   },
   set: (value: GoodsInfoData) => {
-    emit('update:goodsInfo', value);
-  }
+    emit("update:goodsInfo", value);
+  },
 });
 
 const showProductSection = computed((): boolean => {
@@ -339,24 +318,23 @@ const showProductSection = computed((): boolean => {
 });
 
 const selectedCategoryLabel = computed((): string => {
-  if (pathLabels.value.length === 0) return '';
-  return pathLabels.value.join(' / ');
+  if (pathLabels.value.length === 0) return "";
+  return pathLabels.value.join(" / ");
 });
 
 // 初始化分类数据
 const loadCategoryData = async () => {
   try {
-    console.log('📦 开始加载商品分类数据');
-
+    console.log("📦 开始加载商品分类数据");
 
     const response = await PmsCategoryAPI.getCategoryOptions();
 
-    console.log('📦 原始API响应:', response);
-    console.log('📦 响应类型:', typeof response);
-    console.log('📦 是否是数组:', Array.isArray(response));
-    console.log('📦 响应字符串:', JSON.stringify(response));
+    console.log("📦 原始API响应:", response);
+    console.log("📦 响应类型:", typeof response);
+    console.log("📦 是否是数组:", Array.isArray(response));
+    console.log("📦 响应字符串:", JSON.stringify(response));
 
-    console.log('📦 开始加载商品分类数据：{}',response);
+    console.log("📦 开始加载商品分类数据：{}", response);
 
     let data: any[] = [];
     // if (response.statusCode === 200 && response.data) {
@@ -373,48 +351,54 @@ const loadCategoryData = async () => {
     if (data && data.length > 0) {
       // 转换数据格式
       //数据结构显示三级分类有 value属性但没有 id属性
-      const options = data.map(item => new CategoryOption({
-        id: item.value,      // 使用 value 作为 id
-        name: item.label,    // 使用 label 作为 name
-        label: item.label,   // label 保持不变
-        value: item.value,   // value 保持不变
-        children: item.children || []
-      }));
+      const options = data.map(
+        (item) =>
+          new CategoryOption({
+            id: item.value, // 使用 value 作为 id
+            name: item.label, // 使用 label 作为 name
+            label: item.label, // label 保持不变
+            value: item.value, // value 保持不变
+            children: item.children || [],
+          })
+      );
 
-      console.log('✅ 转换数据格式:{}', options);
-
+      console.log("✅ 转换数据格式:{}", options);
 
       categoryOptions.value = options;
       updateMultiOptions(options);
-      console.log('✅ 商品分类数据加载完成，共', options.length, '个一级分类');
+      console.log("✅ 商品分类数据加载完成，共", options.length, "个一级分类");
     } else {
-      console.warn('⚠️ 商品分类数据为空或格式错误');
+      console.warn("⚠️ 商品分类数据为空或格式错误");
       uni.showToast({
-        title: '暂无商品分类数据',
-        icon: 'none',
-        duration: 2000
+        title: "暂无商品分类数据",
+        icon: "none",
+        duration: 2000,
       });
     }
   } catch (error: any) {
-    console.error('❌ 加载商品分类数据失败:', error);
+    console.error("❌ 加载商品分类数据失败:", error);
     uni.showToast({
-      title: '加载商品分类失败',
-      icon: 'error',
-      duration: 2000
+      title: "加载商品分类失败",
+      icon: "error",
+      duration: 2000,
     });
   }
 };
 
 // 更新多列选择器数据
-const updateMultiOptions = (options: CategoryOptionData[], level = 0, selectedIndices = [0, 0, 0]): void => {
+const updateMultiOptions = (
+  options: CategoryOptionData[],
+  level = 0,
+  selectedIndices = [0, 0, 0]
+): void => {
   if (level === 0) {
     // 第一列：一级分类
-    multiOptions.value[0] = options.map(opt => ({ ...opt }));
+    multiOptions.value[0] = options.map((opt) => ({ ...opt }));
 
     // 第二列：二级分类
     const firstIndex = selectedIndices[0];
     if (options[firstIndex]?.children) {
-      multiOptions.value[1] = options[firstIndex].children!.map(child => ({ ...child }));
+      multiOptions.value[1] = options[firstIndex].children!.map((child) => ({ ...child }));
     } else {
       multiOptions.value[1] = [];
     }
@@ -422,7 +406,9 @@ const updateMultiOptions = (options: CategoryOptionData[], level = 0, selectedIn
     // 第三列：三级分类
     const secondIndex = selectedIndices[1];
     if (multiOptions.value[1][secondIndex]?.children) {
-      multiOptions.value[2] = multiOptions.value[1][secondIndex].children!.map(child => ({ ...child }));
+      multiOptions.value[2] = multiOptions.value[1][secondIndex].children!.map((child) => ({
+        ...child,
+      }));
     } else {
       multiOptions.value[2] = [];
     }
@@ -456,13 +442,12 @@ const handlePickerChange = async (e: any) => {
   const secondOption = multiOptions.value[1][value[1]];
   const thirdOption = multiOptions.value[2][value[2]];
 
-  console.log('🔍 选中的分类选项:', {
+  console.log("🔍 选中的分类选项:", {
     firstOption: firstOption?.label,
     secondOption: secondOption?.label,
     thirdOption: thirdOption?.label,
-    hasThirdOption: !!thirdOption
+    hasThirdOption: !!thirdOption,
   });
-
 
   if (!firstOption) return;
 
@@ -473,45 +458,42 @@ const handlePickerChange = async (e: any) => {
 
   pathLabels.value = labels;
 
-  console.log('🔍 路径标签:', labels);
-  console.log('🔍 标签长度:', labels.length);
-
+  console.log("🔍 路径标签:", labels);
+  console.log("🔍 标签长度:", labels.length);
 
   // ✅ 修改：只有选择三级分类时才设置 categoryId
   // ✅ 修改：三级分类使用 value 作为 id
   if (labels.length === 3 && thirdOption && thirdOption.value) {
-    const selectedCategoryId = thirdOption.value;   // 使用 value
+    const selectedCategoryId = thirdOption.value; // 使用 value
     selectedThirdLevelName.value = thirdOption.label;
 
     // 更新商品信息
     goodsInfo.value.categoryId = selectedCategoryId;
     goodsInfo.value.id = undefined; // 重置商品ID（新增模式）
 
-    console.log('✅ 确认是三级分类，ID:', selectedCategoryId);
-    console.log('✅ 设置 goodsInfo.categoryId:', goodsInfo.value.categoryId);
-    console.log('✅ 分类名称:', selectedThirdLevelName.value);
+    console.log("✅ 确认是三级分类，ID:", selectedCategoryId);
+    console.log("✅ 设置 goodsInfo.categoryId:", goodsInfo.value.categoryId);
+    console.log("✅ 分类名称:", selectedThirdLevelName.value);
 
     // 加载三级分类下的商品
-    console.log('🔍 开始加载商品列表...');
+    console.log("🔍 开始加载商品列表...");
     await loadGoodsByCategory(selectedCategoryId);
-
   } else {
     // 选择了一级或二级分类
-    console.log('⚠️ 不是三级分类:', {
+    console.log("⚠️ 不是三级分类:", {
       labelsLength: labels.length,
       hasThirdOption: !!thirdOption,
-      thirdOptionId: thirdOption?.id
+      thirdOptionId: thirdOption?.id,
     });
 
     // ✅ 重要：清空 categoryId，让用户知道需要选择三级分类
     goodsInfo.value.categoryId = undefined;
     goodsInfo.value.id = undefined;
-    selectedThirdLevelName.value = '';
+    selectedThirdLevelName.value = "";
 
     // 清空商品列表
     goodsList.value = [];
   }
-
 };
 
 // 加载分类下的商品
@@ -519,45 +501,43 @@ const loadGoodsByCategory = async (categoryId: number) => {
   try {
     loadingGoods.value = true;
 
+    const response = await PmsSpuAPI.getPage({
+      categoryId,
+      pageNum: 1,
+      pageSize: 10,
+    });
 
-    const response = await PmsSpuAPI.getPage(
-      {
-        categoryId,
-        pageNum: 1,
-        pageSize: 10,
-      }
-
-    );
-
-    console.log('📝 加载分类下的商品：',response);
-
+    console.log("📝 加载分类下的商品：", response);
 
     if (response) {
       const resData = response;
       if (resData && Array.isArray(resData.list)) {
-        goodsList.value = resData.list.map(item => new GoodsItem({
-          id: item.id,
-          name: item.name || '未命名商品',
-          picUrl: item.picUrl,
-          price: item.price || 0,
-          stock: item.stock || 0,
-          status: item.status || 0
-        }));
+        goodsList.value = resData.list.map(
+          (item) =>
+            new GoodsItem({
+              id: item.id,
+              name: item.name || "未命名商品",
+              picUrl: item.picUrl,
+              price: item.price || 0,
+              stock: item.stock || 0,
+              status: item.status || 0,
+            })
+        );
 
         console.log(`✅ 加载到 ${goodsList.value.length} 个商品`);
       } else {
         goodsList.value = [];
-        console.log('📝 该分类下暂无商品');
+        console.log("📝 该分类下暂无商品");
       }
     } else {
       goodsList.value = [];
     }
   } catch (error) {
-    console.error('❌ 加载商品列表失败:', error);
+    console.error("❌ 加载商品列表失败:", error);
     uni.showToast({
-      title: '加载商品列表失败',
-      icon: 'error',
-      duration: 2000
+      title: "加载商品列表失败",
+      icon: "error",
+      duration: 2000,
     });
     goodsList.value = [];
   } finally {
@@ -567,34 +547,34 @@ const loadGoodsByCategory = async (categoryId: number) => {
 
 // 查看商品
 const handleViewGoods = (goods: GoodsItemData) => {
-  console.log('👀 查看商品:', goods);
+  console.log("👀 查看商品:", goods);
   uni.navigateTo({
-    url: `/pages/goods/detail?id=${goods.id}&mode=view`
+    url: `/pages/goods/detail?id=${goods.id}&mode=view`,
   });
 };
 
 // 编辑商品
 const handleEditGoods = (goods: GoodsItemData) => {
-  console.log('✏️ 编辑商品:', goods);
+  console.log("✏️ 编辑商品:", goods);
 
   // 设置商品ID
   goodsInfo.value.id = goods.id;
 
   // 触发编辑商品事件
-  emit('edit-goods', goods.id || 0);
+  emit("edit-goods", goods.id || 0);
 
   // 不在这里跳转，由父组件控制步骤切换
 };
 
 // 新增商品 // 确保是三级分类
 const handleAddGoods = () => {
-  console.log('➕ 新增商品');
+  console.log("➕ 新增商品");
 
   if (pathLabels.value.length !== 3 || !goodsInfo.value.categoryId) {
     uni.showToast({
-      title: '请先选择完整的三级分类',
-      icon: 'none',
-      duration: 2000
+      title: "请先选择完整的三级分类",
+      icon: "none",
+      duration: 2000,
     });
     return;
   }
@@ -602,22 +582,21 @@ const handleAddGoods = () => {
   // 确保是新增模式
   goodsInfo.value.id = undefined;
 
-  console.log('✅ 在三级分类下新增商品，分类ID:', goodsInfo.value.categoryId);
-  console.log('✅ 分类名称:', selectedThirdLevelName.value);
+  console.log("✅ 在三级分类下新增商品，分类ID:", goodsInfo.value.categoryId);
+  console.log("✅ 分类名称:", selectedThirdLevelName.value);
 
   // 触发下一步
-  emit('next');
+  emit("next");
 };
 
 // 下一步
 const handleNext = () => {
-
   // 确保是三级分类
   if (pathLabels.value.length !== 3 || !goodsInfo.value.categoryId) {
     uni.showToast({
-      title: '请先选择完整的三级分类',
-      icon: 'none',
-      duration: 2000
+      title: "请先选择完整的三级分类",
+      icon: "none",
+      duration: 2000,
     });
     return;
   }
@@ -627,56 +606,67 @@ const handleNext = () => {
     const categoryId = goodsInfo.value.categoryId;
     goodsInfo.value = {
       id: undefined,
-      name: '',
+      name: "",
       categoryId: categoryId,
-      picUrl: '',
+      picUrl: "",
       price: undefined,
       originPrice: undefined,
       album: [],
-      detail: '',
+      detail: "",
       attrList: [],
       specList: [],
       skuList: [],
       sales: 0,
       stock: 0,
-      categoryName: '',
-      brandName: '',
+      categoryName: "",
+      brandName: "",
     };
   }
 
-  console.log('➡️ 进入下一步，三级分类ID,模式:', goodsInfo.value.id ? '编辑' : '新增');
-  console.log('➡️ 已选分类ID:', goodsInfo.value.categoryId);
+  console.log("➡️ 进入下一步，三级分类ID,模式:", goodsInfo.value.id ? "编辑" : "新增");
+  console.log("➡️ 已选分类ID:", goodsInfo.value.categoryId);
 
-  emit('next');
+  emit("next");
 };
 
 // 格式化价格
 const formatPrice = (price: number) => {
-  if (!price) return '0.00';
+  if (!price) return "0.00";
   return (price / 100).toFixed(2);
 };
 
 // 计算列表高度
 const calculateListHeight = () => {
-  const query = uni.createSelectorQuery().in(this);
-  query.select('.component-container').boundingClientRect((data: any) => {
-    if (data) {
-      const windowHeight = systemInfo.windowHeight;
-      const containerTop = data.top;
-      const pickerHeight = 120; // 选择器区域高度
-      const pathHeight = 80;   // 路径显示高度
-      const headerHeight = 100; // 标题区域高度
-      const footerHeight = 120; // 底部按钮高度
+  // const query = uni.createSelectorQuery().in(this);
+  const query = uni.createSelectorQuery();
 
-      listHeight.value = windowHeight - containerTop - pickerHeight - pathHeight
-        - headerHeight - footerHeight - 100;
-    }
-  }).exec();
+  query
+    .select(".component-container")
+    .boundingClientRect((data: any) => {
+      if (data) {
+        const windowHeight = systemInfo.windowHeight;
+        const containerTop = data.top;
+        const pickerHeight = 120; // 选择器区域高度
+        const pathHeight = 80; // 路径显示高度
+        const headerHeight = 100; // 标题区域高度
+        const footerHeight = 120; // 底部按钮高度
+
+        listHeight.value =
+          windowHeight -
+          containerTop -
+          pickerHeight -
+          pathHeight -
+          headerHeight -
+          footerHeight -
+          100;
+      }
+    })
+    .exec();
 };
 
 // 生命周期
 onMounted(async () => {
-  console.log('🔄 商品分类组件加载');
+  console.log("🔄 商品分类组件加载");
   await loadCategoryData();
 });
 
@@ -688,17 +678,17 @@ onReady(() => {
 });
 
 onShow(() => {
-  console.log('🔆 商品分类组件显示');
+  console.log("🔆 商品分类组件显示");
   // 重新计算高度
   calculateListHeight();
 });
 
 onHide(() => {
-  console.log('🌙 商品分类组件隐藏');
+  console.log("🌙 商品分类组件隐藏");
 });
 
 onUnmounted(() => {
-  console.log('🗑️ 商品分类组件卸载');
+  console.log("🗑️ 商品分类组件卸载");
 });
 </script>
 
