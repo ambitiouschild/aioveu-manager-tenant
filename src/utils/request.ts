@@ -290,20 +290,21 @@ export function request2<T>(options: UniApp.RequestOptions): Promise<ResponseDat
         if (resData.code === ResultCodeEnum.SUCCESS) {
           // resolve(resData.data);    // ❌ 这里只返回了 data
 
-          resolve(resData);    // ❌ 这里只返回了 data
+          resolve(resData); // ❌ 这里只返回了 data
           // 如果想返回完整响应：必须改函数签名
           // 如果不想改签名：只能返回 resData.data
           // 如果 data 是 null：问题会更复杂
-
         }
         // 令牌失效或过期处理
         else if (resData.code === ResultCodeEnum.TOKEN_INVALID) {
           console.log("令牌失效或过期处理");
-          clearAll();
-          // 跳转到登录页
-          uni.reLaunch({
-            url: "/packageA/pages/login/index",
-          });
+
+
+          setTimeout(() => {
+            handleTokenExpiredSync();
+          }, 0);
+
+
         } else {
           // 其他业务处理失败
           // uni.showToast({
