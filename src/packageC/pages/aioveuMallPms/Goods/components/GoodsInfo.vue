@@ -955,11 +955,128 @@ const formatRichText = (html: string) => {
       .trim()
   );
 };
+//========================================================
 
+// GoodsInfo.vue
+// 存储原始数据
+const originalGoodsInfo = ref(null);
+
+onMounted(() => {
+  // 保存原始数据（深拷贝）
+  originalGoodsInfo.value = JSON.parse(JSON.stringify(goodsInfo.value));
+  console.log("📝 保存原始商品信息:", originalGoodsInfo);
+});
+
+// 检查是否有修改
+const checkGoodsInfoChanges = () => {
+  if (!originalGoodsInfo) return false;
+
+  const current = goodsInfo.value;
+  const original = originalGoodsInfo;
+
+  // 使用JSON.stringify简单对比
+  const hasChanges = JSON.stringify(current) !== JSON.stringify(original);
+
+  if (hasChanges) {
+    console.log("🔄 商品信息有修改");
+  }
+
+  return hasChanges;
+};
+//=========================================================
+
+// GoodsInfo.vue
+import { saveDraft, loadDraft, clearDraft } from "@/utils/draftStorage";
+
+// 保存草稿
+const saveDraftToLocal = () => {
+  const goodsId = goodsInfo.value.id;
+  if (!goodsId) {
+    console.log("新增商品，GoodsInfo不保存草稿");
+    return;
+  }
+
+  saveDraft(goodsId, goodsInfo.value);
+};
+
+// 检查草稿
+onMounted(() => {
+  const goodsId = goodsInfo.value.id;
+  if (!goodsId) return;
+
+  const draftData = loadDraft(goodsId, false); // 先不删除
+
+  if (draftData) {
+    uni.showModal({
+      title: "检测到未保存的草稿",
+      content: "是否恢复商品基本信息的编辑内容？",
+      success: (res) => {
+        if (res.confirm) {
+          // 恢复草稿数据
+          Object.keys(draftData).forEach((key) => {
+            if (key in goodsInfo.value) {
+              goodsInfo.value[key] = draftData[key];
+            }
+          });
+          console.log(`✅ GoodsInfo草稿已恢复: ${goodsId}`);
+        }
+        // 无论是否恢复，都清除草稿
+        clearDraft(goodsId);
+      },
+    });
+  }
+});
+
+//=========================================================
+
+//=========================================================
 // 上一步
+// GoodsInfo.vue
 const handlePrev = () => {
-  console.log("⬅️ 返回上一步");
-  emit("prev");
+  if (!checkGoodsInfoChanges()) {
+    emit("prev");
+    return;
+  }
+
+  const goodsId = goodsInfo.value.id;
+  const isEditMode = !!goodsId;
+
+  if (!isEditMode) {
+    // 新增模式：直接提示
+    uni.showModal({
+      title: "提示",
+      content: "商品信息有未保存的修改，返回将丢失。是否继续？",
+      success: (res) => {
+        if (res.confirm) {
+          emit("prev");
+        }
+      },
+    });
+    return;
+  }
+
+  // 编辑模式：提供草稿选项
+  uni.showActionSheet({
+    title: "有未保存的修改",
+    itemList: ["💾 保存草稿并离开", "🗑️ 放弃修改并离开", "✏️ 继续编辑"],
+    success: (res) => {
+      switch (res.tapIndex) {
+        case 0: // 保存草稿
+          saveDraftToLocal();
+          uni.showToast({ title: "草稿已保存", icon: "success" });
+          setTimeout(() => emit("prev"), 1500);
+          break;
+
+        case 1: // 放弃修改
+          emit("prev");
+          break;
+
+        case 2: // 继续编辑
+          // 什么都不做
+          break;
+      }
+    },
+  });
 };
 
 // 下一步

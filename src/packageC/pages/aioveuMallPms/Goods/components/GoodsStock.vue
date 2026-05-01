@@ -1456,13 +1456,111 @@ const validateAllSkus = () => {
   return isValid;
 };
 
+//==================================================
+// GoodsStock.vue
+// GoodsStock.vue
+import { saveDraft, loadDraft, clearDraft } from "@/utils/draftStorage";
+
+const goodsId = goodsInfo.value.id;
+
+// 保存草稿
+const saveDraftToLocal = () => {
+  if (!goodsId.value) return;
+  saveDraft(goodsId.value, {
+    specForm: specForm.value,
+    skuForm: skuForm.value,
+  });
+};
+
+// 加载时检查草稿
+onMounted(() => {
+  if (!goodsId.value) return;
+
+  const draftData = loadDraft(goodsId.value, false); // 先不删除
+
+  if (draftData) {
+    uni.showModal({
+      title: "检测到未保存的编辑",
+      content: "是否恢复之前的编辑内容？",
+      success: (res) => {
+        if (res.confirm) {
+          specForm.value = draftData.specForm;
+          skuForm.value = draftData.skuForm;
+          console.log(`✅ 草稿已恢复: ${goodsId.value}`);
+        }
+        // 无论是否恢复，都清除
+        clearDraft(goodsId.value);
+      },
+    });
+  }
+});
+//==================================================
+
+//==================================================
+//checkStockChanges需要比较当前编辑的数据和原始数据
+//🎯 方案一：简单对比（推荐）
+// GoodsStock.vue
+// 存储原始数据
+const originalSpecForm = ref(null);
+const originalSkuForm = ref(null);
+
+// 加载时保存原始数据
+onMounted(() => {
+  // 深拷贝保存原始状态
+  originalSpecForm.value = JSON.parse(JSON.stringify(specForm.value));
+  originalSkuForm.value = JSON.parse(JSON.stringify(skuForm.value));
+});
+
+// 检查是否有修改
+const checkStockChanges = () => {
+  // 1. 比较规格
+  const specChanged = !isEqual(specForm.value, originalSpecForm.value);
+
+  // 2. 比较SKU
+  const skuChanged = !isEqual(skuForm.value, originalSkuForm.value);
+
+  console.log("🔍 变化检查:", { specChanged, skuChanged });
+  return specChanged || skuChanged;
+};
+
+// 简单的深比较函数
+const isEqual = (obj1: any, obj2: any) => {
+  return JSON.stringify(obj1) === JSON.stringify(obj2);
+};
+//==================================================
 // 上一步
+// GoodsStock.vue
 const handlePrev = () => {
-  console.log("⬅️ 返回上一步");
-  emit("prev");
+  if (!checkStockChanges()) {
+    emit("prev");
+    return;
+  }
+
+  uni.showActionSheet({
+    title: "有未保存的修改",
+    itemList: ["💾 保存草稿并离开", "🗑️ 放弃修改并离开", "✏️ 继续编辑"],
+    success: (res) => {
+      switch (res.tapIndex) {
+        case 0: // 保存草稿
+          saveDraftToLocal();
+          uni.showToast({ title: "草稿已保存", icon: "success" });
+          setTimeout(() => emit("prev"), 1500);
+          break;
+
+        case 1: // 放弃修改
+          emit("prev");
+          break;
+
+        case 2: // 继续编辑
+          // 什么都不做
+          break;
+      }
+    },
+  });
 };
 
 // 提交表单
+// 提交成功时清除草稿
 const handleSubmit = async () => {
   try {
     console.log("📤 开始提交表单");
@@ -1624,6 +1722,11 @@ const handleSubmit = async () => {
 
       emit("update:goodsInfo", resetInfo);
       emit("submit-success", goodsInfo.value.categoryId);
+
+      // 提交成功后清除草稿
+      if (goodsId.value) {
+        clearDraft(goodsId.value);
+      }
     } else {
       throw new Error(result.data?.msg || "提交失败");
     }
