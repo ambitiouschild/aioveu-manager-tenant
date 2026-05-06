@@ -156,7 +156,7 @@
     >
       <!-- 列表为空 -->
       <view v-if="!loading && orderList.length === 0" class="empty-order">
-        <image src="/static/business/empty-order.png" class="empty-image" mode="aspectFit" />
+        <image src="/static/images/order/empty-order.png" class="empty-image" mode="aspectFit" />
         <text class="empty-text">暂无订单</text>
         <text class="empty-tip">当前筛选条件下没有找到订单</text>
       </view>
@@ -166,42 +166,42 @@
         v-for="order in orderList"
         :key="order.id"
         class="order-card"
-        @click="viewOrderDetail(order.id)"
+        @click="viewOrderDetail(order.orderSn)"
       >
         <!-- 订单头部 -->
         <view class="order-header">
           <view class="order-info">
-            <text class="order-no">订单号: {{ order.orderNo }}</text>
+            <text class="order-no">订单号: {{ order.orderSn }}</text>
             <text class="order-time">{{ formatDateTime(order.createTime) }}</text>
           </view>
           <view class="order-status">
             <view class="status-badge" :class="getStatusClass(order.status)">
               {{ getStatusText(order.status) }}
             </view>
-            <text class="order-amount">¥{{ formatMoney(order.actualAmount) }}</text>
+            <text class="order-amount">¥{{ formatMoney(order.totalAmount) }}</text>
           </view>
         </view>
 
         <!-- 商品信息 -->
         <view class="goods-section">
-          <scroll-view scroll-x class="goods-scroll" v-if="order.items.length > 1">
-            <view v-for="(item, index) in order.items" :key="index" class="goods-item-scroll">
-              <image :src="item.image" class="goods-image-small" mode="aspectFill" />
+          <scroll-view scroll-x class="goods-scroll" v-if="order.orderItems.length > 1">
+            <view v-for="(item, index) in order.orderItems" :key="index" class="goods-item-scroll">
+              <image :src="item.picUrl" class="goods-image-small" mode="aspectFill" />
             </view>
           </scroll-view>
           <view v-else class="goods-single">
-            <image :src="order.items[0].image" class="goods-image" mode="aspectFill" />
+            <image :src="order.orderItems[0].picUrl" class="goods-image" mode="aspectFill" />
             <view class="goods-info">
-              <text class="goods-name">{{ order.items[0].name }}</text>
-              <text class="goods-spec">{{ order.items[0].spec || "默认规格" }}</text>
+              <text class="goods-name">{{ order.orderItems[0].spuName }}</text>
+              <text class="goods-spec">{{ order.orderItems[0].skuName || "默认规格" }}</text>
               <view class="goods-price">
-                <text>¥{{ formatMoney(order.items[0].price) }}</text>
-                <text class="goods-quantity">×{{ order.items[0].quantity }}</text>
+                <text>¥{{ formatMoney(order.orderItems[0].price) }}</text>
+                <text class="goods-quantity">×{{ order.orderItems[0].quantity }}</text>
               </view>
             </view>
           </view>
 
-          <view v-if="order.items.length > 1" class="goods-count">
+          <view v-if="order.orderItems.length > 1" class="goods-count">
             共{{ order.totalQuantity }}件商品
           </view>
         </view>
@@ -210,11 +210,11 @@
         <view class="order-details">
           <view class="detail-row">
             <text class="detail-label">收货人:</text>
-            <text class="detail-value">{{ order.receiver.name }} {{ order.receiver.phone }}</text>
+            <text class="detail-value">{{ order.receiverName }} {{ order.receiverPhone }}</text>
           </view>
           <view class="detail-row">
             <text class="detail-label">收货地址:</text>
-            <text class="detail-value address">{{ order.receiver.address }}</text>
+            <text class="detail-value address">{{ order.fullAddress }}</text>
           </view>
           <view class="detail-row" v-if="order.remark">
             <text class="detail-label">买家留言:</text>
@@ -227,7 +227,7 @@
           <button
             v-if="showActionButton(order, 'view')"
             class="btn-view"
-            @click.stop="viewOrderDetail(order.id)"
+            @click.stop="viewOrderDetail(order.orderSn)"
           >
             查看详情
           </button>
@@ -355,19 +355,20 @@ import {
   cancelOrder as cancelOrderApi,
   deleteOrder as deleteOrderApi,
   listOrdersWithPage,
+  getOrderStatistics,
   // 导入退款相关的API
   applyRefund as applyRefundApi,
   getRefundDetail,
 } from "@/packageD/api/oms/order";
-
+import { OrderItemVO, OrderVO } from "@/packageD/types/oms/order";
 // 系统信息
 const systemInfo = uni.getSystemInfoSync();
 
 // 响应式数据
-const todayOrders = ref(0);
-const pendingOrders = ref(0);
-const todayIncome = ref(0);
-const orderList = ref([]);
+const todayOrders = ref(0); //今日订单
+const pendingOrders = ref(0); //待处理
+const todayIncome = ref(0); //今日总收入
+const orderList = ref<OrderVO[]>([]); //订单列表
 const loading = ref(false);
 const hasMore = ref(true);
 const pageNum = ref(1);
@@ -386,7 +387,7 @@ const selectedOrders = ref(new Set());
 
 // 发货表单
 const shipForm = ref({
-  orderIds: [],
+  orderIds: [] as number[], // 使用类型断言
   logisticsCompany: "",
   trackingNo: "",
   remark: "",
@@ -398,8 +399,8 @@ const currentLogisticsCompany = ref("");
 // 高级筛选
 const advancedFilter = ref({
   source: "",
-  minAmount: "",
-  maxAmount: "",
+  minAmount: "",  //订单金额
+  maxAmount: "",  //订单金额
   keyword: "",
 });
 
@@ -453,7 +454,8 @@ const loadOrders = async (reset = false) => {
   if (reset) {
     pageNum.value = 1;
     hasMore.value = true;
-    orderList.value = [];
+    orderList.value = []; // 重置时清空数组
+    console.log("重置后，订单列表设置为新数据，长度为：", orderList.value.length);
   }
 
   if (!hasMore.value) return;
@@ -470,25 +472,64 @@ const loadOrders = async (reset = false) => {
       ...advancedFilter.value,
     };
 
+    console.log("订单列表参数:", params);
+
     // 调用API
     const response = await listOrdersWithPage(params);
 
     console.log("订单列表响应:", response);
 
-    if (response.code === 0) {
-      const data = response.data;
+    if (response.code === "00000") {
+      const data = response.data as { list: OrderVO[]; total: number };
+
+      // 使用可选链确保安全
+      // 现在 TypeScript 知道 data.list 是 OrderVO[] 类型
+      const newList = data?.list || [];
+      const total = data?.total || 0;
 
       if (reset) {
         orderList.value = data.list || [];
+
+        // 访问 order 对象的属性时有完整类型提示
+        orderList.value.forEach((order) => {
+          console.log(`订单 ${order.orderSn}:`);
+          console.log(`- 状态: ${order.status} (${order.statusLabel})`);
+          console.log(`- 金额: ${order.totalAmount / 100} 元`);
+          console.log(`- 商品数: ${order.totalQuantity}`);
+          console.log(`- 商品列表:`, order.orderItems);
+
+          // 安全访问
+          if (order.orderItems && order.orderItems.length > 0) {
+            const firstItem = order.orderItems[0];
+            console.log(`- 第一个商品: ${firstItem.spuName}, 价格: ${firstItem.price / 100} 元`);
+          }
+        });
       } else {
-        orderList.value = [...orderList.value, ...(data.list || [])];
+        // 使用可选链确保 orderList.value 有值
+        const currentList = orderList.value || [];
+        orderList.value = [...currentList, ...newList];
       }
 
-      hasMore.value = data.hasNextPage;
-      pageNum.value = data.pageNum + 1;
+      console.log("订单列表:", orderList.value);
 
-      // 更新统计
-      updateOrderStats(data);
+      // 自己计算是否有下一页,安全计算是否有下一页
+      const currentTotal = orderList.value.length || 0;
+      hasMore.value = currentTotal < total;
+      pageNum.value = pageNum.value + 1;
+
+      // 调用API
+      try {
+        const statistics = await getOrderStatistics(params);
+        console.log("订单统计响应:", statistics);
+        // 更新统计
+        updateOrderStats(statistics);
+      } catch (error) {
+        console.error("加载订单统计响应失败:", error);
+        uni.showToast({
+          title: "加载失败",
+          icon: "error",
+        });
+      }
     }
   } catch (error) {
     console.error("加载订单失败:", error);
@@ -503,19 +544,19 @@ const loadOrders = async (reset = false) => {
 };
 
 // 更新订单统计
-const updateOrderStats = (data) => {
+const updateOrderStats = (statistics: any) => {
   // 更新各个状态的数量
-  if (data.statusCounts) {
+  if (statistics.statusCounts) {
     orderStatusList.value.forEach((status) => {
-      const count = data.statusCounts[status.value] || 0;
+      const count = statistics.statusCounts[status.value] || 0;
       status.count = count;
     });
   }
 
   // 更新今日数据
-  todayOrders.value = data.todayOrderCount || 0;
-  pendingOrders.value = data.pendingCount || 0;
-  todayIncome.value = data.todayIncome || 0;
+  todayOrders.value = statistics.todayOrderCount || 0;
+  pendingOrders.value = statistics.pendingCount || 0;
+  todayIncome.value = statistics.todayIncome || 0;
 };
 
 // 下拉刷新
@@ -532,7 +573,7 @@ const loadMore = () => {
 };
 
 // 状态点击
-const onStatusClick = (status) => {
+const onStatusClick = (status: number) => {
   if (activeStatus.value === status) {
     activeStatus.value = -1; // 点击已激活状态则取消筛选
   } else {
@@ -542,7 +583,7 @@ const onStatusClick = (status) => {
 };
 
 // 快捷筛选点击
-const onQuickFilterClick = (filter) => {
+const onQuickFilterClick = (filter: string) => {
   activeQuickFilter.value = filter;
 
   const now = new Date();
@@ -599,12 +640,12 @@ const setThisWeek = () => {
 };
 
 // 日期选择
-const onStartDateChange = (e) => {
+const onStartDateChange = (e: any) => {
   dateRange.value.start = e.detail.value;
   loadOrders(true);
 };
 
-const onEndDateChange = (e) => {
+const onEndDateChange = (e: any) => {
   dateRange.value.end = e.detail.value;
   loadOrders(true);
 };
@@ -614,7 +655,7 @@ const toggleAdvancedFilter = () => {
   showAdvanced.value = !showAdvanced.value;
 };
 
-const toggleSource = (source) => {
+const toggleSource = (source: string) => {
   advancedFilter.value.source = source;
 };
 
@@ -638,16 +679,16 @@ const resetAdvancedFilter = () => {
 };
 
 // 查看订单详情
-const viewOrderDetail = (orderId) => {
+const viewOrderDetail = (orderSn: string) => {
   uni.navigateTo({
-    url: `/pages/business/order/detail?id=${orderId}`,
+    url: `/pages/business/order/detail?orderSn=${orderSn}`,
     animationType: "slide-in-right",
   });
 };
 
 // 获取状态类名
-const getStatusClass = (status) => {
-  const statusMap = {
+const getStatusClass = (status: number) => {
+  const statusMap: { [key: number]: string } = {
     0: "pending-payment",
     1: "pending-ship",
     2: "shipped",
@@ -659,8 +700,8 @@ const getStatusClass = (status) => {
 };
 
 // 获取状态文本
-const getStatusText = (status) => {
-  const statusTextMap = {
+const getStatusText = (status: number) => {
+  const statusTextMap: { [key: number]: string } = {
     0: "待付款",
     1: "待发货",
     2: "已发货",
@@ -671,9 +712,12 @@ const getStatusText = (status) => {
   return statusTextMap[status] || "未知";
 };
 
+// 定义可用的操作类型
+type OrderAction = "view" | "ship" | "confirm" | "cancel" | "refund" | "print";
+
 // 显示操作按钮
-const showActionButton = (order, action) => {
-  const actionMap = {
+const showActionButton = (order: OrderVO, action: OrderAction) => {
+  const actionMap: Record<OrderAction, boolean> = {
     view: true, // 总是显示查看
     ship: order.status === 1, // 待发货
     confirm: order.status === 2, // 已发货
@@ -684,18 +728,22 @@ const showActionButton = (order, action) => {
   return actionMap[action] || false;
 };
 
+// 首先，在组件顶部定义 ref
+const shipPopup = ref<any>(null); // 使用 any 或具体的组件类型
+
 // 发货处理
-const handleShip = (order) => {
-  shipForm.value.orderIds = [order.id];
+const handleShip = (order: OrderVO) => {
+  shipForm.value.orderIds = [order.id] as number[];
   currentLogisticsCompany.value = "";
   shipForm.value.trackingNo = "";
   shipForm.value.remark = "";
 
-  uni.$refs.shipPopup.open();
+  // 使用组件 ref 而不是 uni.$refs
+  shipPopup.value?.open();
 };
 
 // 物流公司选择
-const onLogisticsChange = (e) => {
+const onLogisticsChange = (e: any) => {
   logisticsCompanyIndex.value = e.detail.value;
   currentLogisticsCompany.value = logisticsCompanies.value[e.detail.value];
 };
@@ -755,19 +803,19 @@ const closeShipPopup = () => {
 };
 
 // 其他操作
-const handleConfirm = async (order) => {
+const handleConfirm = async (order: OrderVO) => {
   // 确认收货逻辑
 };
 
-const handleCancel = async (order) => {
+const handleCancel = async (order: OrderVO) => {
   // 取消订单逻辑
 };
 
-const handleRefund = async (order) => {
+const handleRefund = async (order: OrderVO) => {
   // 处理退款逻辑
 };
 
-const handlePrint = (order) => {
+const handlePrint = (order: OrderVO) => {
   // 打印订单逻辑
   console.log("打印订单:", order.orderNo);
 };

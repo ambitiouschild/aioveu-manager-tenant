@@ -1,5 +1,5 @@
 import request from "@/utils/request";
-
+import { request2 } from "@/utils/request";  // named export
 const OMSORDER_BASE_URL = "/aioveu-tenant-oms/app-api/v1/orders";
 
 // 订单状态枚举
@@ -14,10 +14,22 @@ export const OrderStatus = {
 };
 
 // 订单列表（分页）
-export const listOrdersWithPage = (params : any) => {
-  return request({
+export const listOrdersWithPage = (params: any) => {
+  return request2({
     url: OMSORDER_BASE_URL,
-    method: "GET",
+    method: "POST",
+    data: params,
+    header: {
+      auth: true, // 需要认证
+    },
+  });
+};
+
+// 订单列表（分页）
+export const getOrderStatistics = (params: any) => {
+  return request2({
+    url: `${OMSORDER_BASE_URL}/statistics`,
+    method: "POST",
     data: params,
     header: {
       auth: true, // 需要认证
