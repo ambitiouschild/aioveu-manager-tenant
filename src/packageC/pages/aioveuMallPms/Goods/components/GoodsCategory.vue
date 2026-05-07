@@ -468,13 +468,31 @@ const handlePickerChange = async (e: any) => {
     selectedThirdLevelName.value = thirdOption.label;
 
     // 更新商品信息
-    goodsInfo.value.categoryId = selectedCategoryId;
-    goodsInfo.value.id = undefined; // 重置商品ID（新增模式）
+
+    /*
+     * 当您设置 goodsInfo.value.categoryId时，Vue 会调用 computed 的 getter 获取当前值，
+     * 然后修改这个值的 categoryId属性，但这个修改不会自动触发 computed 的 setter，
+     * 因为您只是修改了对象的一个属性，而不是整个对象。
+     *
+     * */
+    // ✅ 关键修复：直接通过 emit 更新父组件
+    const updatedGoodsInfo = {
+      ...props.goodsInfo, // 保留已有的商品信息
+      categoryId: selectedCategoryId, // 更新分类ID
+      id: undefined, // 重置商品ID（新增模式）
+      categoryName: thirdOption.label, // 保存分类名称
+    };
+
+    // ✅ 直接触发更新事件
+    emit("update:goodsInfo", updatedGoodsInfo);
+
+    // goodsInfo.value.categoryId = selectedCategoryId;
+    // goodsInfo.value.id = undefined; // 重置商品ID（新增模式）
 
     console.log("✅ 确认是三级分类，ID:", selectedCategoryId);
     console.log("✅ 设置 goodsInfo.categoryId:", goodsInfo.value.categoryId);
     console.log("✅ 分类名称:", selectedThirdLevelName.value);
-
+    console.log("✅ 已更新父组件商品信息");
     // 加载三级分类下的商品
     console.log("🔍 开始加载商品列表...");
     await loadGoodsByCategory(selectedCategoryId);
@@ -487,8 +505,17 @@ const handlePickerChange = async (e: any) => {
     });
 
     // ✅ 重要：清空 categoryId，让用户知道需要选择三级分类
-    goodsInfo.value.categoryId = undefined;
-    goodsInfo.value.id = undefined;
+    // goodsInfo.value.categoryId = undefined;
+    // goodsInfo.value.id = undefined;
+
+    // ✅ 清空父组件的分类ID
+    const updatedGoodsInfo = {
+      ...props.goodsInfo,
+      categoryId: undefined,
+      categoryName: "",
+    };
+    emit("update:goodsInfo", updatedGoodsInfo);
+
     selectedThirdLevelName.value = "";
 
     // 清空商品列表
