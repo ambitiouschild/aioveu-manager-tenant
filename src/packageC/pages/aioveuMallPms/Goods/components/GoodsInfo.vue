@@ -1132,9 +1132,23 @@ const handleNext = async () => {
   }
 };
 
+import { getCurrentInstance } from "vue";
+
+// 获取组件实例
+const instance = getCurrentInstance();
+
 // 计算滚动区域高度
 const calculateScrollHeight = () => {
-  const query = uni.createSelectorQuery().in(this);
+  console.log("📏 计算高度");
+
+  if (!instance) {
+    console.warn("⚠️ 无法获取组件实例");
+    return;
+  }
+
+  // ✅ 使用正确的实例
+  const query = uni.createSelectorQuery().in(instance);
+
   query
     .select(".component-container")
     .boundingClientRect((data: any) => {

@@ -206,9 +206,13 @@ const tableHeight = ref<number>(300);
 const goodsInfo = computed({
   get: (): GoodsInfoData => {
     const data = props.goodsInfo || {};
-    if (!data.attrList || !Array.isArray(data.attrList)) {
-      data.attrList = [new GoodsAttribute()];
-    }
+    // if (!data.attrList || !Array.isArray(data.attrList)) {
+    //   data.attrList = [new GoodsAttribute()];
+    // }
+
+    // ❌ 不要修改原始数据
+    // ✅ 返回新对象
+
     return {
       id: data.id,
       categoryId: data.categoryId,
@@ -216,6 +220,13 @@ const goodsInfo = computed({
     };
   },
   set: (value: GoodsInfoData) => {
+    // 添加防重复触发检查
+    const current = props.goodsInfo;
+    if (JSON.stringify(current) === JSON.stringify(value)) {
+      console.log("跳过相同数据的更新");
+      return;
+    }
+    console.log("触发商品信息更新", value);
     emit("update:goodsInfo", value);
   },
 });
@@ -253,11 +264,11 @@ const watchCategoryChange = (): void => {
         await loadCategoryAttributes(newCategoryId);
       } else {
         // 没有选择分类，重置属性列表
-        resetAttributeList();
+        // resetAttributeList();
       }
     },
     {
-      immediate: true, // 立即执行一次
+      // immediate: true, // 立即执行一次
       deep: true, // 深度监听
     }
   );
@@ -343,7 +354,11 @@ const loadCategoryAttributes = async (categoryId: number) => {
  */
 const resetAttributeList = (): void => {
   const newGoodsInfo = { ...goodsInfo.value, attrList: [new GoodsAttribute()] };
-  goodsInfo.value = newGoodsInfo;
+  // goodsInfo.value = newGoodsInfo;
+
+  // ✅ 直接触发 emit，不通过 computed
+  emit("update:goodsInfo", newGoodsInfo);
+
   errors.value = [{}];
   console.log("🔄 重置属性列表");
 };
@@ -407,12 +422,20 @@ const handleRemoveAttribute = (index: number): void => {
  */
 const handleAttributeInput = (e: any, index: number, field: "name" | "value"): void => {
   const value = e.detail ? e.detail.value : e.target.value;
-
+  // ✅ 创建新的数组，不直接修改 computed
   const newAttrList = [...goodsInfo.value.attrList];
+
+  if (!newAttrList[index]) {
+    newAttrList[index] = new GoodsAttribute();
+  }
+
   newAttrList[index] = { ...newAttrList[index], [field]: value };
 
   const newGoodsInfo = { ...goodsInfo.value, attrList: newAttrList };
-  goodsInfo.value = newGoodsInfo;
+
+  // goodsInfo.value = newGoodsInfo;
+  // ✅ 直接触发更新，不经过 computed
+  emit("update:goodsInfo", newGoodsInfo);
 
   console.log(`📝 属性${field}变化:`, value);
 
@@ -562,12 +585,20 @@ const handleNext = async () => {
     });
   }
 };
+import { getCurrentInstance } from "vue";
+// 获取组件实例
+const instance = getCurrentInstance();
 
 /**
  * 计算表格高度
  */
 const calculateTableHeight = () => {
-  const query = uni.createSelectorQuery().in(this);
+  if (!instance) {
+    console.warn("无法获取组件实例");
+    return;
+  }
+
+  const query = uni.createSelectorQuery().in(instance);
   query
     .select(".component-container")
     .boundingClientRect((data: any) => {
@@ -587,13 +618,16 @@ const calculateTableHeight = () => {
 onMounted(() => {
   console.log("🔄 商品属性组件挂载");
 
-  // 初始化属性列表
-  if (!goodsInfo.value.attrList || goodsInfo.value.attrList.length === 0) {
-    resetAttributeList();
-  }
+  // ❌ 移除这个自动重置
+  // if (!goodsInfo.value.attrList || goodsInfo.value.attrList.length === 0) {
+  //   resetAttributeList();  // ❌ 这里会触发循环
+  // }
 
-  // 开始监听分类变化
-  watchCategoryChange();
+  // ✅ 改为简单的检查
+  console.log("📊 当前属性数据:", goodsInfo.value.attrList);
+
+  // ❌ 移除这个会触发循环的监听
+  // watchCategoryChange();
 
   // 计算表格高度
   nextTick(() => {

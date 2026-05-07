@@ -742,7 +742,7 @@ const processSpecList = async (specList: any[]) => {
       specMap.set(
         item.name,
         new Specification({
-          id: item.id ? String(item.id) : generateTempId(),
+          id: item.id ? String(item.id) : generateTempId(), // 使用 specId
           name: item.name || "",
           values: [],
         })
@@ -753,7 +753,7 @@ const processSpecList = async (specList: any[]) => {
     if (spec) {
       spec.values.push(
         new SpecValue({
-          id: item.id ? String(item.id) : generateTempId(),
+          id: item.id ? String(item.id) : generateTempId(), // 使用 specId
           value: item.value || "",
           picUrl: item.picUrl,
         })
@@ -1804,9 +1804,25 @@ const handleSubmit = async () => {
   }
 };
 
+//错误2：Cannot read property '__route__' of undefined(calculateHeights 函数)
+//这是 calculateHeights函数中的 this 上下文问题。
+import { getCurrentInstance } from "vue";
+// 获取组件实例
+const instance = getCurrentInstance();
 // 计算高度
 const calculateHeights = (): void => {
-  const query = uni.createSelectorQuery().in(this);
+  // const query = uni.createSelectorQuery().in(this);
+
+  console.log("📏 计算高度");
+
+  if (!instance) {
+    console.warn("⚠️ 无法获取组件实例");
+    return;
+  }
+
+  // ✅ 使用正确的实例
+  const query = uni.createSelectorQuery().in(instance);
+
   query
     .select(".component-container")
     .boundingClientRect((data: any) => {
@@ -1815,8 +1831,11 @@ const calculateHeights = (): void => {
         const containerTop = data.top;
         const footerHeight = 120;
 
-        scrollHeight.value = windowHeight - containerTop - footerHeight;
-        skuTableHeight.value = 500; // 固定高度
+        // ✅ 确保高度不为负
+        const height = Math.max(200, windowHeight - containerTop - footerHeight);
+        scrollHeight.value = height;
+
+        console.log("📊 计算出的高度:", height);
       }
     })
     .exec();

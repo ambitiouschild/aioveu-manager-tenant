@@ -635,30 +635,58 @@ const formatPrice = (price: number) => {
   return (price / 100).toFixed(2);
 };
 
+import { getCurrentInstance } from "vue";
+// 获取组件实例
+const instance = getCurrentInstance();
+
 // 计算列表高度
 const calculateListHeight = () => {
-  // const query = uni.createSelectorQuery().in(this);
-  const query = uni.createSelectorQuery();
+  console.log("📏 计算高度");
+
+  if (!instance) {
+    console.warn("⚠️ 无法获取组件实例");
+    return;
+  }
+
+  // ✅ 使用正确的实例
+  const query = uni.createSelectorQuery().in(instance);
 
   query
     .select(".component-container")
     .boundingClientRect((data: any) => {
+      if (!data || typeof data.top !== "number") {
+        console.warn("⚠️ 无法获取容器位置，使用默认高度");
+        listHeight.value = 500; // ✅ 提高默认值
+        return;
+      }
+
       if (data) {
         const windowHeight = systemInfo.windowHeight;
         const containerTop = data.top;
+
+        console.log("📊 容器位置:", { windowHeight, containerTop });
+
+        // ✅ 简化：只减去必要的固定高度
+        // 不要减太多，给滚动区域留足够空间
+
         const pickerHeight = 120; // 选择器区域高度
         const pathHeight = 80; // 路径显示高度
         const headerHeight = 100; // 标题区域高度
         const footerHeight = 120; // 底部按钮高度
 
-        listHeight.value =
+        const calculatedHeight =
           windowHeight -
           containerTop -
-          pickerHeight -
-          pathHeight -
-          headerHeight -
-          footerHeight -
-          100;
+          // pickerHeight -
+          // pathHeight -
+          // headerHeight -
+          // footerHeight -
+          -200;
+        console.log("📈 计算值:", calculatedHeight);
+        // ✅ 限制最小和最大高度，避免极端值
+        listHeight.value = Math.max(400, Math.min(calculatedHeight, 600));
+
+        console.log(`📐 屏幕高: ${windowHeight}, 最终高度: ${listHeight.value}`);
       }
     })
     .exec();
