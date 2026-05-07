@@ -703,6 +703,19 @@ const loadGoodsData = async () => {
     if (goodsInfo.value.specList?.length > 0) {
       console.log("📦 开始处理规格数据:", goodsInfo.value.specList);
       await processSpecList(goodsInfo.value.specList); // 复制到 specForm
+
+      // ✅ 在这里保存初始快照
+      const initialSpecsHash = JSON.stringify(
+        specForm.value.specList
+          .map((spec) => ({
+            name: spec.name,
+            values: spec.values.map((v) => v.value).sort(), // 只比较值
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name))
+      );
+
+      originalSpecsHash.value = initialSpecsHash;
+      console.log("📸 保存初始规格快照（页面加载时）:", initialSpecsHash);
     } else {
       console.log("📝 商品没有规格数据");
     }
@@ -787,7 +800,7 @@ const processSkuList = async (skuList: any[]) => {
       price: sku.price, // 原始价格（分）
       stock: sku.stock, // 库存
       picUrl: sku.picUrl, // 图片
-      specValues: sku.specValues, // 规格值字符串
+      specValues: sku.name, // 规格值字符串
       specIds: sku.specIds, // 规格ID   // 规格ID，如 "947_949"
     });
 
@@ -805,7 +818,7 @@ const processSkuList = async (skuList: any[]) => {
       stock: sku.stock, // 变成了 number 类型
       Lockedstock: sku.Lockedstock,
       specIds: sku.specIds,
-      specValues: sku.specValues,
+      specValues: sku.name,
       picUrl: sku.picUrl, // 使用name字段作为规格值显示   // 变成了 string 或 undefined
     };
 
@@ -991,7 +1004,7 @@ const handleInputSpecValue = (index: number) => {
   }
 
   const newValue = new SpecValue({
-    id: generateTempId(),
+    id: generateTempId(), //生成临时id
     value: inputValue,
   });
 
@@ -1088,23 +1101,30 @@ const generateSkuList = () => {
   // ✅ 编辑模式下如果有SKU数据，不重新生成
   // ✅ 编辑模式下：检测规格是否变化
   if (goodsInfo.value.id) {
+    console.log("✏️ 编辑模式，检查规格变化");
     const currentSpecsHash = JSON.stringify(
       specForm.value.specList
         .map((spec) => ({
           name: spec.name,
-          values: spec.values.sort(),
+          values: spec.values.map((v) => v.value).sort(), // 只比较值，不比较ID，所以值获取值
         }))
         .sort((a, b) => a.name.localeCompare(b.name))
     );
 
-    // 首次加载时保存规格快照
-    if (!originalSpecsHash.value) {
-      originalSpecsHash.value = currentSpecsHash;
-      console.log("📸 保存初始规格快照");
-    }
+    // 这里比较的是修改后的规格和修改后的快照（而不是初始快照）
+    // if (!originalSpecsHash.value) {
+    //   originalSpecsHash.value = currentSpecsHash;
+    //   console.log("📸 保存初始规格快照");
+
+    console.log("🔍 规格快照检查:", {
+      当前规格哈希: currentSpecsHash,
+      初始规格哈希: originalSpecsHash.value,
+      是否相等: originalSpecsHash.value === currentSpecsHash,
+    });
 
     // 如果规格未变化，使用现有SKU
     if (originalSpecsHash.value === currentSpecsHash && skuForm.value.skuList.length > 0) {
+      //新增模式下，skuForm.value.skuList是空的，所以这个条件skuForm.value.skuList.length > 0是false，不会return。
       console.log("📊 规格未变化，使用现有SKU数据");
       return;
     } else {
@@ -1129,8 +1149,19 @@ const generateSkuList = () => {
     const existingSku = skuForm.value.skuList.find((sku) => {
       // 如果已有SKU的规格ID与当前组合匹配
       if (sku.specIds && sku.specIds === specIds) {
+        // ❌ 问题在这里
         return true;
       }
+
+      /*
+      *问题：
+          1.规格变化后，specIds变了（新的临时ID
+          2.但数据库中的SKU使用的是旧的ID（数据库ID）
+          3.两者不匹配，所以找不到
+      *
+      *
+      * */
+
       // 或者规格值匹配
       if (sku.specValues && sku.specValues === specValues) {
         return true;
@@ -1680,15 +1711,64 @@ const handleSubmit = async () => {
           picUrl: value.picUrl || "",
         };
 
-        if (value.id && !isTempId(value.id)) {
-          specObj.id = value.id;
+        // ✅ && !isTempId(value.id)关键：始终使用原有的ID
+        if (value.id) {
+          // 有ID，无论是什么类型，都使用
+          specObj.id = value.id; // 使用原有的ID（无论是数据库ID还是临时ID）
+          console.log(`📤 使用原有ID: "${value.value}" = ${value.id}`);
         } else {
-          specObj.id = generateTempId();
+          /*
+          * 问题：
+            1.如果是临时ID，生成新的临时ID
+            2.但SKU中的specIds使用的是旧的临时ID
+            3.前后端的临时ID不匹配，导致映射失败
+          *
+          * */
+          // 有ID，无论是什么类型，都使用
+          specObj.id = generateTempId(); // ❌ 问题在这里！
+          console.log(`🆕 生成新ID: "${value.value}" = ${specObj.id}`);
         }
 
         processedSpecs.push(specObj);
       });
     });
+    //-----------------------------------------
+
+    // 在提交前验证
+    console.log("🔍 验证ID一致性:");
+
+    // 1. 收集提交的ID
+    const submittedIds = new Map();
+    processedSpecs.forEach((spec) => {
+      submittedIds.set(spec.value, spec.id);
+    });
+
+    // 2. 检查SKU的ID是否在提交的ID中
+    skuForm.value.skuList.forEach((sku, index) => {
+      if (sku.specIds) {
+        const skuIds = sku.specIds.split("|");
+        const skuValues = sku.specValues.split("|");
+
+        skuValues.forEach((value, i) => {
+          const submittedId = submittedIds.get(value);
+          const skuId = skuIds[i];
+
+          if (submittedId !== skuId) {
+            console.error(`❌ SKU ${index} 规格值 "${value}" ID不匹配:`);
+            console.error(`  SKU中ID: ${skuId}`);
+            console.error(`  提交ID: ${submittedId}`);
+
+            // 自动修复
+            console.log(`🔧 自动修复SKU ${index} 的specIds`);
+            const newIds = skuValues.map((v) => submittedIds.get(v) || "").join("|");
+            sku.specIds = newIds;
+          }
+        });
+      }
+    });
+
+    console.log("🔍 验证ID一致性通过");
+    //-----------------------------------------
     submitData.specList = processedSpecs;
 
     // 处理SKU数据

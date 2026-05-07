@@ -43,7 +43,7 @@ const PmsSpuAPI = {
      *  @param data 商品表单数据
      */
     add(data: PmsSpuForm) {
-        return request({
+        return request2({
             url: `${PMSSPU_BASE_URL}`,
             method: "POST",
             data,
