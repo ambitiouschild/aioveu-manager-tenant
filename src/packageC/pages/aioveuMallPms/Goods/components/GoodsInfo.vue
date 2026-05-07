@@ -89,13 +89,14 @@
               <text class="required">*</text>
             </text>
           </view>
+          <!--          @input="handlePriceInput('originPrice')"-->
           <view class="form-control">
             <view class="price-input-group">
               <text class="price-prefix">¥</text>
               <input
                 v-model="goodsInfo.originPrice"
                 placeholder="请输入零售价"
-                type="digit"
+                type="number"
                 class="price-input"
                 placeholder-class="placeholder"
                 @input="handlePriceInput('originPrice')"
@@ -121,12 +122,15 @@
             </text>
           </view>
           <view class="form-control">
+            <!--            @input="handlePriceInput('price')"-->
+            <!--            您遇到了iOS/Android 键盘数字输入限制问题。这是 type="digit"的一个已知问题。-->
+            <!--                 type="digit"改为 number -->
             <view class="price-input-group">
               <text class="price-prefix">¥</text>
               <input
                 v-model="goodsInfo.price"
                 placeholder="请输入促销价"
-                type="digit"
+                type="number"
                 class="price-input"
                 placeholder-class="placeholder"
                 @input="handlePriceInput('price')"
@@ -567,20 +571,27 @@ const handleBrandChange = (e: any): void => {
 
 // 处理价格输入
 const handlePriceInput = (field: "originPrice" | "price") => {
-  const value = goodsInfo.value[field];
-  // 限制两位小数
-  if (value && value.toString().includes(".")) {
-    const parts = value.toString().split(".");
-    if (parts[1] && parts[1].length > 2) {
-      const newValue = Number(parts[0] + "." + parts[1].substring(0, 2));
-      const updated = {
-        ...goodsInfo.value,
-        [field]: newValue,
-      };
-      emit("update:goodsInfo", updated);
-    }
+  console.log(`🔥 价格输入 [${field}]:`, goodsInfo.value[field]);
+
+  // ✅ 确保每次输入都触发更新
+  const currentValue = goodsInfo.value[field];
+
+  //问题的根源是：handlePriceInput函数只在"小数位数超过2位"时才调用 emit，但用户大部分输入（整数、正常小数）不会触发更新。
+  // 如果是空值，设为0
+  if (currentValue === null || currentValue === undefined) {
+    const updated = { ...goodsInfo.value, [field]: 0 };
+    emit("update:goodsInfo", updated);
+  } else {
+    // 保持原值，但触发更新
+    const updated = { ...goodsInfo.value, [field]: currentValue };
+    emit("update:goodsInfo", updated);
   }
+
+  // 这里不需要手动更新，因为 v-model 已经更新了
+  // 只需要清除错误
   delete errors.value[field];
+
+  console.log(`✅ 已触发更新 [${field}]:`, goodsInfo.value[field]);
 };
 
 // 选择主图

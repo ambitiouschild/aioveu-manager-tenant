@@ -1004,28 +1004,55 @@ const handleInputSpecValue = (index: number) => {
 };
 
 // 删除规格值
-const handleRemoveSpecValue = (specIndex: number, valueId: string) => {
-  // 编辑模式下检查是否被SKU使用
-  if (goodsInfo.value.id && hasSkuData(valueId)) {
-    uni.showModal({
-      title: "提示",
-      content: "此规格值已被SKU使用，无法删除。请先删除相关SKU。",
-      showCancel: false,
-    });
-    return;
-  }
-
+const handleRemoveSpecValue = async (specIndex: number, valueId: string) => {
   const spec = specForm.value.specList[specIndex];
   const valueIndex = spec.values.findIndex((v) => v.id === valueId);
 
   if (valueIndex === -1) return;
-
   const removedValue = spec.values[valueIndex];
-  console.log(`🗑️ 删除规格值: ${removedValue.value}`);
+  console.log(`🗑️ 尝试删除规格值: ${removedValue.value}`);
 
+  // 编辑模式下检查是否被SKU使用
+  // 检查是否被SKU使用
+  if (goodsInfo.value.id) {
+    const isValueUsed = await hasSkuData(specIndex, valueId);
+
+    if (isValueUsed) {
+      // 询问用户如何处理
+      const { confirm } = await uni.showModal({
+        title: "删除确认",
+        content: "此规格值已被SKU使用。删除后将同时删除包含此规格值的SKU，是否继续？",
+        confirmText: "继续删除",
+        cancelText: "取消",
+      });
+
+      if (!confirm) {
+        console.log("用户取消删除规格值");
+        return;
+      }
+
+      console.log("用户确认删除规格值及相关SKU");
+    }
+  }
+  // 执行删除
   spec.values.splice(valueIndex, 1);
+
+  // 如果删除后规格没有值了，删除整个规格
+  if (spec.values.length === 0) {
+    specForm.value.specList.splice(specIndex, 1);
+  }
+
+  // 清理使用此规格值的SKU
+  // cleanupSkuData(specIndex, valueId);
+
   generateSkuList();
   updateSpecTitles();
+
+  // 提示用户
+  uni.showToast({
+    title: "删除成功",
+    icon: "success",
+  });
 };
 
 // 处理规格变化
@@ -1033,14 +1060,13 @@ const handleSpecChange = () => {
   updateSpecTitles();
 };
 
+// 在 setup 中定义响应式变量存储快照
+const originalSpecsHash = ref<string>("");
+//specChangeTimer是为了在监听规格变化时做防抖处理
+// const specChangeTimer = ref<NodeJS.Timeout | null>(null);
+
 // 生成SKU列表
 const generateSkuList = () => {
-  // ✅ 编辑模式下如果有SKU数据，不重新生成
-  if (goodsInfo.value.id && skuForm.value.skuList.length > 0) {
-    console.log("编辑模式，已有SKU数据，跳过重新生成");
-    return;
-  }
-
   console.log("🔄 开始生成SKU列表");
 
   const validSpecs = specForm.value.specList.filter((spec) => spec.values.length > 0);
@@ -1050,6 +1076,41 @@ const generateSkuList = () => {
     skuErrors.value = [];
     console.log("📝 无有效规格，清空SKU列表");
     return;
+  }
+
+  if (validSpecs.length === 0) {
+    skuForm.value.skuList = [];
+    skuErrors.value = [];
+    console.log("📝 无有效规格，清空SKU列表");
+    return;
+  }
+
+  // ✅ 编辑模式下如果有SKU数据，不重新生成
+  // ✅ 编辑模式下：检测规格是否变化
+  if (goodsInfo.value.id) {
+    const currentSpecsHash = JSON.stringify(
+      specForm.value.specList
+        .map((spec) => ({
+          name: spec.name,
+          values: spec.values.sort(),
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name))
+    );
+
+    // 首次加载时保存规格快照
+    if (!originalSpecsHash.value) {
+      originalSpecsHash.value = currentSpecsHash;
+      console.log("📸 保存初始规格快照");
+    }
+
+    // 如果规格未变化，使用现有SKU
+    if (originalSpecsHash.value === currentSpecsHash && skuForm.value.skuList.length > 0) {
+      console.log("📊 规格未变化，使用现有SKU数据");
+      return;
+    } else {
+      console.log("🔄 规格已变化，重新生成SKU列表");
+      originalSpecsHash.value = currentSpecsHash;
+    }
   }
 
   // 计算笛卡尔积
@@ -1376,8 +1437,10 @@ const previewSkuImage = (imageUrl: string) => {
 };
 
 // 检查规格值是否被SKU使用
-const hasSkuData = (valueId: string): boolean => {
-  if (!goodsInfo.value.id) return false; // 新增模式，肯定没被使用
+const hasSkuData = (specIndex: number, valueId: string): boolean => {
+  if (!goodsInfo.value.id || skuForm.value.skuList.length === 0) {
+    return false;
+  } // 新增模式，肯定没被使用
 
   return skuForm.value.skuList.some((sku) => {
     if (!sku.specIds) return false;
