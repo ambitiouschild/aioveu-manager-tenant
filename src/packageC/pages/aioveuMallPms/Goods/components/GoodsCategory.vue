@@ -35,6 +35,41 @@
 
       <!-- 在下面显示该第三级分类的商品列表 -->
       <view v-if="showProductSection" class="product-section">
+        <!-- 批量操作工具栏 -->
+        <view v-if="goodsList.length > 0" class="batch-toolbar">
+          <view class="batch-checkbox">
+            <checkbox-group @change="handleBatchSelect">
+              <label class="checkbox-item">
+                <checkbox :value="selectAll ? 'all' : ''" />
+                <text class="checkbox-label">全选</text>
+              </label>
+            </checkbox-group>
+            <text class="selected-count">已选 {{ selectedIds.length }} 个</text>
+          </view>
+
+          <view v-if="selectedIds.length > 0" class="batch-actions">
+            <button
+              class="btn-batch-action"
+              :class="{ 'btn-shelf': batchAction === 1, 'btn-off': batchAction === 0 }"
+              @tap="handleBatchToggleShelf"
+              hover-class="btn-hover"
+              hover-start-time="20"
+              hover-stay-time="70"
+            >
+              {{ batchAction === 1 ? "批量上架" : "批量下架" }}
+            </button>
+            <button
+              class="btn-batch-action btn-delete"
+              @tap="handleBatchDelete"
+              hover-class="btn-hover"
+              hover-start-time="20"
+              hover-stay-time="70"
+            >
+              批量删除
+            </button>
+          </view>
+        </view>
+
         <view class="section-header">
           <text class="section-title">{{ selectedThirdLevelName }} - 商品列表</text>
           <button
@@ -56,12 +91,36 @@
           class="goods-list"
           :style="{ height: listHeight + 'px' }"
         >
+          <!-- 修改商品项，添加复选框 -->
           <view
             v-for="(item, index) in goodsList"
             :key="item.id"
             class="goods-item"
-            @tap="handleViewGoods(item)"
+            :class="item.status !== 1 ? 'disabled-item' : ''"
+            @tap.stop="() => {}"
           >
+            <!-- 商品选择框 -->
+            <!--            选择框导致滑动不了是因为 checkbox-group 和 checkbox 在 UniApp-->
+            <!--            中默认会阻止触摸事件的冒泡，这会影响滚动-->
+            <!-- 关键：阻止事件冒泡 -->
+            <view class="goods-checkbox">
+              <!--              <checkbox-group @change="handleItemSelect(item.id!, $event)">-->
+              <!--                <checkbox-->
+              <!--                  :value="item.id"-->
+              <!--                  :checked="selectedIds.includes(item.id!)"-->
+              <!--                  @tap.stop="() => {}"-->
+              <!--                />-->
+              <!--              </checkbox-group>-->
+              <!-- 临时用 view 代替 -->
+              <!--              <view-->
+              <!--                class="temp-checkbox"-->
+              <!--                :class="{ checked: selectedIds.includes(item.id!) }"-->
+              <!--                @tap="handleItemSelect(item.id!)"-->
+              <!--              >-->
+              <!--                {{ selectedIds.includes(item.id!) ? "✓" : "" }}-->
+              <!--              </view>-->
+            </view>
+
             <!-- 商品图片 -->
             <view class="goods-image-container">
               <image v-if="item.picUrl" :src="item.picUrl" mode="aspectFill" class="goods-image" />
@@ -104,6 +163,29 @@
                 hover-stay-time="70"
               >
                 编辑
+              </button>
+
+              <!-- 新增：隐藏/显示按钮 -->
+              <button
+                v-if="item.status !== undefined"
+                class="btn-status"
+                :class="item.status === 1 ? 'btn-off-shelf' : 'btn-on-shelf'"
+                @tap.stop="handleToggleShelf(item)"
+                hover-class="btn-hover"
+                hover-start-time="20"
+                hover-stay-time="70"
+              >
+                {{ item.status === 1 ? "下架" : "上架" }}
+              </button>
+              <!-- 新增：删除按钮 -->
+              <button
+                class="btn-delete"
+                @tap.stop="handleDeleteGoods(item, index)"
+                hover-class="btn-hover"
+                hover-start-time="20"
+                hover-stay-time="70"
+              >
+                删除
               </button>
             </view>
           </view>
@@ -290,6 +372,13 @@ const loadingGoods = ref<boolean>(false); // 商品加载状态
 const selectedThirdLevelName = ref<string>(""); // 三级分类名称
 const listHeight = ref<number>(400); // 列表高度
 
+//----------------------------------------------
+// 批量操作相关
+const selectedIds = ref<number[]>([]); // 选中的商品ID数组
+const selectAll = ref<boolean>(false); // 是否全选
+const batchAction = ref<number>(1); // 批量操作类型：1=上架，0=下架
+const isBatchProcessing = ref<boolean>(false); // 是否正在批量处理
+//----------------------------------------------
 // 系统信息
 const systemInfo = uni.getSystemInfoSync();
 
@@ -571,7 +660,182 @@ const loadGoodsByCategory = async (categoryId: number) => {
     loadingGoods.value = false;
   }
 };
+//----------------------------------------------
+// 添加批量操作方法
+// 单个商品选择/取消选择
+const handleItemSelect = (goodsId: number, e?: any) => {
+  const index = selectedIds.value.indexOf(goodsId);
+  if (index === -1) {
+    // 选中
+    selectedIds.value.push(goodsId);
+  } else {
+    // 取消选中
+    selectedIds.value.splice(index, 1);
+  }
 
+  // 更新全选状态
+  selectAll.value = selectedIds.value.length === goodsList.value.length;
+  console.log("🔍 当前选中:", selectedIds.value);
+};
+
+// 批量选择（全选/取消全选）
+const handleBatchSelect = () => {
+  if (selectAll.value) {
+    // 取消全选
+    selectedIds.value = [];
+  } else {
+    // 全选
+    selectedIds.value = goodsList.value
+      .filter((item) => item.id !== undefined)
+      .map((item) => item.id!);
+  }
+
+  selectAll.value = !selectAll.value;
+  console.log("🔍 全选状态:", selectAll.value, "选中数量:", selectedIds.value.length);
+};
+
+// 批量上架/下架
+const handleBatchToggleShelf = async () => {
+  if (selectedIds.value.length === 0 || isBatchProcessing.value) {
+    return;
+  }
+
+  const action = batchAction.value === 1 ? "上架" : "下架";
+  uni.showModal({
+    title: "批量操作确认",
+    content: `确定要${action}选中的 ${selectedIds.value.length} 个商品吗？`,
+    success: async (res) => {
+      if (res.confirm) {
+        isBatchProcessing.value = true;
+        uni.showLoading({ title: `${action}处理中...` });
+
+        try {
+          let response;
+          if (batchAction.value === 1) {
+            // 批量上架
+            response = await PmsSpuAPI.batchShelf({
+              spuIds: selectedIds.value,
+            });
+          } else {
+            // 批量下架
+            response = await PmsSpuAPI.batchOffShelf({
+              spuIds: selectedIds.value,
+            });
+          }
+
+          uni.hideLoading();
+          isBatchProcessing.value = false;
+
+          if (response.code === "00000") {
+            // 批量更新本地列表状态
+            goodsList.value = goodsList.value.map((item) => {
+              if (selectedIds.value.includes(item.id!)) {
+                return {
+                  ...item,
+                  status: batchAction.value,
+                };
+              }
+              return item;
+            });
+
+            // 更新列表（触发响应式）
+            goodsList.value = [...goodsList.value];
+            // 清空选中状态
+            selectedIds.value = [];
+            selectAll.value = false;
+          }
+
+          uni.showModal({
+            title: `批量${action}成功`,
+            icon: "success",
+            showCancel: false,
+            success: () => {
+              // 自动切换批量操作类型
+              batchAction.value = batchAction.value === 1 ? 0 : 1;
+            },
+          });
+        } catch (error) {
+          uni.hideLoading();
+          isBatchProcessing.value = false;
+          uni.showToast({
+            title: "批量操作失败",
+            icon: "error",
+            duration: 2000,
+          });
+        }
+      }
+    },
+  });
+};
+
+// 批量删除
+const handleBatchDelete = async () => {
+  if (selectedIds.value.length === 0 || isBatchProcessing.value) {
+    return;
+  }
+
+  uni.showModal({
+    title: "批量删除确认",
+    content: `确定要删除选中的 ${selectedIds.value.length} 个商品吗？删除后将无法恢复。`,
+    confirmText: "删除",
+    confirmColor: "#f56c6c",
+    success: async (res) => {
+      if (res.confirm) {
+        isBatchProcessing.value = true;
+        uni.showLoading({ title: "批量删除中..." });
+
+        try {
+          // 调用批量删除接口
+          const response = await PmsSpuAPI.batchRemove({
+            spuIds: selectedIds.value,
+          });
+
+          uni.hideLoading();
+          isBatchProcessing.value = false;
+
+          if (response.code === "00000") {
+            // 从列表中移除已删除的商品
+            goodsList.value = goodsList.value.filter(
+              (item) => !selectedIds.value.includes(item.id!)
+            );
+
+            // 更新列表（触发响应式）
+            goodsList.value = [...goodsList.value];
+
+            // 检查是否有当前正在编辑的商品被删除
+            if (selectedIds.value.includes(goodsInfo.value.id!)) {
+              goodsInfo.value = {
+                ...goodsInfo.value,
+                id: undefined,
+              };
+            }
+
+            // 清空选中状态
+            selectedIds.value = [];
+            selectAll.value = false;
+
+            uni.showModal({
+              title: "批量删除成功",
+              icon: "success",
+              showCancel: false,
+            });
+          } else {
+            throw new Error(response.msg || "删除失败");
+          }
+        } catch (error) {
+          uni.hideLoading();
+          isBatchProcessing.value = false;
+          uni.showToast({
+            title: "批量删除失败",
+            icon: "error",
+            duration: 2000,
+          });
+        }
+      }
+    },
+  });
+};
+//----------------------------------------------
 // 查看商品
 const handleViewGoods = (goods: GoodsItemData) => {
   console.log("👀 查看商品:", goods);
@@ -591,6 +855,168 @@ const handleEditGoods = (goods: GoodsItemData) => {
   emit("edit-goods", goods.id || 0);
 
   // 不在这里跳转，由父组件控制步骤切换
+};
+
+// 获取状态文本
+const getStatusText = (status: number): string => {
+  const statusMap: Record<number, string> = {
+    0: "已下架",
+    1: "上架中",
+    2: "待审核", // 如果有审核流程
+  };
+  return statusMap[status] || "未知";
+};
+
+// 切换商品状态（上架/下架）修改 handleToggleShelf 方法，删除后自动取消选中
+const handleToggleShelf = async (goods: GoodsItemData) => {
+  try {
+
+    // goods 应该是完整的商品对象
+    console.log("🔍 handleToggleShelf 接收到的参数:", goods);
+
+    if (!goods.id) {
+      uni.showToast({
+        title: "商品ID不存在",
+        icon: "none",
+        duration: 2000,
+      });
+      return;
+    }
+
+    const newStatus = goods.status === 1 ? 0 : 1; // 切换状态
+    const action = newStatus === 1 ? "上架" : "下架";
+
+    uni.showModal({
+      title: "确认",
+      content: `确定要${action}这个商品吗？`,
+      success: async (res) => {
+        if (res.confirm) {
+          // 显示加载中
+          uni.showLoading({ title: "处理中..." });
+
+          try {
+            const response = await PmsSpuAPI.updateStatus({
+              id: goods.id!, // 添加 ! 断言
+              status: newStatus,
+            });
+
+            uni.hideLoading();
+
+            if (response.code === "00000") {
+              // 更新本地列表中的商品状态
+              const index = goodsList.value.findIndex((item) => item.id === goods.id);
+              if (index !== -1) {
+                goodsList.value[index].status = newStatus;
+
+                // 使用 Vue 的响应式更新
+                goodsList.value = [...goodsList.value];
+
+                uni.showToast({
+                  title: `${action}成功`,
+                  icon: "success",
+                  duration: 2000,
+                });
+
+                // 从选中列表中移除
+                const selectedIndex = selectedIds.value.indexOf(goods.id!);
+                if (selectedIndex !== -1) {
+                  selectedIds.value.splice(selectedIndex, 1);
+                }
+              }
+            } else {
+              throw new Error(response.msg || "操作失败");
+            }
+          } catch (error: any) {
+            uni.hideLoading();
+            uni.showToast({
+              title: error.message || "操作失败",
+              icon: "error",
+              duration: 2000,
+            });
+          }
+        }
+      },
+    });
+  } catch (error) {
+    console.error("切换商品状态失败:", error);
+    uni.showToast({
+      title: "操作失败",
+      icon: "error",
+      duration: 2000,
+    });
+  }
+};
+
+// 删除商品
+const handleDeleteGoods = async (goods: GoodsItemData, index: number) => {
+  try {
+    if (!goods.id) {
+      uni.showToast({
+        title: "商品ID不存在",
+        icon: "none",
+        duration: 2000,
+      });
+      return;
+    }
+
+    uni.showModal({
+      title: "删除确认",
+      content: "确定要删除这个商品吗？删除后将无法恢复。",
+      confirmText: "删除",
+      confirmColor: "#f56c6c",
+      success: async (res) => {
+        if (res.confirm) {
+          // 显示加载中
+          uni.showLoading({ title: "删除中..." });
+
+          try {
+            const response = await PmsSpuAPI.remove(goods.id!);
+
+            uni.hideLoading();
+
+            if (response.code === "00000") {
+              // 从列表中移除
+              goodsList.value.splice(index, 1);
+
+              // 使用 Vue 的响应式更新
+              goodsList.value = [...goodsList.value];
+
+              uni.showToast({
+                title: "删除成功",
+                icon: "success",
+                duration: 2000,
+              });
+
+              // 如果删除的是当前正在编辑的商品
+              if (goodsInfo.value.id === goods.id) {
+                // 重置商品信息
+                goodsInfo.value = {
+                  ...goodsInfo.value,
+                  id: undefined,
+                };
+              }
+            } else {
+              throw new Error(response.msg || "删除失败");
+            }
+          } catch (error: any) {
+            uni.hideLoading();
+            uni.showToast({
+              title: error.message || "删除失败",
+              icon: "error",
+              duration: 2000,
+            });
+          }
+        }
+      },
+    });
+  } catch (error) {
+    console.error("删除商品失败:", error);
+    uni.showToast({
+      title: "操作失败",
+      icon: "error",
+      duration: 2000,
+    });
+  }
 };
 
 // 新增商品 // 确保是三级分类
@@ -701,23 +1127,52 @@ const calculateListHeight = () => {
         const headerHeight = 100; // 标题区域高度
         const footerHeight = 120; // 底部按钮高度
 
+        // ✅ 修正计算逻辑
+        // containerTop 已经包含了顶部所有元素的高度
+        // 我们只需要减去底部按钮即可
+
         const calculatedHeight =
           windowHeight -
           containerTop -
           // pickerHeight -
           // pathHeight -
           // headerHeight -
-          // footerHeight -
-          -200;
-        console.log("📈 计算值:", calculatedHeight);
+          footerHeight -
+          20;
+
+        console.log("📈 计算详情:", {
+          屏幕高度: windowHeight,
+          容器顶部: containerTop,
+          底部按钮: footerHeight,
+          边距: 20,
+          计算结果: calculatedHeight,
+        });
         // ✅ 限制最小和最大高度，避免极端值
-        listHeight.value = Math.max(400, Math.min(calculatedHeight, 600));
+        listHeight.value = Math.max(300, Math.min(calculatedHeight, windowHeight * 0.55));
 
         console.log(`📐 屏幕高: ${windowHeight}, 最终高度: ${listHeight.value}`);
       }
     })
     .exec();
 };
+
+// 监听商品列表变化
+watch(
+  () => goodsList.value,
+  (newList) => {
+    // 如果列表中有上架商品，批量操作按钮显示"批量下架"
+    // 如果列表中全是下架商品，批量操作按钮显示"批量上架"
+    const hasOnShelf = newList.some((item) => item.status === 1);
+    const allOffShelf = newList.length > 0 && newList.every((item) => item.status === 0);
+
+    if (hasOnShelf) {
+      batchAction.value = 0; // 显示"批量下架"
+    } else if (allOffShelf) {
+      batchAction.value = 1; // 显示"批量上架"
+    }
+  },
+  { deep: true }
+);
 
 // 生命周期
 onMounted(async () => {
@@ -751,9 +1206,9 @@ onUnmounted(() => {
 .component-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100vh; /* 必须保留，确保撑满屏幕 */
+  // overflow: hidden; /* ❌ 删除这一行！ */
   background-color: #f8f9fa;
-  overflow: hidden;
   box-sizing: border-box;
   padding-bottom: env(safe-area-inset-bottom);
 
@@ -841,6 +1296,127 @@ onUnmounted(() => {
       box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
       overflow: hidden;
 
+      //====================================================
+      // 批量操作工具栏
+
+      .batch-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20rpx 30rpx;
+        background-color: #f8f9fa;
+        border-bottom: 2rpx solid #e4e7ed;
+
+        .batch-checkbox {
+          display: flex;
+          align-items: center;
+          gap: 20rpx;
+
+          .checkbox-item {
+            display: flex;
+            align-items: center;
+            font-size: 28rpx;
+            color: #606266;
+
+            checkbox {
+              transform: scale(0.8);
+              margin-right: 10rpx;
+            }
+
+            .checkbox-label {
+              font-size: 28rpx;
+            }
+          }
+
+          .selected-count {
+            font-size: 26rpx;
+            color: #409eff;
+            font-weight: 500;
+          }
+        }
+
+        .batch-actions {
+          display: flex;
+          gap: 15rpx;
+
+          .btn-batch-action {
+            padding: 8rpx 20rpx;
+            border: none;
+            border-radius: 6rpx;
+            font-size: 24rpx;
+            color: #ffffff;
+
+            &::after {
+              border: none;
+            }
+
+            &.btn-shelf {
+              background-color: #67c23a;
+            }
+
+            &.btn-off {
+              background-color: #e6a23c;
+            }
+
+            &.btn-delete {
+              background-color: #f56c6c;
+            }
+
+            &[disabled] {
+              opacity: 0.5;
+            }
+          }
+        }
+      }
+
+      // 商品项中的选择框
+      .goods-item {
+        display: flex;
+        align-items: center;
+        padding: 20rpx 30rpx;
+        border-bottom: 2rpx solid #f0f0f0;
+        background-color: #ffffff;
+
+        .goods-checkbox {
+          flex-shrink: 0;
+          margin-right: 20rpx;
+
+          checkbox {
+            transform: scale(1.1);
+          }
+        }
+
+        .goods-image-container {
+          width: 120rpx;
+          height: 120rpx;
+          margin-right: 20rpx;
+          // ... 其他样式
+        }
+
+        // ... 其他商品项样式
+      }
+
+      // 被选中的商品项
+      .goods-item.selected {
+        background-color: #f0f9ff;
+        border-left: 4rpx solid #409eff;
+      }
+
+      // 下架商品样式
+      .disabled-item {
+        opacity: 0.6;
+        background-color: #f8f9fa;
+
+        .goods-name {
+          color: #909399;
+        }
+
+        .goods-price {
+          color: #909399;
+        }
+      }
+
+      //====================================================
       .section-header {
         display: flex;
         justify-content: space-between;
@@ -967,6 +1543,7 @@ onUnmounted(() => {
             flex-direction: column;
             gap: 10rpx;
             flex-shrink: 0;
+            min-width: 140rpx; // 增加宽度以适应更多按钮
 
             button {
               width: 120rpx;
@@ -989,6 +1566,39 @@ onUnmounted(() => {
                 background-color: #67c23a;
                 color: #ffffff;
               }
+
+              // 新增：隐藏按钮样式
+              &.btn-status {
+                &.btn-on-shelf {
+                  background-color: #67c23a;
+                  color: #ffffff;
+                }
+
+                &.btn-off-shelf {
+                  background-color: #e6a23c;
+                  color: #ffffff;
+                }
+              }
+
+              // 新增：删除按钮样式
+              &.btn-delete {
+                background-color: #f56c6c;
+                color: #ffffff;
+              }
+            }
+          }
+
+          // 被禁用的商品项样式
+          .disabled-item {
+            opacity: 0.6;
+            background-color: #f8f9fa;
+
+            .goods-name {
+              text-decoration: line-through;
+              color: #909399;
+            }
+            .goods-price {
+              color: #909399;
             }
           }
         }
@@ -1273,6 +1883,44 @@ onUnmounted(() => {
           }
         }
       }
+    }
+  }
+}
+
+// 响应式调整
+@media (max-width: 768px) {
+  .batch-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15rpx;
+    padding: 15rpx 20rpx;
+
+    .batch-checkbox {
+      justify-content: space-between;
+    }
+
+    .batch-actions {
+      justify-content: flex-end;
+
+      .btn-batch-action {
+        flex: 1;
+        font-size: 26rpx;
+        padding: 10rpx 0;
+      }
+    }
+  }
+
+  .goods-item {
+    padding: 15rpx 20rpx;
+
+    .goods-checkbox {
+      margin-right: 15rpx;
+    }
+
+    .goods-image-container {
+      width: 100rpx;
+      height: 100rpx;
+      margin-right: 15rpx;
     }
   }
 }

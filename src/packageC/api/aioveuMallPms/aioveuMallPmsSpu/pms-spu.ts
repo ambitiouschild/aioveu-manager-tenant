@@ -5,15 +5,17 @@ import {BaseQueryParams, PageQuery} from "@/types";
 
 const PMSSPU_BASE_URL = "/aioveu-tenant-pms/api/v1/pms-spu";
 
+const PMSSPUAPP_BASE_URL = "/aioveu-tenant-pms/app-api/v1/spu";
+
 const PmsSpuAPI = {
-    /** 获取商品分页数据 */
-    getPage(queryParams?: PmsSpuPageQuery) {
-        return request< PageResult<PmsSpuPageVO[]>>({
-          url: `${PMSSPU_BASE_URL}/page`,
-          method: "GET",
-          data: queryParams,
-        });
-    },
+  /** 获取商品分页数据 */
+  getPage(queryParams?: PmsSpuPageQuery) {
+    return request<PageResult<PmsSpuPageVO[]>>({
+      url: `${PMSSPU_BASE_URL}/page`,
+      method: "GET",
+      data: queryParams,
+    });
+  },
 
   /** 获取商品详情 */
   getSpuDetail(id: number) {
@@ -23,59 +25,121 @@ const PmsSpuAPI = {
     });
   },
 
+  /**
+   * 获取商品表单数据
+   *
+   * @param id 商品ID
+   * @returns 商品表单数据
+   */
+  getFormData(id: number) {
+    return request<PmsSpuForm>({
+      url: `${PMSSPU_BASE_URL}/${id}/form`,
+      method: "GET",
+    });
+  },
 
-    /**
-     * 获取商品表单数据
-     *
-     * @param id 商品ID
-     * @returns 商品表单数据
-     */
-    getFormData(id: number) {
-        return request< PmsSpuForm>({
-            url: `${PMSSPU_BASE_URL}/${id}/form`,
-            method: "GET",
-        });
-    },
+  /**
+   *  添加商品
+   *
+   *  @param data 商品表单数据
+   */
+  add(data: PmsSpuForm) {
+    return request2({
+      url: `${PMSSPU_BASE_URL}`,
+      method: "POST",
+      data,
+    });
+  },
 
-    /**
-     *  添加商品
-     *
-     *  @param data 商品表单数据
-     */
-    add(data: PmsSpuForm) {
-        return request2({
-            url: `${PMSSPU_BASE_URL}`,
-            method: "POST",
-            data,
-        });
-    },
+  /**
+   * 更新商品
+   *
+   * @param id 商品ID
+   * @param data 商品表单数据
+   */
+  update(id: number, data: PmsSpuForm) {
+    return request2({
+      url: `${PMSSPU_BASE_URL}/admin/${id}`,
+      method: "PUT",
+      data,
+    });
+  },
 
-    /**
-     * 更新商品
-     *
-     * @param id 商品ID
-     * @param data 商品表单数据
-     */
-     update(id: number, data: PmsSpuForm) {
-        return request2({
-            url: `${PMSSPU_BASE_URL}/admin/${id}`,
-            method: "PUT",
-            data,
-        });
-    },
+  /**
+   * 批量删除商品，多个以英文逗号(,)分割
+   *
+   * @param ids 商品ID字符串，多个以英文逗号(,)分割
+   */
+  deleteByIds(ids: string) {
+    return request({
+      url: `${PMSSPU_BASE_URL}/${ids}`,
+      method: "DELETE",
+    });
+  },
 
-    /**
-     * 批量删除商品，多个以英文逗号(,)分割
-     *
-     * @param ids 商品ID字符串，多个以英文逗号(,)分割
-     */
-     deleteByIds(ids: string) {
-        return request({
-            url: `${PMSSPU_BASE_URL}/${ids}`,
-            method: "DELETE",
-        });
-    }
-}
+  //---------------------------------------------------------------
+  /**
+   *  批量更新状态
+   *
+   *  @param data 商品表单数据
+   */
+  batchUpdateStatus: (data: { spuIds: number[]; status: number }) => {
+    return request2({
+      url: `${PMSSPUAPP_BASE_URL}/batch/update-status`,
+      method: "POST",
+      data,
+    });
+  },
+
+  /**
+   *  批量上架
+   *
+   *  @param data 商品表单数据
+   */
+  batchShelf: (data: { spuIds: number[] }) => {
+    return request2({
+      url: `${PMSSPUAPP_BASE_URL}/batch/shelf`,
+      method: "POST",
+      data: { spuIds: data.spuIds },
+    });
+  },
+  /**
+   *  批量下架
+   *
+   *  @param data 商品表单数据
+   */
+  batchOffShelf: (data: { spuIds: number[] }) => {
+    return request2({
+      url: `${PMSSPUAPP_BASE_URL}/batch/off-shelf`,
+      method: "POST",
+      data: { spuIds: data.spuIds },
+    });
+  },
+  // 批量删除
+  batchRemove: (data: { spuIds: number[] }) => {
+    return request2({
+      url: `${PMSSPUAPP_BASE_URL}/batch/remove`,
+      method: "POST",
+      data: { spuIds: data.spuIds },
+    });
+  },
+
+  // 原有的单个操作方法保持不变
+  updateStatus: (data: { id: number; status: number }) => {
+    return request2({
+      url: `${PMSSPUAPP_BASE_URL}/update-status`,
+      method: "POST",
+      data,
+    });
+  },
+
+  remove: (id: number) => {
+    return request2({
+      url: `${PMSSPUAPP_BASE_URL}/${id}`,
+      method: "DELETE",
+    });
+  },
+};
 
 export default PmsSpuAPI;
 

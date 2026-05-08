@@ -617,6 +617,7 @@ const goodsInfo = computed({
     // ✅ 关键：返回一个新的对象，确保每个字段都有值
     return {
       id: data.id,
+      brandId: data.brandId,
       categoryId: data.categoryId,
       specList: Array.isArray(data.specList) ? data.specList : [],
       skuList: Array.isArray(data.skuList) ? data.skuList : [],
@@ -1559,8 +1560,8 @@ const goodsId = goodsInfo.value.id;
 
 // 保存草稿
 const saveDraftToLocal = () => {
-  if (!goodsId.value) return;
-  saveDraft(goodsId.value, {
+  if (!goodsId) return;
+  saveDraft(goodsId, {
     specForm: specForm.value,
     skuForm: skuForm.value,
   });
@@ -1568,9 +1569,9 @@ const saveDraftToLocal = () => {
 
 // 加载时检查草稿
 onMounted(() => {
-  if (!goodsId.value) return;
+  if (!goodsId) return;
 
-  const draftData = loadDraft(goodsId.value, false); // 先不删除
+  const draftData = loadDraft(goodsId, false); // 先不删除
 
   if (draftData) {
     uni.showModal({
@@ -1580,10 +1581,10 @@ onMounted(() => {
         if (res.confirm) {
           specForm.value = draftData.specForm;
           skuForm.value = draftData.skuForm;
-          console.log(`✅ 草稿已恢复: ${goodsId.value}`);
+          console.log(`✅ 草稿已恢复: ${goodsId}`);
         }
         // 无论是否恢复，都清除
-        clearDraft(goodsId.value);
+        clearDraft(goodsId);
       },
     });
   }
@@ -1867,8 +1868,8 @@ const handleSubmit = async () => {
       emit("submit-success", goodsInfo.value.categoryId);
 
       // 提交成功后清除草稿
-      if (goodsId.value) {
-        clearDraft(goodsId.value);
+      if (goodsId) {
+        clearDraft(goodsId);
       }
     } else {
       throw new Error(result.data?.msg || "提交失败");
