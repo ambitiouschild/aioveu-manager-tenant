@@ -398,9 +398,9 @@ const currentLogisticsCompany = ref("");
 
 // 高级筛选
 const advancedFilter = ref({
-  source: "",
-  minAmount: "",  //订单金额
-  maxAmount: "",  //订单金额
+  source: null,
+  minAmount: null, //订单金额
+  maxAmount: null, //订单金额
   keyword: "",
 });
 
@@ -440,10 +440,10 @@ const quickFilters = ref([
 
 // 订单来源
 const orderSources = ref([
-  { value: "", label: "全部" },
-  { value: "wechat", label: "微信小程序" },
-  { value: "app", label: "APP" },
-  { value: "h5", label: "H5网页" },
+  { value: null, label: "全部" }, // null 表示全部
+  { value: 1, label: "微信小程序" }, // 假设 1=微信小程序
+  { value: 2, label: "APP" }, // 2=APP
+  { value: 3, label: "H5网页" }, // 3=H5
 ]);
 
 // 方法
@@ -655,7 +655,7 @@ const toggleAdvancedFilter = () => {
   showAdvanced.value = !showAdvanced.value;
 };
 
-const toggleSource = (source: string) => {
+const toggleSource = (source: any) => {
   advancedFilter.value.source = source;
 };
 
@@ -671,9 +671,9 @@ const confirmAdvancedFilter = () => {
 
 const resetAdvancedFilter = () => {
   advancedFilter.value = {
-    source: "",
-    minAmount: "",
-    maxAmount: "",
+    source: null, // 改为 null
+    minAmount: null, // 改为 null
+    maxAmount: null, // 改为 null
     keyword: "",
   };
 };

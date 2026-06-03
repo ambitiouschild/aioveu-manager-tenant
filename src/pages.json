@@ -219,8 +219,13 @@
           "style": {
             "navigationBarTitleText": "营销优惠券管理"
           }
+        },
+        {
+          "path": "pages/aioveuMallSms/homeCategory/index",
+          "style": {
+            "navigationBarTitleText": "首页分类管理"
+          }
         }
-
       ]
     },
     {
