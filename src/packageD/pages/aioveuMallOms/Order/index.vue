@@ -359,8 +359,10 @@ import {
   // 导入退款相关的API
   applyRefund as applyRefundApi,
   getRefundDetail,
+  shipOrder,
 } from "@/packageD/api/oms/order";
 import { OrderItemVO, OrderVO } from "@/packageD/types/oms/order";
+import { ResultCodeEnum } from "@/enums/ResultCodeEnum";
 // 系统信息
 const systemInfo = uni.getSystemInfoSync();
 
@@ -392,6 +394,7 @@ const shipForm = ref({
   trackingNo: "",
   remark: "",
 });
+const currentOrder = ref<OrderVO>();
 const logisticsCompanies = ref(["顺丰", "圆通", "中通", "韵达", "申通", "京东", "邮政"]);
 const logisticsCompanyIndex = ref(0);
 const currentLogisticsCompany = ref("");
@@ -738,6 +741,9 @@ const handleShip = (order: OrderVO) => {
   shipForm.value.trackingNo = "";
   shipForm.value.remark = "";
 
+  // ✅ 这里把 order 存起来
+  currentOrder.value = order;
+
   // 使用组件 ref 而不是 uni.$refs
   shipPopup.value?.open();
 };
@@ -750,6 +756,8 @@ const onLogisticsChange = (e: any) => {
 
 // 确认发货
 const confirmShip = async () => {
+  if (!currentOrder.value) return;
+
   if (!currentLogisticsCompany.value) {
     uni.showToast({
       title: "请选择物流公司",
@@ -767,16 +775,13 @@ const confirmShip = async () => {
   }
 
   try {
-    const params = {
-      orderIds: shipForm.value.orderIds,
+    const res = await shipOrder(currentOrder.value.orderSn, {
       logisticsCompany: currentLogisticsCompany.value,
       trackingNo: shipForm.value.trackingNo,
       remark: shipForm.value.remark,
-    };
+    });
 
-    const response = await uni.$api.business.order.ship(params);
-
-    if (response.code === 0) {
+    if (res.code === ResultCodeEnum.SUCCESS) {
       uni.showToast({
         title: "发货成功",
         icon: "success",
@@ -799,7 +804,7 @@ const confirmShip = async () => {
 
 // 关闭发货弹窗
 const closeShipPopup = () => {
-  uni.$refs.shipPopup.close();
+  shipPopup.value?.close();
 };
 
 // 其他操作
@@ -830,8 +835,9 @@ const batchShip = () => {
     return;
   }
 
-  shipForm.value.orderIds = Array.from(selectedOrders.value);
-  uni.$refs.shipPopup.open();
+  // ✅ 明确 Set<number>
+  shipForm.value.orderIds = Array.from(selectedOrders.value as Set<number>);
+  shipPopup.value?.open();
 };
 
 const batchPrint = () => {

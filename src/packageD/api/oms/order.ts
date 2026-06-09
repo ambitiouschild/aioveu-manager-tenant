@@ -123,7 +123,7 @@ export const getRefundDetail = (orderId : any) => {
 };
 
 // 取消退款
-export const cancelRefund = (refundId : any) => {
+export const cancelRefund = (refundId: any) => {
   return request({
     url: `/aioveu-oms/app-api/v1/orders/cancel-refund/${refundId}`,
     method: "POST",
@@ -133,10 +133,17 @@ export const cancelRefund = (refundId : any) => {
   });
 };
 
-// 发货
-export const shipOrder = (data : any) => {
-  return request({
-    url: `${OMSORDER_BASE_URL}/ship`,
+// 发货 单订单发货（人工）
+export const shipOrder = (
+  orderSn: string,
+  data: {
+    logisticsCompany: string;
+    trackingNo: string;
+    remark?: string;
+  }
+) => {
+  return request2({
+    url: `${OMSORDER_BASE_URL}/${orderSn}/ship`,
     method: "POST",
     data,
     header: {
@@ -169,7 +176,7 @@ export const confirmReceipt = (orderId : any) => {
 };
 
 // 获取订单详情
-export const getOrderDetail = (orderId : any) => {
+export const getOrderDetail = (orderId: any) => {
   return request({
     url: `${OMSORDER_BASE_URL}/${orderId}`,
     method: "GET",
@@ -177,6 +184,11 @@ export const getOrderDetail = (orderId : any) => {
       auth: true,
     },
   });
+};
+
+const PayFlowAPI = {
+  /** 获取支付流水分页数据 */
+
 };
 
 // 获取订单统计
