@@ -36,7 +36,7 @@ export default async function request<T>(options: UniApp.RequestOptions): Promis
     console.log("构建最终请求头:{}", headers);
 
     // 特殊处理 OAuth2 登录接口
-    if (options.url === "/oauth2/token" || options.url.includes("/oauth2/token")) {
+    if (processedConfig.url?.includes("/oauth2/token")) {
       // OAuth2 token 接口需要 Basic 认证，不是 Bearer token
       // headers['Authorization'] = 'Basic ' + btoa('web:web_secret');  // 改成 Basic
       headers["Content-Type"] = "application/x-www-form-urlencoded"; // 必须是这个
@@ -89,6 +89,12 @@ export default async function request<T>(options: UniApp.RequestOptions): Promis
           setTimeout(() => {
             handleTokenExpiredSync();
           }, 0);
+
+          // ✅ 必须 reject，否则 Promise 永远 pending
+          reject({
+            code: resData.code,
+            message: resData.msg || "token失效",
+          });
 
           // 拒绝 Promise，防止后续代码执行
         } else {
@@ -282,7 +288,7 @@ export async function request2<T>(options: UniApp.RequestOptions): Promise<Respo
     };
 
     // 特殊处理 OAuth2 登录接口
-    if (options.url === "/oauth2/token" || options.url.includes("/oauth2/token")) {
+    if (processedConfig.url?.includes("/oauth2/token")){
       // OAuth2 token 接口需要 Basic 认证，不是 Bearer token
       // headers['Authorization'] = 'Basic ' + btoa('web:web_secret');  // 改成 Basic
       headers["Content-Type"] = "application/x-www-form-urlencoded"; // 必须是这个
@@ -329,9 +335,18 @@ export async function request2<T>(options: UniApp.RequestOptions): Promise<Respo
         else if (resData.code === ResultCodeEnum.TOKEN_INVALID) {
           console.log("令牌失效或过期处理");
 
+
+          // 异步跳转登录页（不阻塞）
           setTimeout(() => {
             handleTokenExpiredSync();
           }, 0);
+
+          // ✅ 必须 reject，否则 Promise 永远 pending
+          reject({
+            code: resData.code,
+            message: resData.msg || "token失效",
+          });
+
         } else {
           // 其他业务处理失败
           // uni.showToast({
