@@ -7,15 +7,15 @@ const PMSCATEGORY_BASE_URL = "/aioveu-tenant-pms/app-api/v1";
 const AUTHCATEGORY_BASE_URL = "/aioveu-tenant-auth/app-api/v1/auth";
 
 export function getCategoryList(queryParams: PmsCategoryPageQuery) {
-  const clientId = getClientId() || CLIENT_CONFIG.CLIENT_ID;
-  console.log("登录使用客户端ID:", clientId);
-
 
 	return request({
-    url: `${AUTHCATEGORY_BASE_URL}/goodsCategories?clientId=${clientId}`,
-		method: "GET",
-    data:queryParams,
-	})
+    url: `${AUTHCATEGORY_BASE_URL}/goodsCategories`,
+    method: "GET",
+    data: queryParams,
+    header: {
+      skipAuth: true,
+    },
+  });
 }
 
 

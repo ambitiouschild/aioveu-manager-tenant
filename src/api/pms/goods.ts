@@ -16,13 +16,14 @@ const AUTHSPUDETIL_BASE_URL = "/aioveu-tenant-auth/app-api/v1/auth/spuDetail";
  */
 export function listSpuPages(params:any) {
 
-  const clientId = getClientId() || CLIENT_CONFIG.CLIENT_ID;
-  console.log("登录使用客户端ID:", clientId);
 	return request({
-    url: `${AUTHSPU_BASE_URL}/spuLists?clientId=${clientId}`,
-		method: "GET",
+    url: `${AUTHSPU_BASE_URL}/spuLists`,
+    method: "GET",
     data: params,
-	})
+    header: {
+      skipAuth: true,
+    },
+  });
 }
 
 /**
@@ -32,13 +33,13 @@ export function listSpuPages(params:any) {
  */
 export function listSeckillingSpus() {
 
-  const clientId = getClientId() || CLIENT_CONFIG.CLIENT_ID;
-  console.log("登录使用客户端ID:", clientId);
-
 	return request({
-    url: `${AUTHSECKILLING_BASE_URL}/seckilling?clientId=${clientId}`,
-		method: "GET",
-	})
+    url: `${AUTHSECKILLING_BASE_URL}/seckilling`,
+    method: "GET",
+    header: {
+      skipAuth: true,
+    },
+  });
 }
 
 /**
@@ -48,11 +49,12 @@ export function listSeckillingSpus() {
  */
 export function getSpuDetail(spuId: number) {
 
-  const clientId = getClientId() || CLIENT_CONFIG.CLIENT_ID;
-  console.log("登录使用客户端ID:", clientId);
 	return request({
-    url: `${AUTHSPUDETIL_BASE_URL}/${spuId}?clientId=${clientId}`,
-		method: "GET"
-	})
+    url: `${AUTHSPUDETIL_BASE_URL}/${spuId}`,
+    method: "GET",
+    header: {
+      skipAuth: true,
+    },
+  });
 }
 

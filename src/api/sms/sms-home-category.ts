@@ -17,8 +17,7 @@ const SmsHomeCategoryAPI = {
       // uni.request 没有 params参数
       //GET请求的参数必须通过URL查询字符串传递
       //您需要手动拼接参数到URL中
-      const clientId = getClientId() || CLIENT_CONFIG.CLIENT_ID;
-      console.log("登录使用客户端ID:", clientId);
+
 
       // // 构建查询字符串
       // // 将所有值转换为字符串
@@ -42,9 +41,12 @@ const SmsHomeCategoryAPI = {
       // console.log("使用URLSearchParams或手动拼接:", queryString);
       //<PageResult<SmsHomeCategoryPageVO[]>>
         return request({
-            url: `${AUTHCATEGORY_BASE_URL}/categories?clientId=${clientId}`,
-            method: "GET",
-            data: clientId,  // 加入 clientId,  //GET 请求通常不应该有请求体，参数应该通过 URL 查询字符串传递
+          url: `${AUTHCATEGORY_BASE_URL}/categories`,
+          method: "GET",
+          header: {
+            skipAuth: true,
+          },
+          // data: clientId,  // 加入 clientId,  //GET 请求通常不应该有请求体，参数应该通过 URL 查询字符串传递
         });
     },
 

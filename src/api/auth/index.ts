@@ -31,7 +31,7 @@ const AuthAPI = {
       password: data.password,
       captchaId: data.captchaId,
       captchaCode: data.captchaCode,
-      grant_type: "password",  //获取授权类型grant_type
+      grant_type: "password", //获取授权类型grant_type
     };
 
     // tenantId is optional — include only when provided (multi-tenant feature)
@@ -39,8 +39,7 @@ const AuthAPI = {
       payload.tenantId = data.tenantId;
     }
 
-    console.log("打印payload：{}",payload);
-
+    console.log("打印payload：{}", payload);
 
     return request<LoginResult>({
       url: `${AUTH_LOGIN_URL}/oauth2/token`,
@@ -50,19 +49,21 @@ const AuthAPI = {
         "Content-Type": "multipart/form-data",
         Authorization: "Basic bWFsbC1hZG1pbjoxMjM0NTY=", // 客户端信息Base64明文：mall-admin:123456
       },
-    }).then(response => {
-      console.log("✅ 登录响应:", response);
-      return response;
-    }).catch(error => {
-      console.error("❌ 登录错误:", error);
-      throw error;
-    });
+    })
+      .then((response) => {
+        console.log("✅ 登录响应:", response);
+        return response;
+      })
+      .catch((error) => {
+        console.error("❌ 登录错误:", error);
+        throw error;
+      });
   },
 
   /** 一次查询获取用户名在所有租户中的可访问租户  方案1：使用模板字符串（推荐）*/
   getAccessibleTenantsByUsername(username: String) {
     return request<TenantItem[]>({
-      url: `${AUTH_BASE_URL}/tenants/${username}`,  // 使用模板字符串
+      url: `${AUTH_BASE_URL}/tenants/${username}`, // 使用模板字符串
       method: "GET",
       // 不需要params了，因为username已经在URL中了
     });
@@ -103,8 +104,6 @@ const AuthAPI = {
     });
   },
 
-
-
   /**
    * refreshToken  刷新令牌
    *
@@ -118,25 +117,23 @@ const AuthAPI = {
     //code: "0a106x000bOLFV1Pis000Tsiqh306x0u"传递的应该是字符串而不是对象
     const clientId = getClientId() || CLIENT_CONFIG.CLIENT_ID;
     console.log("登录使用客户端ID:", clientId);
-    const basicAuth =  CLIENT_CONFIG.getBASIC_AUTH();
+    const basicAuth = CLIENT_CONFIG.getBASIC_AUTH();
     console.log("动态生成的认证头:", basicAuth);
-
 
     return request<LoginResult>({
       url: `${AUTH_LOGIN_URL}/oauth2/token`,
       method: "POST",
       data: {
-        refresh_token: refreshToken ,
+        refresh_token: refreshToken,
         grant_type: "aioveu_refresh_token",
       },
       header: {
         //修改你的 API 文件，使用字符串格式参数
         "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: basicAuth,  // 使用动态生成的认证头
+        Authorization: basicAuth, // 使用动态生成的认证头
         // Authorization: "Basic bWFsbC1hcHA6MTIzNDU2", // 客户端信息Base64加密，明文：mall-app:123456  return 'Basic bWFsbC1hcHA6MTIzNDU2';
         skipAuth: true, // 跳过认证，因为还没有有效的access_token
       },
-
     });
   },
 
@@ -144,38 +141,34 @@ const AuthAPI = {
 
   /** 获取用户的工作台菜单*/
   getWorkbenchCategoriesWithItems() {
-
-    const clientId = getClientId() || CLIENT_CONFIG.CLIENT_ID;
-    console.log("登录使用客户端ID:", clientId);
-
     return request({
-      url: `${AUTHMANAGERAPP_BASE_URL}/manager-categories-with-items?clientId=${clientId}`,
+      url: `${AUTHMANAGERAPP_BASE_URL}/manager-categories-with-items`,
       method: "GET",
+      header: {
+        skipAuth: true,
+      },
     });
   },
 
-
   /** 获取管理端首页分类*/
   getManagerHomeCategories() {
-
-    const clientId = getClientId() || CLIENT_CONFIG.CLIENT_ID;
-    console.log("登录使用客户端ID:", clientId);
-
     return request({
-      url: `${AUTHMANAGERAPP_BASE_URL}/manager-home-categories?clientId=${clientId}`,
+      url: `${AUTHMANAGERAPP_BASE_URL}/manager-home-categories`,
       method: "GET",
+      header: {
+        skipAuth: true,
+      },
     });
   },
 
   /** 获取管理端首页滚播栏*/
   getManagerMenuHomeBanners() {
-
-    const clientId = getClientId() || CLIENT_CONFIG.CLIENT_ID;
-    console.log("登录使用客户端ID:", clientId);
-
     return request({
-      url: `${AUTHMANAGERAPP_BASE_URL}/manager-home-banner?clientId=${clientId}`,
+      url: `${AUTHMANAGERAPP_BASE_URL}/manager-home-banner`,
       method: "GET",
+      header: {
+        skipAuth: true,
+      },
     });
   },
 };

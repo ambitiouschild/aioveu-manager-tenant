@@ -384,7 +384,7 @@ export async function request2<T>(options: UniApp.RequestOptions): Promise<Respo
 const requestInterceptor = async (config: any) => {
   // console.log("🔧 请求拦截器处理", config);
 
-  // ✅ 2. 公共接口：统一加 X-Client-Id（重点）
+  // ✅公共接口：统一加 X-Client-Id（重点）
   const clientId = getClientId() || CLIENT_CONFIG.CLIENT_ID;
   console.log("request请求拦截器,登录使用的客户端ID:", clientId);
 
