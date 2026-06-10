@@ -5,7 +5,7 @@ import { useUserStore } from "@/store/modules/user";
 import { CLIENT_CONFIG, getClientId } from "@/utils/clientManager";
 
 
-export default function request<T>(options: UniApp.RequestOptions): Promise<T> {
+export default async function request<T>(options: UniApp.RequestOptions): Promise<T> {
   // H5 使用 VITE_APP_BASE_API 作为代理路径，其他平台使用 VITE_APP_API_URL 作为请求路径
   let baseApi = import.meta.env.VITE_APP_API_URL;
   // #ifdef H5
@@ -17,18 +17,23 @@ export default function request<T>(options: UniApp.RequestOptions): Promise<T> {
 
   // 应用请求拦截器
   try {
-    Object.assign(processedConfig, requestInterceptor(processedConfig));
+    Object.assign(processedConfig, await requestInterceptor(processedConfig));
+    console.log("应用请求拦截器完成:");
   } catch (error) {
     console.error("请求拦截器错误:", error);
     return Promise.reject(error);
   }
 
-
   return new Promise((resolve, reject) => {
     // 构建请求头
+    // const headers = {
+    //   ...options.header,
+    // };
+
     const headers = {
-      ...options.header,
+      ...processedConfig.header,
     };
+    console.log("构建最终请求头:{}", headers);
 
     // 特殊处理 OAuth2 登录接口
     if (options.url === "/oauth2/token" || options.url.includes("/oauth2/token")) {
@@ -57,7 +62,7 @@ export default function request<T>(options: UniApp.RequestOptions): Promise<T> {
 
     uni.request({
       ...options,
-      url: `${baseApi}${options.url}`,
+      url: `${baseApi}${processedConfig.url}`,
 
       //你在 OAuth2 /token接口中使用了 Bearer token，但实际上 OAuth2 的 token 端点需要的是 Basic 认证。
       header: headers, // 使用新的 headers
@@ -250,7 +255,7 @@ function safeNavigateToLogin(onComplete?: () => void) {
 
 
 //request2: 返回完整的 ResponseData（用于需要完整信息的场景）
-export function request2<T>(options: UniApp.RequestOptions): Promise<ResponseData<T>> {
+export async function request2<T>(options: UniApp.RequestOptions): Promise<ResponseData<T>> {
   // H5 使用 VITE_APP_BASE_API 作为代理路径，其他平台使用 VITE_APP_API_URL 作为请求路径
   let baseApi = import.meta.env.VITE_APP_API_URL;
   // #ifdef H5
@@ -261,7 +266,8 @@ export function request2<T>(options: UniApp.RequestOptions): Promise<ResponseDat
 
   // 应用请求拦截器
   try {
-    Object.assign(processedConfig, requestInterceptor(processedConfig));
+    Object.assign(processedConfig, await requestInterceptor(processedConfig));
+    console.log("应用请求拦截器完成:");
   } catch (error) {
     console.error("请求拦截器错误:", error);
     return Promise.reject(error);
@@ -302,7 +308,7 @@ export function request2<T>(options: UniApp.RequestOptions): Promise<ResponseDat
 
     uni.request({
       ...options,
-      url: `${baseApi}${options.url}`,
+      url: `${baseApi}${processedConfig.url}`,
 
       //你在 OAuth2 /token接口中使用了 Bearer token，但实际上 OAuth2 的 token 端点需要的是 Basic 认证。
       header: headers, // 使用新的 headers
@@ -360,6 +366,17 @@ export function request2<T>(options: UniApp.RequestOptions): Promise<ResponseDat
 const requestInterceptor = async (config: any) => {
   // console.log("🔧 请求拦截器处理", config);
 
+
+  // ✅ 2. 公共接口：统一加 X-Client-Id（重点）
+  const clientId = getClientId() || CLIENT_CONFIG.CLIENT_ID;
+  console.log("request请求拦截器,登录使用的客户端ID:", clientId);
+
+  if (clientId) {
+    config.header = config.header || {};
+    config.header["X-Client-Id"] = clientId;
+  }
+
+
   // 判断请求是否需要认证
   if (config.header?.auth === true) {
     const token = getToken();
@@ -377,8 +394,8 @@ const requestInterceptor = async (config: any) => {
   try {
     // 获取有效的token（会自动刷新）
     const token = await userStore.getValidToken();
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (token && config.header) {
+      config.header.Authorization = `Bearer ${token}`;
     }
   } catch (error: any) {
     // token刷新失败，需要重新登录
@@ -396,14 +413,7 @@ const requestInterceptor = async (config: any) => {
     return Promise.reject(error);
   }
 
-  // ✅ 2. 公共接口：统一加 X-Client-Id（重点）
-  const clientId = getClientId() || CLIENT_CONFIG.CLIENT_ID;
-  console.log("登录使用的客户端ID:", clientId);
 
-  if (clientId) {
-    config.header = config.header || {};
-    config.header["X-Client-Id"] = clientId;
-  }
 
   return config;
 };
