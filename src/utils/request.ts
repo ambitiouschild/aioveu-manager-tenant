@@ -70,44 +70,46 @@ export default async function request<T>(options: UniApp.RequestOptions): Promis
         console.log("success response", response);
         const resData = response.data as ResponseData<T>;
 
-        // 业务状态码 00000 表示成功
-        if (resData.code === ResultCodeEnum.SUCCESS) {
-          resolve(resData.data); // ❌ 这里只返回了 data
+        const responseWithConfig = {
+          ...response,
+          config: processedConfig,
+        };
 
-          // resolve(resData);    // ❌ 这里只返回了 data
-          // 如果想返回完整响应：必须改函数签名
-          // 如果不想改签名：只能返回 resData.data
-          // 如果 data 是 null：问题会更复杂
+        // 应用响应拦截器
+        try {
+
+          const interceptorResult = responseInterceptor(responseWithConfig);
+
+          // 如果拦截器返回了Promise.reject，走失败流程
+          if (interceptorResult && interceptorResult.then && interceptorResult.catch) {
+            interceptorResult.then(resolve).catch(reject);
+            return;
+          }
+
+
+          // 业务状态码 00000 表示成功
+          if (resData.code === ResultCodeEnum.SUCCESS) {
+            resolve(resData.data); // ❌ 这里只返回了 自定义包裹的data
+            // 如果想返回完整响应：必须改函数签名
+            // 如果不想改签名：只能返回 resData.data
+            // 如果 data 是 null：问题会更复杂
+            // 拒绝 Promise，防止后续代码执行
+          } else {
+            // 其他业务处理失败
+            uni.showToast({
+              title: resData.msg || "业务处理失败",
+              icon: "none",
+            });
+            reject({
+              message: resData.msg || "业务处理失败",
+              code: resData.code,
+            });
+          }
+        } catch (error) {
+          console.error("响应拦截器错误:", error);
+          reject(error);
         }
-        // 令牌失效或过期处理
-        else if (resData.code === ResultCodeEnum.TOKEN_INVALID) {
-          console.log("令牌失效或过期处理");
-          // clearAll();
-          // 跳转到登录页
-          // 跳转到登录页 - 使用安全的跳转方法
-          // 异步处理，不阻塞当前请求
-          setTimeout(() => {
-            handleTokenExpiredSync();
-          }, 0);
 
-          // ✅ 必须 reject，否则 Promise 永远 pending
-          reject({
-            code: resData.code,
-            message: resData.msg || "token失效",
-          });
-
-          // 拒绝 Promise，防止后续代码执行
-        } else {
-          // 其他业务处理失败
-          // uni.showToast({
-          //   title: resData.msg || "业务处理失败",
-          //   icon: "none",
-          // });
-          reject({
-            message: resData.msg || "业务处理失败",
-            code: resData.code,
-          });
-        }
       },
       fail: (error) => {
         console.log("fail error", error);
@@ -322,41 +324,42 @@ export async function request2<T>(options: UniApp.RequestOptions): Promise<Respo
         console.log("success response", response);
         const resData = response.data as ResponseData<T>;
 
-        // 业务状态码 00000 表示成功
-        if (resData.code === ResultCodeEnum.SUCCESS) {
-          // resolve(resData.data);    // ❌ 这里只返回了 data
+        const responseWithConfig = {
+          ...response,
+          config: processedConfig,
+        };
+        // 应用响应拦截器
+        try {
+          const interceptorResult = responseInterceptor(responseWithConfig);
 
-          resolve(resData); // ❌ 这里只返回了 data
-          // 如果想返回完整响应：必须改函数签名
-          // 如果不想改签名：只能返回 resData.data
-          // 如果 data 是 null：问题会更复杂
-        }
-        // 令牌失效或过期处理
-        else if (resData.code === ResultCodeEnum.TOKEN_INVALID) {
-          console.log("令牌失效或过期处理");
+          // 如果拦截器返回了Promise.reject，走失败流程
+          if (interceptorResult && interceptorResult.then && interceptorResult.catch) {
+            interceptorResult.then(resolve).catch(reject);
+            return;
+          }
 
+          // 业务状态码 00000 表示成功
+          if (resData.code === ResultCodeEnum.SUCCESS) {
+            // resolve(resData.data);    // ❌ 这里只返回了 data
 
-          // 异步跳转登录页（不阻塞）
-          setTimeout(() => {
-            handleTokenExpiredSync();
-          }, 0);
-
-          // ✅ 必须 reject，否则 Promise 永远 pending
-          reject({
-            code: resData.code,
-            message: resData.msg || "token失效",
-          });
-
-        } else {
-          // 其他业务处理失败
-          // uni.showToast({
-          //   title: resData.msg || "业务处理失败",
-          //   icon: "none",
-          // });
-          reject({
-            message: resData.msg || "业务处理失败",
-            code: resData.code,
-          });
+            resolve(resData); // ❌ 这里返回了 所有响应data
+            // 如果想返回完整响应：必须改函数签名
+            // 如果不想改签名：只能返回 resData.data
+            // 如果 data 是 null：问题会更复杂
+          } else {
+            //其他业务处理失败
+            uni.showToast({
+              title: resData.msg || "业务处理失败",
+              icon: "none",
+            });
+            reject({
+              message: resData.msg || "业务处理失败",
+              code: resData.code,
+            });
+          }
+        } catch (error) {
+          console.error("响应拦截器错误:", error);
+          reject(error);
         }
       },
       fail: (error) => {
@@ -381,7 +384,6 @@ export async function request2<T>(options: UniApp.RequestOptions): Promise<Respo
 const requestInterceptor = async (config: any) => {
   // console.log("🔧 请求拦截器处理", config);
 
-
   // ✅ 2. 公共接口：统一加 X-Client-Id（重点）
   const clientId = getClientId() || CLIENT_CONFIG.CLIENT_ID;
   console.log("request请求拦截器,登录使用的客户端ID:", clientId);
@@ -390,7 +392,6 @@ const requestInterceptor = async (config: any) => {
     config.header = config.header || {};
     config.header["X-Client-Id"] = clientId;
   }
-
 
   // 判断请求是否需要认证
   if (config.header?.auth === true) {
@@ -428,8 +429,6 @@ const requestInterceptor = async (config: any) => {
     return Promise.reject(error);
   }
 
-
-
   return config;
 };
 
@@ -453,19 +452,92 @@ const responseInterceptor = (response: any) => {
   }
 
   // 处理业务错误码
-  if (resData.code === "A0230") {
-    // token过期
-    uni.showToast({
-      title: "会话已过期，请重新登录",
-      success() {
-        uni.navigateTo({
-          url: `/packageA/pages/login/login`,
-        });
-      },
+  // 业务层 token 失效
+  if (resData.code === ResultCodeEnum.TOKEN_INVALID || resData.code === "A0230") {
+    handleTokenExpiredSync();
+    return Promise.reject({
+      code: resData.code,
+      message: resData.msg || "token失效",
     });
-    return Promise.reject(resData);
   }
 
   return resData;
 };
 
+function baseRequest<T>(options: UniApp.RequestOptions, returnFullResponse = false): Promise<any> {
+  return new Promise(async (resolve, reject) => {
+    // 1️请求拦截器
+    const processedConfig = { ...options };
+    try {
+      Object.assign(processedConfig, await requestInterceptor(processedConfig));
+    } catch (err) {
+      return reject(err);
+    }
+
+    // 2️请求头
+    const headers = {
+      ...processedConfig.header,
+    };
+
+    if (processedConfig.url?.includes("/oauth2/token")) {
+      headers["Content-Type"] = "application/x-www-form-urlencoded";
+      delete headers.Authorization;
+    } else {
+      const token = getToken();
+      if (token && !headers.Authorization) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+    }
+
+    // 3️发起请求
+    uni.request({
+      ...processedConfig,
+      header: headers,
+      success: (response) => {
+        const responseWithConfig = {
+          ...response,
+          config: processedConfig,
+        };
+
+        try {
+          const interceptorResult = responseInterceptor(responseWithConfig);
+
+          if (interceptorResult?.then) {
+            interceptorResult.then(resolve).catch(reject);
+            return;
+          }
+
+          const resData = response.data as ResponseData<T>;
+
+          if (resData.code === ResultCodeEnum.SUCCESS) {
+            resolve(returnFullResponse ? resData : resData.data);
+          } else {
+            reject({
+              code: resData.code,
+              message: resData.msg,
+            });
+          }
+        } catch (e) {
+          reject(e);
+        }
+      },
+      fail: (err) => {
+        reject(err);
+      },
+    });
+  });
+}
+
+// request（不新增参数 ✅）
+export function request3<T>(
+  options: UniApp.RequestOptions
+): Promise<T> {
+  return baseRequest<T>(options, false);
+}
+
+// request2（不新增参数 ✅）
+export function request4<T>(
+  options: UniApp.RequestOptions
+): Promise<ResponseData<T>> {
+  return baseRequest<T>(options, true);
+}
