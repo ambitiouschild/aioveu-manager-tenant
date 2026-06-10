@@ -1,5 +1,9 @@
 import { getToken, clearAll } from "@/utils/cache";
 import { ResultCodeEnum } from "@/enums/ResultCodeEnum";
+import { useUserStore } from "@/store/modules/user";
+
+import { CLIENT_CONFIG, getClientId } from "@/utils/clientManager";
+
 
 export default function request<T>(options: UniApp.RequestOptions): Promise<T> {
   // H5 使用 VITE_APP_BASE_API 作为代理路径，其他平台使用 VITE_APP_API_URL 作为请求路径
@@ -8,28 +12,39 @@ export default function request<T>(options: UniApp.RequestOptions): Promise<T> {
   baseApi = import.meta.env.VITE_APP_BASE_API;
   // #endif
 
-  return new Promise((resolve, reject) => {
+  // 处理请求配置
+  const processedConfig = { ...options };
 
+  // 应用请求拦截器
+  try {
+    Object.assign(processedConfig, requestInterceptor(processedConfig));
+  } catch (error) {
+    console.error("请求拦截器错误:", error);
+    return Promise.reject(error);
+  }
+
+
+  return new Promise((resolve, reject) => {
     // 构建请求头
     const headers = {
-      ...options.header
+      ...options.header,
     };
 
     // 特殊处理 OAuth2 登录接口
-    if (options.url === '/oauth2/token' || options.url.includes('/oauth2/token')) {
+    if (options.url === "/oauth2/token" || options.url.includes("/oauth2/token")) {
       // OAuth2 token 接口需要 Basic 认证，不是 Bearer token
       // headers['Authorization'] = 'Basic ' + btoa('web:web_secret');  // 改成 Basic
-      headers['Content-Type'] = 'application/x-www-form-urlencoded';  // 必须是这个
+      headers["Content-Type"] = "application/x-www-form-urlencoded"; // 必须是这个
 
       // 删除 Bearer token（如果有的话）
-      delete headers['Bearer'];
+      delete headers["Bearer"];
     } else {
       // 其他接口使用 Bearer token
       const token = getToken();
       // console.log('🔑 获取到的token:', token);
 
       if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+        headers["Authorization"] = `Bearer ${token}`;
       }
     }
 
@@ -39,7 +54,6 @@ export default function request<T>(options: UniApp.RequestOptions): Promise<T> {
     //   headers: headers,
     //   data: options.data
     // });
-
 
     uni.request({
       ...options,
@@ -241,30 +255,41 @@ export function request2<T>(options: UniApp.RequestOptions): Promise<ResponseDat
   let baseApi = import.meta.env.VITE_APP_API_URL;
   // #ifdef H5
   baseApi = import.meta.env.VITE_APP_BASE_API;
+
+  // 处理请求配置
+  const processedConfig = { ...options };
+
+  // 应用请求拦截器
+  try {
+    Object.assign(processedConfig, requestInterceptor(processedConfig));
+  } catch (error) {
+    console.error("请求拦截器错误:", error);
+    return Promise.reject(error);
+  }
+
   // #endif
 
   return new Promise((resolve, reject) => {
-
     // 构建请求头
     const headers = {
-      ...options.header
+      ...options.header,
     };
 
     // 特殊处理 OAuth2 登录接口
-    if (options.url === '/oauth2/token' || options.url.includes('/oauth2/token')) {
+    if (options.url === "/oauth2/token" || options.url.includes("/oauth2/token")) {
       // OAuth2 token 接口需要 Basic 认证，不是 Bearer token
       // headers['Authorization'] = 'Basic ' + btoa('web:web_secret');  // 改成 Basic
-      headers['Content-Type'] = 'application/x-www-form-urlencoded';  // 必须是这个
+      headers["Content-Type"] = "application/x-www-form-urlencoded"; // 必须是这个
 
       // 删除 Bearer token（如果有的话）
-      delete headers['Bearer'];
+      delete headers["Bearer"];
     } else {
       // 其他接口使用 Bearer token
       const token = getToken();
       // console.log('🔑 获取到的token:', token);
 
       if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+        headers["Authorization"] = `Bearer ${token}`;
       }
     }
 
@@ -275,13 +300,12 @@ export function request2<T>(options: UniApp.RequestOptions): Promise<ResponseDat
     //   data: options.data
     // });
 
-
     uni.request({
       ...options,
       url: `${baseApi}${options.url}`,
 
       //你在 OAuth2 /token接口中使用了 Bearer token，但实际上 OAuth2 的 token 端点需要的是 Basic 认证。
-      header: headers,  // 使用新的 headers
+      header: headers, // 使用新的 headers
       success: (response) => {
         console.log("success response", response);
         const resData = response.data as ResponseData<T>;
@@ -299,12 +323,9 @@ export function request2<T>(options: UniApp.RequestOptions): Promise<ResponseDat
         else if (resData.code === ResultCodeEnum.TOKEN_INVALID) {
           console.log("令牌失效或过期处理");
 
-
           setTimeout(() => {
             handleTokenExpiredSync();
           }, 0);
-
-
         } else {
           // 其他业务处理失败
           // uni.showToast({
@@ -333,5 +354,93 @@ export function request2<T>(options: UniApp.RequestOptions): Promise<ResponseDat
   });
 }
 
+/**
+ * 请求拦截器
+ */
+const requestInterceptor = async (config: any) => {
+  // console.log("🔧 请求拦截器处理", config);
 
+  // 判断请求是否需要认证
+  if (config.header?.auth === true) {
+    const token = getToken();
+    if (token) {
+      config.header.Authorization = `Bearer ${token}`;
+    }
+  }
+
+  // 如果配置中指定跳过认证，则不添加token
+  if (config.header?.skipAuth === true) {
+    return config;
+  }
+  const userStore = useUserStore();
+
+  try {
+    // 获取有效的token（会自动刷新）
+    const token = await userStore.getValidToken();
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } catch (error: any) {
+    // token刷新失败，需要重新登录
+    if (error.message === "NOT_LOGGED_IN" || error.message === "NO_REFRESH_TOKEN") {
+      // 跳转到登录页
+      // uni.showModal({
+      //   title: "提示",
+      //   content: "登录已过期，请重新登录",
+      //   showCancel: false,
+      //   success: () => {
+      //     uni.reLaunch({ url: "/pages/login/login" });
+      //   },
+      // });
+    }
+    return Promise.reject(error);
+  }
+
+  // ✅ 2. 公共接口：统一加 X-Client-Id（重点）
+  const clientId = getClientId() || CLIENT_CONFIG.CLIENT_ID;
+  console.log("登录使用的客户端ID:", clientId);
+
+  if (clientId) {
+    config.header = config.header || {};
+    config.header["X-Client-Id"] = clientId;
+  }
+
+  return config;
+};
+
+/**
+ * 响应拦截器
+ */
+const responseInterceptor = (response: any) => {
+  // console.log("🔧 响应拦截器处理", response);
+
+  const resData = response.data;
+  const config = response.config;
+
+  // 如果状态码是 401，处理认证失败
+  if (response.statusCode === 401) {
+    console.error("❌ 认证失败，状态码 401");
+    return Promise.reject({
+      code: "AUTH_ERROR",
+      message: "认证失败",
+      response,
+    });
+  }
+
+  // 处理业务错误码
+  if (resData.code === "A0230") {
+    // token过期
+    uni.showToast({
+      title: "会话已过期，请重新登录",
+      success() {
+        uni.navigateTo({
+          url: `/packageA/pages/login/login`,
+        });
+      },
+    });
+    return Promise.reject(resData);
+  }
+
+  return resData;
+};
 

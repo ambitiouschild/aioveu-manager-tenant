@@ -15,7 +15,7 @@ const CLIENT_KEY = "app-clientId";
  */
 export const CLIENT_CONFIG = {
   // 管理端ID mall-admin
-  CLIENT_ID: 'mall-admin',
+  CLIENT_ID: 'mall-manager',
 
   //        Authorization: "Basic bWFsbC1hZG1pbjoxMjM0NTY=", // 客户端信息Base64明文：mall-admin:123456
 
