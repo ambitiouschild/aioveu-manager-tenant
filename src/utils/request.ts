@@ -268,6 +268,8 @@ export async function request2<T>(options: UniApp.RequestOptions): Promise<Respo
   let baseApi = import.meta.env.VITE_APP_API_URL;
   // #ifdef H5
   baseApi = import.meta.env.VITE_APP_BASE_API;
+  // #endif
+
 
   // 处理请求配置
   const processedConfig = { ...options };
@@ -281,8 +283,6 @@ export async function request2<T>(options: UniApp.RequestOptions): Promise<Respo
     return Promise.reject(error);
   }
 
-  // #endif
-
   return new Promise((resolve, reject) => {
     // 构建请求头
     const headers = {
@@ -290,7 +290,7 @@ export async function request2<T>(options: UniApp.RequestOptions): Promise<Respo
     };
 
     // 特殊处理 OAuth2 登录接口
-    if (processedConfig.url?.includes("/oauth2/token")){
+    if (processedConfig.url?.includes("/oauth2/token")) {
       // OAuth2 token 接口需要 Basic 认证，不是 Bearer token
       // headers['Authorization'] = 'Basic ' + btoa('web:web_secret');  // 改成 Basic
       headers["Content-Type"] = "application/x-www-form-urlencoded"; // 必须是这个
