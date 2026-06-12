@@ -360,6 +360,8 @@ import {
   applyRefund as applyRefundApi,
   getRefundDetail,
   shipOrder,
+  exportOmsOrders,
+  downloadExportFile,
 } from "@/packageD/api/oms/order";
 import { OrderItemVO, OrderVO } from "@/packageD/types/oms/order";
 import { ResultCodeEnum } from "@/enums/ResultCodeEnum";
@@ -852,6 +854,7 @@ const batchPrint = () => {
   console.log("批量打印订单:", Array.from(selectedOrders.value));
 };
 
+// 创建导出任务 + 下载
 const exportOrders = async () => {
   try {
     const params = {
@@ -859,30 +862,17 @@ const exportOrders = async () => {
       exportType: "excel",
     };
 
-    const response = await uni.$api.business.order.export(params);
+    const response = await exportOmsOrders(params);
 
-    if (response.code === 0 && response.data.url) {
-      // 下载文件
-      uni.downloadFile({
-        url: response.data.url,
-        success: (res) => {
-          if (res.statusCode === 200) {
-            uni.showToast({
-              title: "导出成功",
-              icon: "success",
-            });
+    // 后端返回的是文件流
+    const blob = new Blob([response.data as BlobPart], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const fileName = `订单导出_${formatDate(new Date())}.xlsx`;
 
-            // 保存文件
-            uni.saveFile({
-              tempFilePath: res.tempFilePath,
-              success: (saveRes) => {
-                console.log("文件保存成功:", saveRes.savedFilePath);
-              },
-            });
-          }
-        },
-      });
-    }
+    downloadExcel(blob, fileName);
+
+    uni.showToast({ title: "导出任务已创建", icon: "success" });
   } catch (error) {
     console.error("导出失败:", error);
     uni.showToast({
@@ -890,6 +880,77 @@ const exportOrders = async () => {
       icon: "error",
     });
   }
+};
+
+// 下载已有任务
+const handleDownload = async (exportNo: string) => {
+  try {
+    const res = await downloadExportFile(exportNo);
+
+    const blob = new Blob([res.data as BlobPart], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    const fileName = `订单导出_${exportNo}.xlsx`;
+
+    downloadExcel(blob, fileName);
+
+    uni.showToast({ title: "下载成功", icon: "success" });
+  } catch (e) {
+    console.error(e);
+    uni.showToast({ title: "文件不存在或已过期", icon: "error" });
+  }
+};
+
+/**
+ * 通用 Excel 下载（H5 + APP‑PLUS）
+ * 下载逻辑合并 ✅（你已经做到了）
+ */
+const downloadExcel = (blob: Blob, fileName: string) => {
+  if (!blob) {
+    uni.showToast({ title: "文件下载失败", icon: "error" });
+    return;
+  }
+
+  // #ifdef H5
+  const link = document.createElement("a");
+  link.href = window.URL.createObjectURL(blob);
+  link.download = fileName;
+  link.click();
+  window.URL.revokeObjectURL(link.href);
+  // #endif
+
+  // #ifdef APP-PLUS
+  plus.io.resolveLocalFileSystemURL(
+    "_doc/",
+    (dirEntry: any) => {
+      dirEntry.getFile(
+        fileName,
+        { create: true, exclusive: false },
+        (fileEntry: any) => {
+          fileEntry.createWriter((writer: any) => {
+            writer.onwriteend = () => {
+              plus.runtime.openFile(fileEntry.toURL());
+            };
+
+            // ✅ 安全写法（Android 必稳）
+            const reader = new FileReader();
+            reader.onload = () => {
+              writer.write(reader.result as ArrayBuffer);
+            };
+            reader.readAsArrayBuffer(blob);
+          });
+        },
+        () => {
+          uni.showToast({ title: "创建文件失败", icon: "error" });
+        }
+      );
+    },
+    () => {
+      uni.showToast({ title: "访问目录失败", icon: "error" });
+    }
+  );
+  // #endif
 };
 
 // 获取筛选参数

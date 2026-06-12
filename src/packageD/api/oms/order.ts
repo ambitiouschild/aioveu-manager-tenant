@@ -192,7 +192,7 @@ const PayFlowAPI = {
 };
 
 // 获取订单统计
-export const getOrderStats = (params : any) => {
+export const getOrderStats = (params: any) => {
   return request({
     url: `${OMSORDER_BASE_URL}/stats`,
     method: "GET",
@@ -204,10 +204,10 @@ export const getOrderStats = (params : any) => {
 };
 
 // 导出订单
-export const exportOrders = (params : any) => {
-  return request({
+export const exportOmsOrders = (params: any) => {
+  return request2({
     url: `${OMSORDER_BASE_URL}/export`,
-    method: "GET",
+    method: "POST",
     data: params,
     responseType: "blob", // 如果需要处理文件下载
     header: {
@@ -215,6 +215,17 @@ export const exportOrders = (params : any) => {
     },
   });
 };
+
+export const downloadExportFile = (exportNo: string) => {
+  return request2({
+    url: `${OMSORDER_BASE_URL}/export/download`,
+    method: "GET",
+    data: { exportNo },
+    responseType: "blob", // ✅ 必须
+  });
+};
+
+
 
 // 打印订单
 export const printOrder = (orderId: any) => {
@@ -363,6 +374,7 @@ export default {
   getPendingOrderCount,
 
   // 其他功能
-  exportOrders,
+  exportOmsOrders,
+  downloadExportFile,
   printOrder,
 };
