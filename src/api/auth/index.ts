@@ -41,13 +41,21 @@ const AuthAPI = {
 
     console.log("打印payload：{}", payload);
 
+    const clientId = getClientId() || CLIENT_CONFIG.CLIENT_ID;
+    console.log("登录使用客户端ID:", clientId);
+    const basicAuth = CLIENT_CONFIG.getBASIC_AUTH();
+    console.log("动态生成的认证头:", basicAuth);
+
+
     return request<LoginResult>({
       url: `${AUTH_LOGIN_URL}/oauth2/token`,
       method: "POST",
       data: payload,
       header: {
         "Content-Type": "multipart/form-data",
-        Authorization: "Basic bWFsbC1hZG1pbjoxMjM0NTY=", // 客户端信息Base64明文：mall-admin:123456
+        // Authorization: "Basic bWFsbC1hZG1pbjoxMjM0NTY=", // 客户端信息Base64明文：mall-admin:123456
+        Authorization: basicAuth, // 使用动态生成的认证头
+        skipAuth: true,
       },
     })
       .then((response) => {
@@ -65,6 +73,9 @@ const AuthAPI = {
     return request<TenantItem[]>({
       url: `${AUTH_BASE_URL}/tenants/${username}`, // 使用模板字符串
       method: "GET",
+      header: {
+        skipAuth: true,
+      },
       // 不需要params了，因为username已经在URL中了
     });
   },
@@ -101,6 +112,9 @@ const AuthAPI = {
     return request<CaptchaInfo>({
       url: `${AUTH_BASE_URL}/captcha`,
       method: "GET",
+      header: {
+        skipAuth: true,
+      },
     });
   },
 
