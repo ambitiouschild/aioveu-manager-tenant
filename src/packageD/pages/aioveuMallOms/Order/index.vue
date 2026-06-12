@@ -854,7 +854,7 @@ const batchPrint = () => {
   console.log("批量打印订单:", Array.from(selectedOrders.value));
 };
 
-// 创建导出任务 + 下载
+// 创建导出任务 + 下载 （只拿 exportNo）
 const exportOrders = async () => {
   try {
     const params = {
@@ -862,15 +862,28 @@ const exportOrders = async () => {
       exportType: "excel",
     };
 
-    const response = await exportOmsOrders(params);
+    //await exportOmsOrders()返回的是 ResponseData<ExportTaskResp>​
+    const res = await exportOmsOrders(params);
 
-    // 后端返回的是文件流
-    const blob = new Blob([response.data as BlobPart], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-    const fileName = `订单导出_${formatDate(new Date())}.xlsx`;
+    // // 后端返回的是文件流
+    // const blob = new Blob([response.data as BlobPart], {
+    //   type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    // });
+    // const fileName = `订单导出_${formatDate(new Date())}.xlsx`;
+    //
+    // downloadExcel(blob, fileName);
 
-    downloadExcel(blob, fileName);
+    if (res.code === "00000") {
+      const exportNo = res.data.exportNo; // ✅ 100% OK
+
+      uni.showToast({
+        title: "导出任务已创建",
+        icon: "success",
+      });
+
+      // ✅ 可以刷新任务列表
+      // loadExportTaskList();
+    }
 
     uni.showToast({ title: "导出任务已创建", icon: "success" });
   } catch (error) {

@@ -205,16 +205,20 @@ export const getOrderStats = (params: any) => {
 
 // 导出订单
 export const exportOmsOrders = (params: any) => {
-  return request2({
+  return request2<ExportTaskResp>({
     url: `${OMSORDER_BASE_URL}/export`,
     method: "POST",
     data: params,
-    responseType: "blob", // 如果需要处理文件下载
+    // responseType: "blob", // 如果需要处理文件下载
     header: {
       auth: true,
     },
   });
 };
+
+interface ExportTaskResp {
+    exportNo: string;
+}
 
 export const downloadExportFile = (exportNo: string) => {
   return request2({

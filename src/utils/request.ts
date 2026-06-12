@@ -322,7 +322,7 @@ export async function request2<T>(options: UniApp.RequestOptions): Promise<Respo
       header: headers, // 使用新的 headers
       success: (response) => {
         console.log("success response", response);
-        const resData = response.data as ResponseData<T>;
+        const resData = response.data as ResponseData<T>; //response.data= 整个 JSON 对象
 
         const responseWithConfig = {
           ...response,
