@@ -386,7 +386,9 @@ const pageSize = ref(20);
 const refreshing = ref(false);
 
 // 筛选相关
-const activeStatus = ref(-1); // -1表示全部
+// const activeStatus = ref(-1); // -1表示全部
+const activeStatus = ref<null | string>(null); // null = 全部
+
 const dateRange = ref({
   start: formatDate(new Date()),
   end: formatDate(new Date()),
@@ -432,9 +434,10 @@ const selectedAmount = computed(() => {
 
 // 订单状态配置
 const orderStatusList = computed(() => [
-  { value: -1, label: "全部", class: "all", count: 0 },
+  // { value: -1, label: "全部", class: "all", count: 0 },
+  { value: null, label: "全部", class: "all", count: 0 },
   ...ORDER_STATUS_VALUES.map((status) => ({
-    value: status,
+    value: status, // 这里是 "PAID" / "UNPAID" 等字符串 ✅
     label: OrderStatusLabel[status],
     class: OrderStatusClass[status],
     count: 0,
@@ -559,7 +562,10 @@ const updateOrderStats = (statistics: any) => {
   // 更新各个状态的数量
   if (statistics.statusCounts) {
     orderStatusList.value.forEach((status) => {
-      const count = statistics.statusCounts[status.value] || 0;
+      // ✅ 跳过 null  “全部”本来就不应该有数量，数量是后端按状态算的
+      if (status.value === null) return;
+
+      const count = statistics.statusCounts[status.value] ?? 0;
       status.count = count;
     });
   }
@@ -584,9 +590,9 @@ const loadMore = () => {
 };
 
 // 状态点击
-const onStatusClick = (status: number) => {
+const onStatusClick = (status: string | null) => {
   if (activeStatus.value === status) {
-    activeStatus.value = -1; // 点击已激活状态则取消筛选
+    activeStatus.value = null; // ✅ 取消筛选 // 点击已激活状态则取消筛选
   } else {
     activeStatus.value = status;
   }
@@ -977,12 +983,17 @@ const downloadExcel = (blob: Blob, fileName: string) => {
 
 // 获取筛选参数
 const getFilterParams = () => {
-  return {
-    status: activeStatus.value,
+  const params: any = {
     startTime: dateRange.value.start + " 00:00:00",
     endTime: dateRange.value.end + " 23:59:59",
     ...advancedFilter.value,
   };
+
+  if (activeStatus.value !== null) {
+    params.status = activeStatus.value;
+  }
+
+  return params;
 };
 
 // 计算是否可以确认发货

@@ -2,6 +2,8 @@
  * Order 对象的完整 TypeScript 定义
  */
 
+import { OrderStatusEnum } from "@/packageD/enums/OrderStatusEnum";
+
 /** OrderItemVO */
 export interface OrderItemVO {
   orderId: number;
@@ -26,7 +28,7 @@ export interface OrderVO {
   paymentMethodLabel: string | null; // 支付方式标签
 
   // 订单状态
-  status: number; // 状态值: 0-待付款, 1-待发货, 2-已发货, 3-已完成, 4-已取消
+  status: OrderStatusEnum; // 状态值: 0-待付款, 1-待发货, 2-已发货, 3-已完成, 4-已取消
   statusLabel: string; // 状态标签: "待付款", "待发货" 等
 
   // 商品信息
