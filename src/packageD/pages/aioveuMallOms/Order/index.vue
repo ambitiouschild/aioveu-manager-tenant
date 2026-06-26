@@ -365,6 +365,12 @@ import {
 } from "@/packageD/api/oms/order";
 import { OrderItemVO, OrderVO } from "@/packageD/types/oms/order";
 import { ResultCodeEnum } from "@/enums/ResultCodeEnum";
+import {
+  OrderStatusEnum,
+  OrderStatusLabel,
+  OrderStatusClass,
+  ORDER_STATUS_VALUES,
+} from "@/packageD/enums/OrderStatusEnum";
 // 系统信息
 const systemInfo = uni.getSystemInfoSync();
 
@@ -425,14 +431,14 @@ const selectedAmount = computed(() => {
 });
 
 // 订单状态配置
-const orderStatusList = ref([
+const orderStatusList = computed(() => [
   { value: -1, label: "全部", class: "all", count: 0 },
-  { value: 0, label: "待付款", class: "pending-payment", count: 0 },
-  { value: 1, label: "待发货", class: "pending-ship", count: 0 },
-  { value: 2, label: "已发货", class: "shipped", count: 0 },
-  { value: 3, label: "已完成", class: "completed", count: 0 },
-  { value: 4, label: "已取消", class: "cancelled", count: 0 },
-  { value: 5, label: "退款中", class: "refunding", count: 0 },
+  ...ORDER_STATUS_VALUES.map((status) => ({
+    value: status,
+    label: OrderStatusLabel[status],
+    class: OrderStatusClass[status],
+    count: 0,
+  })),
 ]);
 
 // 快捷筛选
@@ -712,7 +718,8 @@ const getStatusText = (status: number) => {
     2: "已发货",
     3: "已完成",
     4: "已取消",
-    5: "退款中",
+    5: "已关闭",
+    6: "售后中",
   };
   return statusTextMap[status] || "未知";
 };
@@ -724,11 +731,13 @@ type OrderAction = "view" | "ship" | "confirm" | "cancel" | "refund" | "print";
 const showActionButton = (order: OrderVO, action: OrderAction) => {
   const actionMap: Record<OrderAction, boolean> = {
     view: true, // 总是显示查看
-    ship: order.status === 1, // 待发货
-    confirm: order.status === 2, // 已发货
-    cancel: [0, 1].includes(order.status), // 待付款、待发货
-    refund: [5, 6].includes(order.status), // 退款相关状态
-    print: [1, 2, 3].includes(order.status), // 已发货、已完成
+    ship: order.status === OrderStatusEnum.PAID, // 待发货
+    confirm: order.status === OrderStatusEnum.SHIPPED, // 已发货
+    cancel: [OrderStatusEnum.UNPAID, OrderStatusEnum.PAID].includes(order.status), // 待付款、待发货
+    refund: [OrderStatusEnum.CLOSED, OrderStatusEnum.SERVICING].includes(order.status), // 退款相关状态
+    print: [OrderStatusEnum.PAID, OrderStatusEnum.SHIPPED, OrderStatusEnum.COMPLETED].includes(
+      order.status
+    ), // 已发货、已完成
   };
   return actionMap[action] || false;
 };
