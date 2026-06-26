@@ -531,19 +531,19 @@ const loadOrders = async (reset = false) => {
       hasMore.value = currentTotal < total;
       pageNum.value = pageNum.value + 1;
 
-      // 调用API
-      try {
-        const statistics = await getOrderStatistics(params);
-        console.log("订单统计响应:", statistics);
-        // 更新统计
-        updateOrderStats(statistics);
-      } catch (error) {
-        console.error("加载订单统计响应失败:", error);
-        uni.showToast({
-          title: "加载失败",
-          icon: "error",
-        });
-      }
+      // 调用API          // ❌ 每次分页 / 翻页都会调用
+      // try {
+      //   const statistics = await getOrderStatistics(params);
+      //   console.log("订单统计响应:", statistics);
+      //   // 更新统计
+      //   updateOrderStats(statistics);
+      // } catch (error) {
+      //   console.error("加载订单统计响应失败:", error);
+      //   uni.showToast({
+      //     title: "加载失败",
+      //     icon: "error",
+      //   });
+      // }
     }
   } catch (error) {
     console.error("加载订单失败:", error);
@@ -554,6 +554,17 @@ const loadOrders = async (reset = false) => {
   } finally {
     loading.value = false;
     refreshing.value = false;
+  }
+};
+
+//单独写一个「加载统计的方法」
+const loadOrderStatistics = async () => {
+  try {
+    const params = getFilterParams();
+    const statistics = await getOrderStatistics(params);
+    updateOrderStats(statistics);
+  } catch (e) {
+    console.error("加载统计失败", e);
   }
 };
 
@@ -579,6 +590,7 @@ const updateOrderStats = (statistics: any) => {
 // 下拉刷新
 const onRefresh = () => {
   refreshing.value = true;
+  loadOrderStatistics();
   loadOrders(true);
 };
 
@@ -597,6 +609,8 @@ const onStatusClick = (status: string | null) => {
     activeStatus.value = status;
   }
   loadOrders(true);
+  //状态切换 在「筛选变化」的地方调用统计
+  loadOrderStatistics();
 };
 
 // 快捷筛选点击
@@ -628,7 +642,7 @@ const onQuickFilterClick = (filter: string) => {
       };
       break;
   }
-
+  loadOrderStatistics();
   loadOrders(true);
 };
 
@@ -660,11 +674,13 @@ const setThisWeek = () => {
 const onStartDateChange = (e: any) => {
   dateRange.value.start = e.detail.value;
   loadOrders(true);
+  loadOrderStatistics();
 };
 
 const onEndDateChange = (e: any) => {
   dateRange.value.end = e.detail.value;
   loadOrders(true);
+  loadOrderStatistics();
 };
 
 // 高级筛选
@@ -683,6 +699,7 @@ const applyAdvancedFilter = () => {
 
 const confirmAdvancedFilter = () => {
   loadOrders(true);
+  loadOrderStatistics();
   showAdvanced.value = false;
 };
 
@@ -704,28 +721,29 @@ const viewOrderDetail = (orderSn: string) => {
 };
 
 // 获取状态类名
-const getStatusClass = (status: number) => {
-  const statusMap: { [key: number]: string } = {
-    0: "pending-payment",
-    1: "pending-ship",
-    2: "shipped",
-    3: "completed",
-    4: "cancelled",
-    5: "refunding",
+const getStatusClass = (status: string) => {
+  const statusMap: { [key: string]: string } = {
+    UNPAID: "pending-payment",
+    PAID: "pending-ship",
+    SHIPPED: "shipped",
+    COMPLETED: "completed",
+    CANCELLED: "cancelled",
+    CLOSED: "cancelled",
+    SERVICING: "refunding",
   };
   return statusMap[status] || "all";
 };
 
 // 获取状态文本
-const getStatusText = (status: number) => {
-  const statusTextMap: { [key: number]: string } = {
-    0: "待付款",
-    1: "待发货",
-    2: "已发货",
-    3: "已完成",
-    4: "已取消",
-    5: "已关闭",
-    6: "售后中",
+const getStatusText = (status: string) => {
+  const statusTextMap: { [key: string]: string } = {
+    UNPAID: "待付款",
+    PAID: "待发货",
+    SHIPPED: "已发货",
+    COMPLETED: "已完成",
+    CANCELLED: "已取消",
+    CLOSED: "已关闭",
+    SERVICING: "售后中",
   };
   return statusTextMap[status] || "未知";
 };
@@ -1005,6 +1023,8 @@ const canConfirmShip = computed(() => {
 onLoad(() => {
   console.log("商家订单管理页面加载");
   loadOrders(true);
+  //在「筛选变化」的地方调用统计
+  loadOrderStatistics();
 });
 
 onShow(() => {
