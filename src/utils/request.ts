@@ -289,7 +289,6 @@ export async function request2<T>(options: UniApp.RequestOptions): Promise<Respo
   baseApi = import.meta.env.VITE_APP_BASE_API;
   // #endif
 
-
   // 处理请求配置
   const processedConfig = { ...options };
 
@@ -412,6 +411,11 @@ const requestInterceptor = async (config: any) => {
     config.header["X-Client-Id"] = clientId;
   }
 
+  // ✅ 公共接口直接放行
+  if (config.url?.startsWith("/app-api/v1/auth")) {
+    return config;
+  }
+
   // 判断请求是否需要认证
   if (config.header?.auth === true) {
     const token = getToken();
@@ -463,7 +467,7 @@ const responseInterceptor = (response: any) => {
   const config = response.config;
 
   // ✅ 公共接口直接放过
-  if (config.url?.startsWith("/public/")) {
+  if (config.url?.startsWith("/app-api/v1/auth")) {
     return resData;
   }
 
