@@ -5,6 +5,25 @@ import { useUserStore } from "@/store/modules/user";
 import { CLIENT_CONFIG, getClientId } from "@/utils/clientManager";
 
 
+//统一「刷新锁」（替换你现在的）
+
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (err: any) => void;
+}> = [];
+
+function processQueue(error: any, token: string | null = null) {
+  failedQueue.forEach((p) => {
+    if (error) {
+      p.reject(error);
+    } else {
+      p.resolve(token!);
+    }
+  });
+  failedQueue = [];
+}
+
 export default async function request<T>(options: UniApp.RequestOptions): Promise<T> {
   // H5 使用 VITE_APP_BASE_API 作为代理路径，其他平台使用 VITE_APP_API_URL 作为请求路径
   let baseApi = import.meta.env.VITE_APP_API_URL;
@@ -408,8 +427,10 @@ const requestInterceptor = async (config: any) => {
   const userStore = useUserStore();
 
   try {
-    // 获取有效的token（会自动刷新）
-    const token = await userStore.getValidToken();
+    // // 获取有效的token（会自动刷新）
+    // const token = await userStore.getValidToken();  // ❌ 删掉
+    //改成：只拿 token，不刷新
+    const token = getToken();
     if (token && config.header) {
       config.header.Authorization = `Bearer ${token}`;
     }
@@ -441,23 +462,42 @@ const responseInterceptor = (response: any) => {
   const resData = response.data;
   const config = response.config;
 
-  // 如果状态码是 401，处理认证失败
-  if (response.statusCode === 401) {
-    console.error("❌ 认证失败，状态码 401");
-    return Promise.reject({
-      code: "AUTH_ERROR",
-      message: "认证失败",
-      response,
-    });
+  // ✅ 公共接口直接放过
+  if (config.url?.startsWith("/public/")) {
+    return resData;
   }
 
-  // 处理业务错误码
-  // 业务层 token 失效
-  if (resData.code === ResultCodeEnum.TOKEN_INVALID || resData.code === "A0230") {
-    handleTokenExpiredSync();
-    return Promise.reject({
-      code: resData.code,
-      message: resData.msg || "token失效",
+  // OAuth2 token 接口失败，直接 reject
+  if (config.url?.includes("/oauth2/token")) {
+    return Promise.reject(resData);
+  }
+
+  // 401 或 token 失效
+  if (
+    response.statusCode === 401 ||
+    resData.code === ResultCodeEnum.TOKEN_INVALID ||
+    resData.code === "A0230"
+  ) {
+    return new Promise((resolve, reject) => {
+      failedQueue.push({ resolve, reject });
+
+      if (!isRefreshing) {
+        isRefreshing = true;
+
+        const userStore = useUserStore();
+        userStore
+          .refreshAccessToken()
+          .then((newToken) => {
+            processQueue(null, newToken);
+          })
+          .catch((err) => {
+            processQueue(err, null);
+            handleTokenExpiredSync(); // 只在这里跳转一次
+          })
+          .finally(() => {
+            isRefreshing = false;
+          });
+      }
     });
   }
 

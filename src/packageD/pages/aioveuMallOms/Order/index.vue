@@ -1002,8 +1002,10 @@ const downloadExcel = (blob: Blob, fileName: string) => {
 // 获取筛选参数
 const getFilterParams = () => {
   const params: any = {
-    startTime: dateRange.value.start + " 00:00:00",
-    endTime: dateRange.value.end + " 23:59:59",
+    // startTime: dateRange.value.start + " 00:00:00",
+    // endTime: dateRange.value.end + " 23:59:59",
+    startDate: dateRange.value.start, // ✅ 不要拼接时间
+    endDate: dateRange.value.end, // ✅ 不要拼接时间
     ...advancedFilter.value,
   };
 

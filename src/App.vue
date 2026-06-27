@@ -8,13 +8,13 @@ import { useUserStore } from "@/store/modules/user"; // 添加用户store
 const themeStore = useThemeStore();
 const userStore = useUserStore(); // 添加用户store实例
 
-onLaunch(async() => {
+onLaunch(async () => {
   console.log("App Launch");
   // 初始化主题
   themeStore.initTheme();
 
-  // 定时检查token（每30分钟检查一次）
-  setInterval(checkTokenStatus, 30 * 60 * 1000);
+  // 定时检查token（每30分钟检查一次）  ❌ 删除定时器
+  // setInterval(checkTokenStatus, 30 * 60 * 1000);
 
   // 动态设置状态栏高度
   setStatusBarHeight();
@@ -31,21 +31,35 @@ onLaunch(async() => {
   //     icon: "none"
   //   });
   // }
-
 });
 
 const setStatusBarHeight = () => {
   // #ifdef APP-PLUS
   const statusBarHeight = plus.navigator.getStatusbarHeight();
-  document.documentElement.style.setProperty('--status-bar-height', `${statusBarHeight}px`);
+  document.documentElement.style.setProperty("--status-bar-height", `${statusBarHeight}px`);
   // #endif
 
   // #ifdef MP-WEIXIN
   const systemInfo = uni.getSystemInfoSync();
-  document.documentElement.style.setProperty('--status-bar-height', `${systemInfo.statusBarHeight}px`);
+  document.documentElement.style.setProperty(
+    "--status-bar-height",
+    `${systemInfo.statusBarHeight}px`
+  );
   // #endif
-}
+};
 
+// ✅ 只在需要时检查   全部删掉
+const checkTokenIfNeeded = () => {
+  const pages = getCurrentPages();
+  const route = pages[pages.length - 1]?.route;
+
+  if (!route) return;
+
+  const publicRoutes = ["pages/index/index", "pages/login/index"];
+  if (publicRoutes.includes(route)) return;
+
+  checkTokenStatus();
+};
 
 const checkTokenStatus = async () => {
   const userStore = useUserStore();
@@ -71,9 +85,8 @@ onHide(() => {
 </script>
 
 <style lang="scss">
-
 /* 引入 uni.css */
-@import '@/common/uni.css';
+@import "@/common/uni.css";
 
 /* H5 环境样式变量设置 */
 :root {
