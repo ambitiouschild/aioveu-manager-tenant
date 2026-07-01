@@ -1,7 +1,7 @@
 import request from "@/utils/request";
 import {BaseQueryParams, PageQuery} from "@/types";
 
-const PMSBRAND_BASE_URL = "/aioveu-tenant-pms/api/v1/pms-brand";
+const PMSBRAND_BASE_URL = "/aioveu/api/v8/admin/pms/pms-category-brand";
 
 const PmsBrandAPI = {
     /** 获取商品品牌分页数据 */

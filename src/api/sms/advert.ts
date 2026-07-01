@@ -3,17 +3,16 @@ import request from '@/utils/request'
 import {CLIENT_CONFIG, getClientId} from "@/utils/clientManager";
 
 
-const SMSADVERT_BASE_URL = "/aioveu-tenant-sms/app-api/v1/adverts";
-
-const AUTHBANNERS_BASE_URL = "/aioveu-tenant-auth/app-api/v1/auth";
+//这是用户端banner
+const SMSADVERT_BASE_URL = "/aioveu/api/v8/app/sms/adverts";
 
 export function getAdvertList() {
 
   return request({
-    url: `${AUTHBANNERS_BASE_URL}/manager-home-banner`,
+    url: `${SMSADVERT_BASE_URL}/banners`,
     method: "GET",
     header: {
-      skipAuth: true
-    }
-  })
+      skipAuth: true,
+    },
+  });
 }

@@ -3,9 +3,9 @@ import { request2 } from "@/utils/request";  // named export
 // import { SmsHomeCategoryPageVO } from "@/api/aioveuMall/aioveuMallSms/aioveuMallSmsHomeCategory/sms-home-category";
 import {BaseQueryParams, PageQuery} from "@/types";
 
-const PMSSPU_BASE_URL = "/aioveu-tenant-pms/api/v1/pms-spu";
+const PMSSPU_BASE_URL = "/aioveu/api/v8/admin/pms/pms-spu";
 
-const PMSSPUAPP_BASE_URL = "/aioveu-tenant-pms/app-api/v1/spu";
+const PMSSPUAPP_BASE_URL = "/aioveu/api/v8/app/pms/spu";
 
 const PmsSpuAPI = {
   /** 获取商品分页数据 */

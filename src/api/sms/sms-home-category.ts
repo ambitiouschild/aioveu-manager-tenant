@@ -1,47 +1,16 @@
 import request from "@/utils/request";
 import {CLIENT_CONFIG, getClientId} from "@/utils/clientManager";
 
-const SMSHOMECATEGORY_BASE_URL = "/aioveu-tenant-sms/app-api/v1/sms-home-category";
+const SMSHOMECATEGORY_BASE_URL = '/aioveu/api/v8/app/sms/sms-home-category"';
 
-
-const AUTHCATEGORY_BASE_URL = "/aioveu-tenant-auth/app-api/v1/auth";
+//这是用户端首页分类
 
 const SmsHomeCategoryAPI = {
     /** 获取首页分类配置分页数据 */
     getPage(queryParams?: SmsHomeCategoryPageQuery) {
 
-      //您封装的 request函数使用了不同的参数名，比如可能叫 data、query或 paramsData
-      //是的！您找到了问题的根源。您的 request函数是专门为 uni-app 环境封装的，而且它不支持 params参数。
-      //没有 params字段！所以当您传递 params时，TypeScript 会报错，而且这些参数不会被发送。
-      //关键点：
-      // uni.request 没有 params参数
-      //GET请求的参数必须通过URL查询字符串传递
-      //您需要手动拼接参数到URL中
-
-
-      // // 构建查询字符串
-      // // 将所有值转换为字符串
-      // const allParams: Record<string, string> = {
-      //   clientId: String(clientId)
-      // };
-      //
-      // // 如果有其他参数，也转换为字符串
-      // if (queryParams) {
-      //   for (const [key, value] of Object.entries(queryParams)) {
-      //     if (value !== undefined && value !== null) {
-      //       allParams[key] = String(value);
-      //     }
-      //   }
-      // }
-      //
-      // //这个错误是因为在小程序环境中，URLSearchParams可能不被支持。您需要改用其他方法来构建查询字符串。
-      // // 使用URLSearchParams或手动拼接
-      // //在小程序环境中，有些Web API（如 URLSearchParams、FormData等）可能不被完全支持。您需要在 request.ts文件中看到，已经有一个 buildQueryString函数专门处理这个问题。
-      // const queryString = buildQueryString(allParams);
-      // console.log("使用URLSearchParams或手动拼接:", queryString);
-      //<PageResult<SmsHomeCategoryPageVO[]>>
         return request({
-          url: `${AUTHCATEGORY_BASE_URL}/categories`,
+          url: `${SMSHOMECATEGORY_BASE_URL}/page`,
           method: "GET",
           header: {
             skipAuth: true,

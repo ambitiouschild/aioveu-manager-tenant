@@ -4,22 +4,22 @@
       <!-- 使用 uni-card 替代 wd-card -->
       <uni-card :title="item.title" class="card-container">
         <!-- 使用 uni-grid 替代 wd-grid -->
-        <uni-grid :column="4" :highlight="false" :square="false" :show-border="false" class="grid-container">
+        <uni-grid
+          :column="4"
+          :highlight="false"
+          :square="false"
+          :show-border="false"
+          class="grid-container"
+        >
           <uni-grid-item
             v-for="(child, childIndex) in item.children"
             :key="childIndex"
             class="grid-item"
           >
             <!-- 使用条件渲染替代 v-has-perm 指令 -->
-            <view
-              v-if="hasPermission(child.prem)"
-              class="nav-item"
-              @click="navigateTo(child.url)"
-            >
+            <view v-if="hasPermission(child.prem)" class="nav-item" @click="navigateTo(child.url)">
               <view class="icon-container">
-                <image
-                  class="item-icon"
-                  :src="child.icon" mode="aspectFit" />
+                <image class="item-icon" :src="child.icon" mode="aspectFit" />
               </view>
               <text class="item-text">{{ child.title }}</text>
             </view>
@@ -31,7 +31,7 @@
 </template>
 
 <script lang="ts" setup>
-import {reactive, computed, ref} from 'vue';
+import { reactive, computed, ref } from "vue";
 import AuthAPI from "@/api/auth";
 import {
   onShareAppMessage,
@@ -79,7 +79,7 @@ const hasPermission = (permission: string) => {
     "aioveuContact:aioveuProcurement-contact:query",
     "aioveuTransaction:aioveuProcurement-transaction:query",
     "aioveuSalesOrder:aioveuProcurement-sales-order:query",
-    "aioveuSalesOrderDetail:aioveuProcurement-sales-order-detail:query"
+    "aioveuSalesOrderDetail:aioveuProcurement-sales-order-detail:query",
   ];
 
   return userPermissions.includes(permission);
@@ -88,7 +88,7 @@ const hasPermission = (permission: string) => {
 // 导航跳转函数
 const navigateTo = (url: string) => {
   uni.navigateTo({
-    url: url
+    url: url,
   });
 };
 
@@ -186,27 +186,28 @@ const gridList1 = reactive([
 ]);
 
 import { SHARE_CONFIG } from "@/utils/shareConfig/shareConfig";
+import TenantAPI from "@/api/tenant/tenant";
 // 分享功能
 onShareAppMessage(() => ({
-  title: SHARE_CONFIG.TITLE,  // 统一使用这里的标题
+  title: SHARE_CONFIG.TITLE, // 统一使用这里的标题
   path: "/pages/work/index",
   imageUrl: "",
-  success: (res?:any) => {
+  success: (res?: any) => {
     console.log("分享成功", res);
   },
-  fail: (err?:any) => {
+  fail: (err?: any) => {
     console.log("分享失败", err);
   },
 }));
 
 onShareTimeline(() => ({
-  title: SHARE_CONFIG.TITLE,  // 统一使用这里的标题
-  query: SHARE_CONFIG.DEFAULT_QUERY,  // 统一使用这里的参数
-  imageUrl: SHARE_CONFIG.IMAGE_URL,  // 统一使用这里的图片
-  success: (res?:any) => {
+  title: SHARE_CONFIG.TITLE, // 统一使用这里的标题
+  query: SHARE_CONFIG.DEFAULT_QUERY, // 统一使用这里的参数
+  imageUrl: SHARE_CONFIG.IMAGE_URL, // 统一使用这里的图片
+  success: (res?: any) => {
     console.log("分享到朋友圈成功", res);
   },
-  fail: (err?:any) => {
+  fail: (err?: any) => {
     console.log("分享到朋友圈失败", err);
   },
 }));
@@ -223,9 +224,7 @@ const loadData = async (isRefresh = false) => {
   try {
     loading.value = true;
 
-    await Promise.all([
-      loadGridListData(),
-    ]);
+    await Promise.all([loadGridListData()]);
   } catch (error) {
     console.error("加载工作台数据失败:", error);
     uni.showToast({
@@ -243,7 +242,7 @@ const loadData = async (isRefresh = false) => {
 //获取轮播图广告列表
 const loadGridListData = async () => {
   try {
-    const response = await AuthAPI.getWorkbenchCategoriesWithItems();
+    const response = await TenantAPI.getWorkbenchCategoriesWithItems();
     console.log("获取工作台分类列表:", response);
 
     if (response && Array.isArray(response)) {
@@ -254,8 +253,6 @@ const loadGridListData = async () => {
     gridList.value = gridList1;
   }
 };
-
-
 </script>
 
 <style lang="scss" scoped>
@@ -277,12 +274,10 @@ page {
   border-radius: 16rpx !important;
 }
 
-
-
 //去除卡片（uni-card）的边框和多余间距
 
 .card-container {
-  margin: 10rpx 20rpx !important;  /* 增加 !important 强制生效 */
+  margin: 10rpx 20rpx !important; /* 增加 !important 强制生效 */
   border-radius: 16rpx;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
 }
@@ -295,8 +290,6 @@ page {
 //  padding: 0;           // 去除卡片内边距
 //}
 
-
-
 //.grid-container {
 //  padding: 20rpx 0;
 //}
@@ -304,17 +297,17 @@ page {
 //去除网格（uni-grid）的边框和间距
 
 .grid-container {
-  padding: 10rpx 0;     // 减小网格内部上下间距
-  border: none;         // 去除网格外边框
+  padding: 10rpx 0; // 减小网格内部上下间距
+  border: none; // 去除网格外边框
 
   // 深度选择器：去除网格列之间的竖线
   :deep(.uni-grid) {
-    border: none;       // 去除网格整体边框
+    border: none; // 去除网格整体边框
   }
 
   // 深度选择器：去除单个网格项的边框（列之间的竖线）
   :deep(.uni-grid-item) {
-    border: none;       // 去除列之间的竖线
+    border: none; // 去除列之间的竖线
   }
 }
 
@@ -325,16 +318,15 @@ page {
 //}
 
 .grid-item {
-  padding: 10rpx 0;     // 减小网格项的上下内边距
+  padding: 10rpx 0; // 减小网格项的上下内边距
 }
-
 
 //去除标题栏（uni-card__header）的边框
 
 :deep(.uni-card__header) {
-  border-bottom: none;  // 去除标题栏底部边框
+  border-bottom: none; // 去除标题栏底部边框
   //background-color: #6c5ce7; // 保持标题背景色（如果需要）
-  color: #fff;          // 标题文字颜色
+  color: #fff; // 标题文字颜色
   padding: 16rpx 20rpx; // 调整标题内边距
 }
 

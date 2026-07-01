@@ -1,6 +1,6 @@
 import request from "@/utils/request";
 import { request2 } from "@/utils/request";  // named export
-const OMSORDER_BASE_URL = "/aioveu-tenant-oms/app-api/v1/orders";
+const OMSORDER_BASE_URL = "/aioveu/api/v8/app/oms/orders";
 
 // 订单状态枚举
 export const OrderStatus = {

@@ -1,7 +1,7 @@
 import request from '@/utils/request'
 
 
-const OMSCART_BASE_URL = "/aioveu-tenant-oms/app-api/v1/carts";
+const OMSCART_BASE_URL = "/aioveu/api/v8/app/oms/carts";
 
 // 查询购物车
 export function getCart() {

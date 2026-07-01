@@ -1,7 +1,7 @@
 import request from "@/utils/request";
 import {BaseQueryParams, PageQuery} from "@/types";
 
-const PMSSPUATTRIBUTE_BASE_URL = "/aioveu-tenant-pms/api/v1/pms-spu-attribute";
+const PMSSPUATTRIBUTE_BASE_URL = "/aioveu/api/v8/admin/pms/pms-spu-attribute";
 
 const PmsSpuAttributeAPI = {
     /** 获取商品类型（属性/规格）分页数据 */

@@ -466,14 +466,19 @@ const responseInterceptor = (response: any) => {
   const resData = response.data;
   const config = response.config;
 
-  // ✅ 公共接口直接放过
-  if (config.url?.startsWith("/app-api/v1/auth")) {
-    return resData;
+  // ✅ 1. OAuth2 token 接口（最重要）
+  if (config.url?.includes("/oauth2/token")) {
+    // 成功：返回 token 数据
+    if (resData.code === ResultCodeEnum.SUCCESS) {
+      return resData.data;
+    }
+    // 失败：直接 reject，让 refresh 逻辑处理
+    return Promise.reject(resData);
   }
 
-  // OAuth2 token 接口失败，直接 reject
-  if (config.url?.includes("/oauth2/token")) {
-    return Promise.reject(resData);
+  // ✅ 2️真正的公共接口（不走 token 校验）
+  if (config.url?.startsWith("/public/")) {
+    return resData;
   }
 
   // 401 或 token 失效

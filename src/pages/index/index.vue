@@ -1,11 +1,10 @@
 <template>
-
   <view style="width: 100%; height: var(--status-bar-height)" />
   <view class="home">
     <!-- 轮播图 -->
-<!--    轮播图组件-->
-<!--    wd-swiper→ swiper+ swiper-item-->
-<!--    添加了原生小程序轮播图组件-->
+    <!--    轮播图组件-->
+    <!--    wd-swiper→ swiper+ swiper-item-->
+    <!--    添加了原生小程序轮播图组件-->
     <swiper
       :current="current"
       :autoplay="true"
@@ -14,38 +13,42 @@
       @change="onChange"
       class="swiper-container"
     >
-      <swiper-item v-for="(item, index) in swiperList" :key="index" @click="handleClick(item, index)">
+      <swiper-item
+        v-for="(item, index) in swiperList"
+        :key="index"
+        @click="handleClick(item, index)"
+      >
         <image :src="item.imageUrl" mode="aspectFill" class="swiper-image" />
       </swiper-item>
     </swiper>
 
     <!-- 自定义swiper指示器 -->
-<!--    <view class="swiper-dots">-->
-<!--      <text class="num">{{ swiperCurrent + 1 }}</text>-->
-<!--      <text class="sign">/</text>-->
-<!--      <text class="num">{{ swiperLength }}</text>-->
-<!--    </view>-->
+    <!--    <view class="swiper-dots">-->
+    <!--      <text class="num">{{ swiperCurrent + 1 }}</text>-->
+    <!--      <text class="sign">/</text>-->
+    <!--      <text class="num">{{ swiperLength }}</text>-->
+    <!--    </view>-->
 
     <!-- 快捷导航 -->
-<!--    网格布局：-->
-<!--    wd-grid→ uni-grid-->
-<!--    wd-grid-item→ uni-grid-item-->
-<!--    使用自定义样式实现导航布局-->
+    <!--    网格布局：-->
+    <!--    wd-grid→ uni-grid-->
+    <!--    wd-grid-item→ uni-grid-item-->
+    <!--    使用自定义样式实现导航布局-->
     <view class="nav-grid mt-2">
       <uni-grid :column="4" :highlight="false" :show-border="false" :square="false">
-      <uni-grid-item v-for="(item, index) in navList" :key="index">
-        <view class="nav-item" @click="navigateTo(item.jumpPath)">
-          <image class="nav-icon" :src="item.homeIcon" mode="aspectFit" />
-          <text class="nav-text">{{ item.homeName }}</text>
-        </view>
-      </uni-grid-item>
+        <uni-grid-item v-for="(item, index) in navList" :key="index">
+          <view class="nav-item" @click="navigateTo(item.jumpPath)">
+            <image class="nav-icon" :src="item.homeIcon" mode="aspectFit" />
+            <text class="nav-text">{{ item.homeName }}</text>
+          </view>
+        </uni-grid-item>
       </uni-grid>
     </view>
 
     <!-- 通知公告 -->
-<!--    通知公告：-->
-<!--    wd-notice-bar→ uni-notice-bar-->
-<!--    wd-tag→ uni-tag-->
+    <!--    通知公告：-->
+    <!--    wd-notice-bar→ uni-notice-bar-->
+    <!--    wd-tag→ uni-tag-->
     <view class="notice-bar">
       <uni-notice-bar
         :text="noticeText"
@@ -54,33 +57,38 @@
         :scrollable="true"
       >
         <template v-slot:left>
-          <uni-tag text="通知公告" type="primary" size="small" custom-style="margin-right: 10rpx; background-color: #FAA21E; color: white;" />
+          <uni-tag
+            text="通知公告"
+            type="primary"
+            size="small"
+            custom-style="margin-right: 10rpx; background-color: #FAA21E; color: white;"
+          />
         </template>
       </uni-notice-bar>
     </view>
 
-<!--    <view>-->
-<!--      <button @click="handleShare">设置分享</button>-->
-<!--    </view>-->
+    <!--    <view>-->
+    <!--      <button @click="handleShare">设置分享</button>-->
+    <!--    </view>-->
 
     <!-- 数据统计 -->
-<!--    数据统计区域：-->
-<!--    移除了 wd-grid，使用 uni-grid重新布局-->
-<!--    wd-button→ 原生 button元素-->
+    <!--    数据统计区域：-->
+    <!--    移除了 wd-grid，使用 uni-grid重新布局-->
+    <!--    wd-button→ 原生 button元素-->
     <view class="stats-grid">
       <uni-grid :column="2" :highlight="false">
         <uni-grid-item>
           <view class="stats-item">
             <!-- 扫描按钮 -->
-<!--            <view class="scan-btn-container" v-if="hasScanPermission">-->
-<!--              <button-->
-<!--                class="scan-btn"-->
-<!--                @click="startQRCodeScan"-->
-<!--              >-->
-<!--                <image class="scan-icon" src="/static/icons/scan.png" />-->
-<!--                扫描-->
-<!--              </button>-->
-<!--            </view>-->
+            <!--            <view class="scan-btn-container" v-if="hasScanPermission">-->
+            <!--              <button-->
+            <!--                class="scan-btn"-->
+            <!--                @click="startQRCodeScan"-->
+            <!--              >-->
+            <!--                <image class="scan-icon" src="/static/icons/scan.png" />-->
+            <!--                扫描-->
+            <!--              </button>-->
+            <!--            </view>-->
 
             <view class="stats-content">
               <image class="stats-icon" src="/static/icons/visitor.png" />
@@ -107,9 +115,9 @@
     </view>
 
     <!-- 访问趋势卡片 -->
-<!--    访问趋势卡片：-->
-<!--    wd-card→ 自定义卡片视图-->
-<!--    wd-radio-group→ 原生 radio组件-->
+    <!--    访问趋势卡片：-->
+    <!--    wd-card→ 自定义卡片视图-->
+    <!--    wd-radio-group→ 原生 radio组件-->
     <view class="trend-card">
       <view class="card-header">
         <text class="card-title">访问趋势</text>
@@ -142,11 +150,9 @@
     class="barcode-scanner-container"
     :key="scannerKey"
   />
-
 </template>
 
 <script setup lang="ts">
-
 //可以直接赋值
 // 这是 JavaScript，不是 TypeScript
 // 注意：这里没有 "lang='ts'"
@@ -157,17 +163,18 @@
 
 //如果你想获得更好的类型安全性和开发体验，建议迁移到 TypeScript 并正确注解类型。
 
-import * as dayjs from 'wot-design-uni/dayjs';
+import * as dayjs from "wot-design-uni/dayjs";
 import LogAPI, { VisitStatsVO } from "@/api/system/log";
-import { ref, onMounted, reactive, nextTick } from 'vue';
-import AioveuLaundryGarmentIdentityAPI, { QRCodeScanRequest } from '@/api/aioveuLaundryGarmentIdentity/aioveu-laundry-garment-identity';
-import BarcodeScanner from '@/components/BarcodeScanner/BarcodeScanner.vue';
+import { ref, onMounted, reactive, nextTick } from "vue";
+import AioveuLaundryGarmentIdentityAPI, {
+  QRCodeScanRequest,
+} from "@/api/aioveuLaundryGarmentIdentity/aioveu-laundry-garment-identity";
+import BarcodeScanner from "@/components/BarcodeScanner/BarcodeScanner.vue";
 import { getAdvertList } from "@/api/sms/advert";
 import { bennerItem } from "@/types/sms/advert";
 import { listSeckillingSpus } from "@/api/pms/goods";
 import SmsHomeAdvertAPI, { SmsHomeAdvertPageVO } from "@/api/sms/sms-home-advert";
 import AuthAPI from "@/api/auth";
-
 
 import {
   onShareAppMessage,
@@ -209,7 +216,9 @@ import {
 //-----------------------------------------------------
 
 const current = ref<number>(0);
-const noticeText = ref("可我不敌可爱 恰同学少年，风华正茂；书生意气，挥斥方遒。指点江山，激扬文字，粪土当年万户侯。");
+const noticeText = ref(
+  "可我不敌可爱 恰同学少年，风华正茂；书生意气，挥斥方遒。指点江山，激扬文字，粪土当年万户侯。"
+);
 const loading = ref(false);
 
 const visitStatsData = ref<VisitStatsVO>({
@@ -230,14 +239,14 @@ const navList = ref();
 const hasScanPermission = computed(() => {
   // 这里实现您的权限检查逻辑
   // 示例：检查用户是否有扫描权限
-  const userPermissions = ['aioveuQRCode:aioveu-QRCode:scan']; // 这里应该是从用户信息中获取的实际权限
-  return userPermissions.includes('aioveuQRCode:aioveu-QRCode:scan');
+  const userPermissions = ["aioveuQRCode:aioveu-QRCode:scan"]; // 这里应该是从用户信息中获取的实际权限
+  return userPermissions.includes("aioveuQRCode:aioveu-QRCode:scan");
 });
 
 // 日期选项
 const dateOptions = [
-  { label: '近7天', value: 7 },
-  { label: '近15天', value: 15 }
+  { label: "近7天", value: 7 },
+  { label: "近15天", value: 15 },
 ];
 
 // 扫描相关状态
@@ -245,27 +254,28 @@ const showScanner = ref(false);
 const scannerKey = ref(0);
 
 import { SHARE_CONFIG } from "@/utils/shareConfig/shareConfig";
+import TenantAPI from "@/api/tenant/tenant";
 //分享功能
 onShareAppMessage(() => ({
-  title: SHARE_CONFIG.TITLE,  // 统一使用这里的标题
+  title: SHARE_CONFIG.TITLE, // 统一使用这里的标题
   path: "/pages/index/index",
   imageUrl: "",
-  success: (res?:any) => {
+  success: (res?: any) => {
     console.log("分享成功", res);
   },
-  fail: (err?:any) => {
+  fail: (err?: any) => {
     console.log("分享失败", err);
   },
 }));
 
 onShareTimeline(() => ({
-  title: SHARE_CONFIG.TITLE,  // 统一使用这里的标题
-  query: SHARE_CONFIG.DEFAULT_QUERY,  // 统一使用这里的参数
-  imageUrl: SHARE_CONFIG.IMAGE_URL,  // 统一使用这里的图片
-  success: (res?:any) => {
+  title: SHARE_CONFIG.TITLE, // 统一使用这里的标题
+  query: SHARE_CONFIG.DEFAULT_QUERY, // 统一使用这里的参数
+  imageUrl: SHARE_CONFIG.IMAGE_URL, // 统一使用这里的图片
+  success: (res?: any) => {
     console.log("分享到朋友圈成功", res);
   },
-  fail: (err?:any) => {
+  fail: (err?: any) => {
     console.log("分享到朋友圈失败", err);
   },
 }));
@@ -298,35 +308,35 @@ onNavigationBarButtonTap((e) => {
 
 // 开始扫描
 const startQRCodeScan = async () => {
-  console.log('[父组件] 扫描按钮被点击');
+  console.log("[父组件] 扫描按钮被点击");
 
   // #ifdef H5
-  console.log('[父组件] H5环境，显示扫描组件');
+  console.log("[父组件] H5环境，显示扫描组件");
   showScanner.value = true;
   scannerKey.value += 1;
 
   nextTick(() => {
-    console.log('nextTick后 showScanner状态:', showScanner.value);
+    console.log("nextTick后 showScanner状态:", showScanner.value);
   });
   // #endif
 };
 
 // 处理扫描结果
 const handleDecode = (result: string) => {
-  console.log('扫描结果:', result);
+  console.log("扫描结果:", result);
   sendScanRequest(result);
 };
 
 // 处理取消事件
 const handleCancel = () => {
-  console.log('[父组件] 收到取消事件');
+  console.log("[父组件] 收到取消事件");
   showScanner.value = false;
 };
 
 // 关闭扫描器
 const closeScanner = () => {
   showScanner.value = false;
-  console.log('[父组件] 关闭扫描器');
+  console.log("[父组件] 关闭扫描器");
 };
 
 // 发送扫描请求
@@ -339,35 +349,35 @@ const sendScanRequest = async (qrContent: string) => {
 
   try {
     uni.showLoading({
-      title: '处理中...',
-      mask: true
+      title: "处理中...",
+      mask: true,
     });
 
     const response = await AioveuLaundryGarmentIdentityAPI.scanQRCode(requestData);
-    console.log('扫描二维码API响应response', response);
+    console.log("扫描二维码API响应response", response);
 
-    uni.setStorageSync('currentGarmentInfo', response);
-    console.log('本地存储信息 currentGarmentInfo:', response);
+    uni.setStorageSync("currentGarmentInfo", response);
+    console.log("本地存储信息 currentGarmentInfo:", response);
 
     uni.navigateTo({
       url: `/packageG/pages/aioveu_laundry/laundry_garment_info/index`,
       success: () => {
-        console.log('跳转成功');
+        console.log("跳转成功");
       },
       fail: (err) => {
-        console.error('跳转失败:', err);
+        console.error("跳转失败:", err);
         uni.showToast({
-          title: '页面跳转失败',
-          icon: 'error'
+          title: "页面跳转失败",
+          icon: "error",
         });
-      }
+      },
     });
   } catch (error) {
-    console.error('扫描失败:', error);
+    console.error("扫描失败:", error);
     uni.showToast({
-      title: '扫描失败: ',
-      icon: 'error',
-      duration: 3000
+      title: "扫描失败: ",
+      icon: "error",
+      duration: 3000,
     });
   } finally {
     uni.hideLoading();
@@ -410,8 +420,6 @@ onMounted(() => {
   loadData();
 });
 
-
-
 // 数据加载
 const loadData = async (isRefresh = false) => {
   try {
@@ -440,8 +448,8 @@ const loadData = async (isRefresh = false) => {
 //获取轮播图广告列表
 const loadCarouselData = async () => {
   try {
-    const response = await getAdvertList();
-    console.log("获取轮播图广告列表:", response);
+    const response = await TenantAPI.getManagerMenuHomeBanners();
+    console.log("获取管理端轮播图广告列表:", response);
 
     if (response && Array.isArray(response)) {
       swiperList.value = response;
@@ -462,12 +470,12 @@ const getDefaultCarouselData = () => [
 
 const loadCategoriesData = async () => {
   try {
-    const response = await AuthAPI.getManagerHomeCategories();
+    const response = await TenantAPI.getManagerHomeCategories();
     console.log("获取分类列表:", response);
 
     if (response) {
-      navList.value = response ;
-      console.log("====navList.value============",navList.value);
+      navList.value = response;
+      console.log("====navList.value============", navList.value);
     } else {
       navList.value = [];
     }
@@ -476,8 +484,6 @@ const loadCategoriesData = async () => {
     categories.value = [];
   }
 };
-
-
 
 // 快捷导航列表
 // const navList = reactive([
@@ -525,18 +531,17 @@ const loadCategoriesData = async () => {
 // 导航跳转
 const navigateTo = (url: string) => {
   uni.navigateTo({
-    url: url
+    url: url,
   });
 };
 
 function handleClick(item: any, index: number) {
-
   swiperCurrent.value = index;
-  console.log('点击轮播图:', item, index);
+  console.log("点击轮播图:", item, index);
 }
 
 function onChange(e: any) {
-  console.log('轮播图切换:', e);
+  console.log("轮播图切换:", e);
   current.value = e.detail.current;
 }
 
@@ -549,9 +554,12 @@ const handleDataRangeChange = (value: number) => {
 
 // 加载访问统计数据
 const loadVisitStatsData = async () => {
-  LogAPI.getVisitStats().then((data) => {
-    visitStatsData.value = data;
-  });
+
+
+  // LogAPI.getVisitStats().then((data) => {
+  //   visitStatsData.value = data;
+  // });
+
 };
 
 // 加载访问趋势数据
@@ -590,8 +598,6 @@ onReady(() => {
 </script>
 
 <style lang="scss">
-
-
 /* 确保 uni.css 被正确引入 */
 /* 通常在 App.vue 或页面中引入 */
 @import "@/common/uni.css";
@@ -601,8 +607,6 @@ onReady(() => {
   width: 100%;
   background-color: transparent;
 }
-
-
 
 .home {
   padding: 20rpx;
@@ -673,7 +677,7 @@ onReady(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #007AFF;
+  background: #007aff;
   color: white;
   border-radius: 40rpx;
   padding: 16rpx 24rpx;
@@ -714,7 +718,7 @@ onReady(() => {
 
 .stats-value {
   font-size: 32rpx;
-  color: #007AFF;
+  color: #007aff;
   font-weight: bold;
 }
 

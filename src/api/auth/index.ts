@@ -10,11 +10,7 @@ import {
 
 } from "@/utils/clientManager";
 
-
-const AUTH_BASE_URL = "/aioveu-tenant-auth/api/v1/auth";
-const AUTH_LOGIN_URL = "/aioveu-tenant-auth";
-
-const AUTHMANAGERAPP_BASE_URL = "/aioveu-tenant-auth/app-api/v1/auth";
+const AUTHMANAGERAPP_BASE_URL = "/aioveu/api/v8/app/auth/auth";
 
 const AuthAPI = {
   /**
@@ -46,9 +42,8 @@ const AuthAPI = {
     const basicAuth = CLIENT_CONFIG.getBASIC_AUTH();
     console.log("动态生成的认证头:", basicAuth);
 
-
     return request<LoginResult>({
-      url: `${AUTH_LOGIN_URL}/oauth2/token`,
+      url: `/oauth2/token`,
       method: "POST",
       data: payload,
       header: {
@@ -68,18 +63,6 @@ const AuthAPI = {
       });
   },
 
-  /** 一次查询获取用户名在所有租户中的可访问租户  方案1：使用模板字符串（推荐）*/
-  getAccessibleTenantsByUsername(username: String) {
-    return request<TenantItem[]>({
-      url: `${AUTH_BASE_URL}/tenants/${username}`, // 使用模板字符串
-      method: "GET",
-      header: {
-        skipAuth: true,
-      },
-      // 不需要params了，因为username已经在URL中了
-    });
-  },
-
   /**
    * 微信登录接口
    *
@@ -88,7 +71,7 @@ const AuthAPI = {
    */
   wechatLogin(code: string): Promise<LoginResult> {
     return request<LoginResult>({
-      url: "/api/v1/auth/wechat-login",
+      url: "${AUTHMANAGERAPP_BASE_URL}/wechat-login",
       method: "POST",
       data: { code },
       header: {
@@ -102,7 +85,7 @@ const AuthAPI = {
    */
   logout(): Promise<void> {
     return request({
-      url: `${AUTH_BASE_URL}/logout`,
+      url: `${AUTHMANAGERAPP_BASE_URL}/logout`,
       method: "DELETE",
     });
   },
@@ -110,7 +93,7 @@ const AuthAPI = {
   /** 获取验证码接口*/
   getCaptcha() {
     return request<CaptchaInfo>({
-      url: `${AUTH_BASE_URL}/captcha`,
+      url: `${AUTHMANAGERAPP_BASE_URL}/captcha`,
       method: "GET",
       header: {
         skipAuth: true,
@@ -135,7 +118,7 @@ const AuthAPI = {
     console.log("动态生成的认证头:", basicAuth);
 
     return request<LoginResult>({
-      url: `${AUTH_LOGIN_URL}/oauth2/token`,
+      url: `/oauth2/token`,
       method: "POST",
       data: {
         refresh_token: refreshToken,
@@ -151,40 +134,11 @@ const AuthAPI = {
     });
   },
 
-  //----------------------------
 
-  /** 获取用户的工作台菜单*/
-  getWorkbenchCategoriesWithItems() {
-    return request({
-      url: `${AUTHMANAGERAPP_BASE_URL}/manager-categories-with-items`,
-      method: "GET",
-      header: {
-        skipAuth: true,
-      },
-    });
-  },
 
-  /** 获取管理端首页分类*/
-  getManagerHomeCategories() {
-    return request({
-      url: `${AUTHMANAGERAPP_BASE_URL}/manager-home-categories`,
-      method: "GET",
-      header: {
-        skipAuth: true,
-      },
-    });
-  },
 
-  /** 获取管理端首页滚播栏*/
-  getManagerMenuHomeBanners() {
-    return request({
-      url: `${AUTHMANAGERAPP_BASE_URL}/manager-home-banner`,
-      method: "GET",
-      header: {
-        skipAuth: true,
-      },
-    });
-  },
+
+
 };
 
 export default AuthAPI;

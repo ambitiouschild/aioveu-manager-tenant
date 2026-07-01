@@ -1,54 +1,48 @@
 <template>
   <view class="login-container">
-
     <!-- 隐私协议弹窗 -->
-<!--    <view v-if="showPrivacyAgreement" class="privacy-mask">-->
-<!--      <view class="privacy-content">-->
-<!--        <view class="privacy-header">-->
-<!--          <text class="title">用户协议与隐私政策</text>-->
-<!--        </view>-->
+    <!--    <view v-if="showPrivacyAgreement" class="privacy-mask">-->
+    <!--      <view class="privacy-content">-->
+    <!--        <view class="privacy-header">-->
+    <!--          <text class="title">用户协议与隐私政策</text>-->
+    <!--        </view>-->
 
-<!--        <view class="privacy-body">-->
-<!--          <text class="desc">感谢您使用可我不敌可爱！我们高度重视您的个人信息和隐私保护。在您使用我们的服务前，请仔细阅读并同意以下协议：</text>-->
+    <!--        <view class="privacy-body">-->
+    <!--          <text class="desc">感谢您使用可我不敌可爱！我们高度重视您的个人信息和隐私保护。在您使用我们的服务前，请仔细阅读并同意以下协议：</text>-->
 
-<!--          <view class="agreement-links">-->
-<!--            <text class="link" @click="previewAgreement('user')">《用户服务协议》</text>-->
-<!--            <text>和</text>-->
-<!--            <text class="link" @click="previewAgreement('privacy')">《隐私政策》</text>-->
-<!--          </view>-->
+    <!--          <view class="agreement-links">-->
+    <!--            <text class="link" @click="previewAgreement('user')">《用户服务协议》</text>-->
+    <!--            <text>和</text>-->
+    <!--            <text class="link" @click="previewAgreement('privacy')">《隐私政策》</text>-->
+    <!--          </view>-->
 
-<!--          <view class="agreement-checkbox" @click="toggleAgree">-->
-<!--            &lt;!&ndash; 圆形选择按钮 &ndash;&gt;-->
-<!--            <view class="circle-checkbox" :class="{ checked: hasAgreed }">-->
-<!--              <view v-if="hasAgreed" class="circle-checkbox-inner"></view>-->
-<!--            </view>-->
-<!--            <text class="checkbox-label">我已阅读并同意以上协议</text>-->
-<!--          </view>-->
-<!--        </view>-->
+    <!--          <view class="agreement-checkbox" @click="toggleAgree">-->
+    <!--            &lt;!&ndash; 圆形选择按钮 &ndash;&gt;-->
+    <!--            <view class="circle-checkbox" :class="{ checked: hasAgreed }">-->
+    <!--              <view v-if="hasAgreed" class="circle-checkbox-inner"></view>-->
+    <!--            </view>-->
+    <!--            <text class="checkbox-label">我已阅读并同意以上协议</text>-->
+    <!--          </view>-->
+    <!--        </view>-->
 
-<!--        <view class="privacy-footer">-->
-<!--          <button class="btn disagree" @click="handleDisagree">暂不同意</button>-->
-<!--          <button-->
-<!--            class="btn agree"-->
-<!--            :class="{ disabled: !hasAgreed }"-->
-<!--            :disabled="!hasAgreed"-->
-<!--            @click="handleAgree"-->
-<!--          >-->
-<!--            同意并继续-->
-<!--          </button>-->
-<!--        </view>-->
-<!--      </view>-->
-<!--    </view>-->
-
-
-
-
-
+    <!--        <view class="privacy-footer">-->
+    <!--          <button class="btn disagree" @click="handleDisagree">暂不同意</button>-->
+    <!--          <button-->
+    <!--            class="btn agree"-->
+    <!--            :class="{ disabled: !hasAgreed }"-->
+    <!--            :disabled="!hasAgreed"-->
+    <!--            @click="handleAgree"-->
+    <!--          >-->
+    <!--            同意并继续-->
+    <!--          </button>-->
+    <!--        </view>-->
+    <!--      </view>-->
+    <!--    </view>-->
 
     <!-- 背景图  v-if="!showPrivacyAgreement" -->
-<!--    <image src="/static/images/login-bg.svg" mode="aspectFill" class="login-bg" />-->
+    <!--    <image src="/static/images/login-bg.svg" mode="aspectFill" class="login-bg" />-->
     <!-- 原有登录页面内容 -->
-    <image  src="/static/images/login-bg.svg" mode="aspectFill" class="login-bg" />
+    <image src="/static/images/login-bg.svg" mode="aspectFill" class="login-bg" />
 
     <!-- Logo和标题区域 -->
     <view class="header">
@@ -83,7 +77,6 @@
           </view>
           <view class="divider"></view>
 
-
           <!-- 租户选择器 -->
           <view v-if="showTenantSelect" class="form-item">
             <uni-icons type="home" size="22" color="#165DFF" class="input-icon" />
@@ -94,14 +87,14 @@
               :value="selectedTenantIndex"
               @change="handleTenantChange"
               class="form-input"
-              style="height: 60rpx; line-height: 60rpx;"
+              style="height: 60rpx; line-height: 60rpx"
             >
               <view class="picker-display">
                 <text v-if="selectedTenantIndex >= 0" class="picker-text">
-                  {{ tenantList[selectedTenantIndex]?.name || '请选择租户' }}
+                  {{ tenantList[selectedTenantIndex]?.name || "请选择租户" }}
                 </text>
                 <text v-else class="picker-placeholder">请选择租户</text>
-                <uni-icons type="arrowdown" size="16" color="#9ca3af" style="margin-left: auto;" />
+                <uni-icons type="arrowdown" size="16" color="#9ca3af" style="margin-left: auto" />
               </view>
             </picker>
 
@@ -122,12 +115,12 @@
           <view class="form-item">
             <uni-icons type="locked" size="22" color="#165DFF" class="input-icon" />
 
-<!--            当 showPassword为 true时（密码可见）：-->
-<!--            !showPassword= false-->
-<!--            :password="false"→ 输入框显示明文-->
-<!--            当 showPassword为 false时（密码隐藏）：-->
-<!--            !showPassword= true-->
-<!--            :password="true"→ 输入框显示星号-->
+            <!--            当 showPassword为 true时（密码可见）：-->
+            <!--            !showPassword= false-->
+            <!--            :password="false"→ 输入框显示明文-->
+            <!--            当 showPassword为 false时（密码隐藏）：-->
+            <!--            !showPassword= true-->
+            <!--            :password="true"→ 输入框显示星号-->
             <input
               v-model="loginFormData.password"
               class="form-input"
@@ -140,11 +133,7 @@
               <!--                工作逻辑：-->
               <!--                当 showPassword为 true时（密码可见），显示 睁眼图标 (eye)-->
               <!--                当 showPassword为 false时（密码隐藏），显示 闭眼图标 (eye-slash)-->
-              <uni-icons
-                :type="showPassword ? 'eye' : 'eye-slash'"
-                size="18"
-                color="#9ca3af"
-              />
+              <uni-icons :type="showPassword ? 'eye' : 'eye-slash'" size="18" color="#9ca3af" />
             </view>
           </view>
           <view class="divider"></view>
@@ -179,15 +168,11 @@
           </view>
           <view class="divider"></view>
 
-
-
-
-
           <!-- 登录按钮 -->
           <button
             class="login-btn"
             :disabled="loading || !hasAgreed || !canSubmit"
-            :style="(loading || !hasAgreed) ? 'opacity: 0.7;' : ''"
+            :style="loading || !hasAgreed ? 'opacity: 0.7;' : ''"
             @click="handleLoginSubmit"
           >
             {{ getLoginButtonText() }}
@@ -229,14 +214,15 @@
 </template>
 
 <script lang="ts" setup>
-import { onLoad, onShow} from "@dcloudio/uni-app";  // 添加 onShow 导入
+import { onLoad, onShow } from "@dcloudio/uni-app"; // 添加 onShow 导入
 import { type LoginFormData } from "@/api/auth";
-import type { LoginRequest , TenantItem  } from "@/types/api";
+import type { LoginRequest, TenantItem } from "@/types/api";
 
 import AuthAPI from "@/api/auth/index";
 import { useUserStore } from "@/store/modules/user";
-import { ref , computed } from "vue";
+import { ref, computed } from "vue";
 import { AuthStorage } from "@/utils/auth.storage";
+import UserAPI from "@/api/system/user";
 
 // 移除 wd-toast 引用
 const loading = ref(false);
@@ -255,7 +241,6 @@ const tenantList = ref<TenantItem[]>([]);
 const tenantLoading = ref(false);
 const showTenantSelect = ref(false);
 const selectedTenantIndex = ref(-1);
-
 
 // 登录表单数据
 const loginFormData = ref<LoginFormData>({
@@ -290,17 +275,17 @@ const canSubmit = computed(() => {
   }
   // 如果有租户列表且长度>0，必须选择租户
   if (tenantList.value.length > 0 && loginFormData.value.tenantId == null) {
-    console.log("计算是否可提交",loginFormData.value.tenantId);
+    console.log("计算是否可提交", loginFormData.value.tenantId);
     return false;
   }
 
   if (!loginFormData.value.captchaCode) {
-    console.log("计算是否可提交，验证码:{}",loginFormData.value.captchaCode);
+    console.log("计算是否可提交，验证码:{}", loginFormData.value.captchaCode);
     return false;
   }
 
   if (!hasAgreed.value) {
-    console.log("计算是否可提交，是否同意隐私:{}",hasAgreed.value);
+    console.log("计算是否可提交，是否同意隐私:{}", hasAgreed.value);
     return false;
   }
 
@@ -309,22 +294,20 @@ const canSubmit = computed(() => {
   return true;
 });
 
-
 // 获取登录按钮文本
 const getLoginButtonText = () => {
-  if (!hasAgreed.value) return '请先同意协议';
-  if (!canSubmit.value) return '登录';
-  if (tenantList.value.length > 0 && loginFormData.value.tenantId == null) return '请选择租户';
+  if (!hasAgreed.value) return "请先同意协议";
+  if (!canSubmit.value) return "登录";
+  if (tenantList.value.length > 0 && loginFormData.value.tenantId == null) return "请选择租户";
   if (!loginFormData.value.captchaCode) {
-    return '请输入验证码';
+    return "请输入验证码";
   }
-  return '登录';
+  return "登录";
 };
-
 
 // 检查隐私协议同意状态
 const checkAgreementStatus = () => {
-  const agreed = uni.getStorageSync('hasAgreedPrivacy');
+  const agreed = uni.getStorageSync("hasAgreedPrivacy");
   hasAgreed.value = agreed;
   showPrivacyAgreement.value = !agreed;
 
@@ -339,7 +322,6 @@ onShow(() => {
   // checkAgreementStatus();
 });
 
-
 // 从本地存储加载上次选择的租户
 const loadLastSelectedTenant = () => {
   const lastTenant = AuthStorage.getLastSelectedTenant();
@@ -348,7 +330,6 @@ const loadLastSelectedTenant = () => {
     // 在实际加载租户列表后处理
   }
 };
-
 
 // 用户名输入框失去焦点
 let usernameBlurTimer: any = null;
@@ -390,43 +371,42 @@ const loadTenants = async () => {
   try {
     // 这里需要调用你的API获取租户列表
     // 假设你的API路径是：GET /api/auth/tenants?username=xxx
-    console.log("登录用户名:{}",loginFormData.value.username);
-    const response  = await AuthAPI.getAccessibleTenantsByUsername(loginFormData.value.username);
+    console.log("登录用户名:{}", loginFormData.value.username);
+    const response = await UserAPI.getAccessibleTenantsByUsername(loginFormData.value.username);
 
-    console.log("一次查询获取用户名在所有租户中的可访问租户:{}",response); //如果字段基本一致，可以安全断言
-    tenantList.value = response as unknown as TenantItem[] || [];
-    console.log("一次查询获取用户名在所有租户中的可访问租户tenantList:{}",tenantList.value);
+    console.log("一次查询获取用户名在所有租户中的可访问租户:{}", response); //如果字段基本一致，可以安全断言
+    tenantList.value = (response as unknown as TenantItem[]) || [];
+    console.log("一次查询获取用户名在所有租户中的可访问租户tenantList:{}", tenantList.value);
 
     if (tenantList.value.length > 0) {
       showTenantSelect.value = true;
 
-        // 如果只有一个租户，自动选择
-        if (tenantList.value.length === 1) {
-          selectedTenantIndex.value = 0;
-          loginFormData.value.tenantId = tenantList.value[0].id;
-          handleTenantChange({ detail: { value: 0 } });
-        } else {
-          // 多个租户，尝试使用上次的选择
-          const lastTenant = AuthStorage.getLastSelectedTenant();
-          if (lastTenant && lastTenant.username === loginFormData.value.username) {
-            const index = tenantList.value.findIndex(t => t.id === lastTenant.tenantId);
-            if (index >= 0) {
-              selectedTenantIndex.value = index;
-              loginFormData.value.tenantId = tenantList.value[index].id;
-            }
+      // 如果只有一个租户，自动选择
+      if (tenantList.value.length === 1) {
+        selectedTenantIndex.value = 0;
+        loginFormData.value.tenantId = tenantList.value[0].id;
+        handleTenantChange({ detail: { value: 0 } });
+      } else {
+        // 多个租户，尝试使用上次的选择
+        const lastTenant = AuthStorage.getLastSelectedTenant();
+        if (lastTenant && lastTenant.username === loginFormData.value.username) {
+          const index = tenantList.value.findIndex((t) => t.id === lastTenant.tenantId);
+          if (index >= 0) {
+            selectedTenantIndex.value = index;
+            loginFormData.value.tenantId = tenantList.value[index].id;
           }
         }
-      } else {
-        loginFormData.value.tenantId = undefined;
-        selectedTenantIndex.value = -1;
       }
-
+    } else {
+      loginFormData.value.tenantId = undefined;
+      selectedTenantIndex.value = -1;
+    }
   } catch (error) {
-    console.error('加载租户列表失败:', error);
+    console.error("加载租户列表失败:", error);
     uni.showToast({
-      title: '加载租户列表失败',
-      icon: 'none',
-      duration: 2000
+      title: "加载租户列表失败",
+      icon: "none",
+      duration: 2000,
     });
     tenantList.value = [];
   } finally {
@@ -445,12 +425,11 @@ const handleTenantChange = (e: any) => {
     if (loginFormData.value.username) {
       AuthStorage.setLastSelectedTenant({
         username: loginFormData.value.username,
-        tenantId: loginFormData.value.tenantId
+        tenantId: loginFormData.value.tenantId,
       });
     }
   }
 };
-
 
 // 获取验证码
 const getCaptcha = async () => {
@@ -458,15 +437,15 @@ const getCaptcha = async () => {
   try {
     const data = await AuthAPI.getCaptcha();
     if (data) {
-      loginFormData.value.captchaId = data.captchaId ;
-      captchaBase64.value = data.captchaBase64 ;
+      loginFormData.value.captchaId = data.captchaId;
+      captchaBase64.value = data.captchaBase64;
     }
   } catch (error) {
-    console.error('获取验证码失败:', error);
+    console.error("获取验证码失败:", error);
     uni.showToast({
-      title: '获取验证码失败',
-      icon: 'none',
-      duration: 2000
+      title: "获取验证码失败",
+      icon: "none",
+      duration: 2000,
     });
   } finally {
     codeLoading.value = false;
@@ -476,9 +455,9 @@ const getCaptcha = async () => {
 // 验证码图片加载错误
 const handleCaptchaError = () => {
   uni.showToast({
-    title: '验证码加载失败',
-    icon: 'none',
-    duration: 2000
+    title: "验证码加载失败",
+    icon: "none",
+    duration: 2000,
   });
   getCaptcha();
 };
@@ -486,15 +465,14 @@ const handleCaptchaError = () => {
 // 切换同意状态
 const toggleAgree = () => {
   hasAgreed.value = !hasAgreed.value;
-
 };
 
 // 处理同意
 const handleAgree = () => {
   if (!hasAgreed.value) return;
 
-  uni.setStorageSync('hasAgreedPrivacy', true);
-  uni.setStorageSync('privacyAgreeTime', Date.now());
+  uni.setStorageSync("hasAgreedPrivacy", true);
+  uni.setStorageSync("privacyAgreeTime", Date.now());
 
   showPrivacyAgreement.value = false;
 };
@@ -502,40 +480,39 @@ const handleAgree = () => {
 // 处理不同意
 const handleDisagree = () => {
   uni.showModal({
-    title: '提示',
-    content: '您需要同意《用户服务协议》和《隐私政策》才能使用本小程序。',
-    confirmText: '退出小程序',
-    cancelText: '再次查看',
+    title: "提示",
+    content: "您需要同意《用户服务协议》和《隐私政策》才能使用本小程序。",
+    confirmText: "退出小程序",
+    cancelText: "再次查看",
     success: (res) => {
       if (res.confirm) {
         uni.exitMiniProgram();
-      }else {
+      } else {
         // 用户点击"再次查看"，不做任何操作，停留在当前弹窗
       }
-    }
+    },
   });
 };
 
 // 预览协议
 const previewAgreement = (type: string) => {
   const urls = {
-    user: '/pages/mine/user-agreement/index',
-    privacy: '/pages/mine/privacy/index'
+    user: "/pages/mine/user-agreement/index",
+    privacy: "/pages/mine/privacy/index",
   };
 
   uni.navigateTo({
-    url: urls[type as keyof typeof urls]
+    url: urls[type as keyof typeof urls],
   });
 };
-
 
 // 登录处理 - 使用 uni.showToast 替换 wd-toast
 const handleLoginSubmit = async () => {
   if (!hasAgreed.value) {
     uni.showToast({
-      title: '请先同意用户协议和隐私政策',
-      icon: 'none',
-      duration: 2000
+      title: "请先同意用户协议和隐私政策",
+      icon: "none",
+      duration: 2000,
     });
     return;
   }
@@ -543,15 +520,15 @@ const handleLoginSubmit = async () => {
   if (!canSubmit.value) {
     if (tenantList.value.length > 0 && !loginFormData.value.tenantId) {
       uni.showToast({
-        title: '请选择要登录的租户',
-        icon: 'none',
-        duration: 2000
+        title: "请选择要登录的租户",
+        icon: "none",
+        duration: 2000,
       });
-    }else if (!loginFormData.value.captchaCode) {
+    } else if (!loginFormData.value.captchaCode) {
       uni.showToast({
-        title: '请输入验证码',
-        icon: 'none',
-        duration: 2000
+        title: "请输入验证码",
+        icon: "none",
+        duration: 2000,
       });
     }
     return;
@@ -571,16 +548,16 @@ const handleLoginSubmit = async () => {
     console.log("获取用户信息...", userStore.getInfo());
 
     uni.showToast({
-      title: '登录成功',
-      icon: 'success',
-      duration: 1000
+      title: "登录成功",
+      icon: "success",
+      duration: 1000,
     });
 
     // 登录成功，保存租户选择
     if (loginFormData.value.tenantId && loginFormData.value.username) {
       AuthStorage.setLastSelectedTenant({
         username: loginFormData.value.username,
-        tenantId: loginFormData.value.tenantId
+        tenantId: loginFormData.value.tenantId,
       });
     }
 
@@ -604,8 +581,8 @@ const handleLoginSubmit = async () => {
   } catch (error: any) {
     uni.showToast({
       title: error?.message || "登录失败",
-      icon: 'none',
-      duration: 2000
+      icon: "none",
+      duration: 2000,
     });
   } finally {
     loading.value = false;
@@ -616,9 +593,9 @@ const handleLoginSubmit = async () => {
 const handleWechatLogin = async () => {
   if (!hasAgreed.value) {
     uni.showToast({
-      title: '请先同意用户协议和隐私政策',
-      icon: 'none',
-      duration: 2000
+      title: "请先同意用户协议和隐私政策",
+      icon: "none",
+      duration: 2000,
     });
     return;
   }
@@ -637,7 +614,6 @@ const handleWechatLogin = async () => {
     const result = await userStore.loginByWechat(code);
 
     if (result) {
-
       // 微信登录成功后，需要获取该微信账号绑定的租户列表
       // 然后让用户选择租户
       // 这里需要根据你的业务逻辑调整
@@ -646,12 +622,11 @@ const handleWechatLogin = async () => {
 
       const wechatTenants = await getTenantsByWechat(code);
 
-
       if (wechatTenants.length === 0) {
         uni.showToast({
-          title: '该微信账号未绑定任何租户',
-          icon: 'none',
-          duration: 2000
+          title: "该微信账号未绑定任何租户",
+          icon: "none",
+          duration: 2000,
         });
         return;
       }
@@ -667,7 +642,7 @@ const handleWechatLogin = async () => {
         // 多个租户，需要选择
         // 这里可以弹出一个选择器让用户选择租户
         uni.showActionSheet({
-          itemList: wechatTenants.map(t => t.name),
+          itemList: wechatTenants.map((t) => t.name),
           success: async (res) => {
             const index = res.tapIndex;
             loginFormData.value.tenantId = wechatTenants[index].id;
@@ -677,17 +652,16 @@ const handleWechatLogin = async () => {
             });
 
             // 后续处理...
-          }
+          },
         });
         return;
       }
 
-
       await userStore.getInfo();
       uni.showToast({
-        title: '登录成功',
-        icon: 'success',
-        duration: 1000
+        title: "登录成功",
+        icon: "success",
+        duration: 1000,
       });
 
       if (!userStore.isUserInfoComplete()) {
@@ -708,16 +682,16 @@ const handleWechatLogin = async () => {
 
     // #ifndef MP-WEIXIN
     uni.showToast({
-      title: '当前环境不支持微信登录',
-      icon: 'none',
-      duration: 2000
+      title: "当前环境不支持微信登录",
+      icon: "none",
+      duration: 2000,
     });
     // #endif
   } catch (error: any) {
     uni.showToast({
       title: error?.message || "微信登录失败",
-      icon: 'none',
-      duration: 2000
+      icon: "none",
+      duration: 2000,
     });
   } finally {
     loading.value = false;
@@ -729,8 +703,8 @@ const getTenantsByWechat = async (code: string): Promise<TenantItem[]> => {
   // 这里需要调用你的后端接口
   // 示例：根据微信登录获取用户绑定的租户列表
   return [
-    { id: 1, name: '租户A' },
-    { id: 2, name: '租户B' }
+    { id: 1, name: "租户A" },
+    { id: 2, name: "租户B" },
   ];
 };
 
@@ -758,7 +732,6 @@ const navigateToPrivacy = () => {
   height: 100vh;
   overflow: hidden;
 }
-
 
 /* 隐私协议弹窗样式 */
 .privacy-mask {
@@ -812,7 +785,7 @@ const navigateToPrivacy = () => {
     margin-bottom: 40rpx;
 
     .link {
-      color: #165DFF;
+      color: #165dff;
       margin: 0 10rpx;
     }
   }
@@ -835,8 +808,8 @@ const navigateToPrivacy = () => {
       transition: all 0.3s;
 
       &.checked {
-        background: #165DFF;
-        border-color: #165DFF;
+        background: #165dff;
+        border-color: #165dff;
       }
 
       .circle-checkbox-inner {
@@ -873,7 +846,7 @@ const navigateToPrivacy = () => {
     }
 
     &.agree {
-      color: #165DFF;
+      color: #165dff;
       background: #fff;
 
       &.disabled {
@@ -990,7 +963,6 @@ const navigateToPrivacy = () => {
   padding: 0 10rpx;
 }
 
-
 .clear-icon,
 .eye-icon {
   padding: 10rpx;
@@ -1098,8 +1070,8 @@ const navigateToPrivacy = () => {
   transition: all 0.3s;
 
   &.checked {
-    background: #165DFF;
-    border-color: #165DFF;
+    background: #165dff;
+    border-color: #165dff;
   }
 }
 

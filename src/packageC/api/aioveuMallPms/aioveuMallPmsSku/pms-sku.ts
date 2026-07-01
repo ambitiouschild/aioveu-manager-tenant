@@ -1,7 +1,7 @@
 import request from "@/utils/request";
 import {BaseQueryParams, PageQuery} from "@/types";
 
-const PMSSKU_BASE_URL = "/aioveu-tenant-pms/api/v1/pms-sku";
+const PMSSKU_BASE_URL = "/aioveu/api/v8/admin/pms/pms-sku";
 
 const PmsSkuAPI = {
     /** 获取商品库存分页数据 */

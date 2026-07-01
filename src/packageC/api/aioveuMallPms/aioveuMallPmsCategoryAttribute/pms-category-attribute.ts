@@ -1,7 +1,7 @@
 import request from "@/utils/request";
 import {BaseQueryParams, PageQuery} from "@/types";
 
-const PMSCATEGORYATTRIBUTE_BASE_URL = "/aioveu-tenant-pms/api/v1/pms-category-attribute";
+const PMSCATEGORYATTRIBUTE_BASE_URL = "/aioveu/api/v8/admin/pms/pms-category-attribute";
 
 const PmsCategoryAttributeAPI = {
     /** 获取商品类型（规格，属性）分页数据 */

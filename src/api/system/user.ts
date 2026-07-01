@@ -1,8 +1,21 @@
 import request from "@/utils/request";
+import type { TenantItem } from "@/types";
 
-const USER_BASE_URL = "/aioveu-tenant/api/v1/users";
+const USER_BASE_URL = "/aioveu/api/v8/admin/tenant/users";
 
 const UserAPI = {
+  /** 一次查询获取用户名在所有租户中的可访问租户  方案1：使用模板字符串（推荐）*/
+  getAccessibleTenantsByUsername(username: String) {
+    return request<TenantItem[]>({
+      url: `${USER_BASE_URL}/tenants/${username}`, // 使用模板字符串
+      method: "GET",
+      header: {
+        skipAuth: true,
+      },
+      // 不需要params了，因为username已经在URL中了
+    });
+  },
+
   /**
    * 获取当前登录用户信息
    *

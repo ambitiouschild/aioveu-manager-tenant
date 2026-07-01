@@ -1,7 +1,7 @@
 import request from "@/utils/request";
 import {BaseQueryParams, PageQuery} from "@/types";
 
-const PMSCATEGORYBRAND_BASE_URL = "/aioveu-tenant-pms/api/v1/pms-category-brand";
+const PMSCATEGORYBRAND_BASE_URL = "/aioveu/api/v8/admin/pms/pms-category-brand";
 
 const PmsCategoryBrandAPI = {
     /** 获取商品分类与品牌关联表分页数据 */

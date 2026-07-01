@@ -1,37 +1,16 @@
 import request from "@/utils/request";
 import {CLIENT_CONFIG, getClientId} from "@/utils/clientManager";
 
-const SMSHOMEADVERT_BASE_URL = "/aioveu-tenant-sms/app-api/v1/sms-home-advert";
+const SMSHOMEADVERT_BASE_URL = "/aioveu/api/v8/app/sms/sms-home-advert";
 
-const AUTHADVERT_BASE_URL = "/aioveu-tenant-auth/app-api/v1/auth";
 
 const SmsHomeAdvertAPI = {
     /** 获取首页广告配置（增加跳转路径）分页数据 */
     getPage(queryParams?: SmsHomeAdvertPageQuery) {
 
 
-      // // 构建查询字符串
-      // // 将所有值转换为字符串
-      // const allParams: Record<string, string> = {
-      //   clientId: String(clientId)
-      // };
-      //
-      // // 如果有其他参数，也转换为字符串
-      // if (queryParams) {
-      //   for (const [key, value] of Object.entries(queryParams)) {
-      //     if (value !== undefined && value !== null) {
-      //       allParams[key] = String(value);
-      //     }
-      //   }
-      // }
-      //
-      // // 使用URLSearchParams或手动拼接
-      // const queryString = new URLSearchParams(allParams).toString();
-      //
-      // console.log("使用URLSearchParams或手动拼接:", queryString);
-
         return request<PageResult<SmsHomeAdvertPageVO[]>>({
-          url: `${AUTHADVERT_BASE_URL}/adverts`,
+          url: `${SMSHOMEADVERT_BASE_URL}/page`,
           method: "GET",
           header: {
             skipAuth: true,

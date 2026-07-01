@@ -481,8 +481,10 @@ const loadOrders = async (reset = false) => {
       pageNum: pageNum.value,
       pageSize: pageSize.value,
       status: activeStatus.value,
-      startTime: dateRange.value.start + " 00:00:00",
-      endTime: dateRange.value.end + " 23:59:59",
+      // startTime: dateRange.value.start + " 00:00:00",
+      // endTime: dateRange.value.end + " 23:59:59",
+      startDate: dateRange.value.start, // ✅ 不要拼接时间
+      endDate: dateRange.value.end, // ✅ 不要拼接时间
       ...advancedFilter.value,
     };
 

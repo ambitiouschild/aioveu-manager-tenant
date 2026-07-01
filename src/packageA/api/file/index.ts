@@ -11,7 +11,7 @@ const FileAPI = {
   /**
    * 文件上传地址
    */
-  uploadUrl: baseApi + "/api/v1/files",
+  uploadUrl: baseApi + "/aioveu/api/v8/admin/tenant/files",
 
   /**
    * 上传文件

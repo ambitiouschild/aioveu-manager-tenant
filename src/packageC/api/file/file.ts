@@ -9,7 +9,7 @@ let baseApi = import.meta.env.VITE_APP_API_URL;
 baseApi = import.meta.env.VITE_APP_BASE_API;
 // #endif
 
-const FILE_BASE_URL = baseApi + "/aioveu-tenant/api/v1/files";
+const FILE_BASE_URL = baseApi + "/aioveu/api/v8/admin/tenant/files";
 
 interface UploadOptions {
   category?: string;       // 文件分类
