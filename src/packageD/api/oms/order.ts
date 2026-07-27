@@ -1,7 +1,7 @@
 import request from "@/utils/request";
 import { request2 } from "@/utils/request";  // named export
 const OMSORDER_BASE_URL = "/aioveu/api/v8/app/oms/orders";
-
+import type { ShipOrderRequest } from "@/packageD/types/oms/logistics";
 // 订单状态枚举
 export const OrderStatus = {
   PENDING_PAYMENT: 0, // 待付款
@@ -136,11 +136,7 @@ export const cancelRefund = (refundId: any) => {
 // 发货 单订单发货（人工）
 export const shipOrder = (
   orderSn: string,
-  data: {
-    logisticsCompany: string;
-    trackingNo: string;
-    remark?: string;
-  }
+  data: ShipOrderRequest
 ) => {
   return request2({
     url: `${OMSORDER_BASE_URL}/${orderSn}/ship`,

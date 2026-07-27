@@ -307,12 +307,13 @@
             <picker
               mode="selector"
               :range="logisticsCompanies"
+              range-key="label"
               :value="logisticsCompanyIndex"
               @change="onLogisticsChange"
               class="company-picker"
             >
               <view class="picker-trigger">
-                {{ currentLogisticsCompany || "请选择物流公司" }}
+                {{ currentCompany?.label || "请选择物流公司" }}
                 <text class="iconfont icon-arrow-down"></text>
               </view>
             </picker>
@@ -371,10 +372,18 @@ import {
   OrderStatusClass,
   ORDER_STATUS_VALUES,
 } from "@/packageD/enums/OrderStatusEnum";
-// 系统信息
+// ✅ 物流相关全部从这里来
+import {
+  LogisticsType,
+  LOGISTICS_COMPANIES,
+  getLogisticsTypeLabel,
+  ShipOrderRequest,
+} from "@/packageD/types/oms/logistics";
+
+// ==================== 系统信息 ====================
 const systemInfo = uni.getSystemInfoSync();
 
-// 响应式数据
+// ==================== 响应式数据 ====================
 const todayOrders = ref(0); //今日订单
 const pendingOrders = ref(0); //待处理
 const todayIncome = ref(0); //今日总收入
@@ -405,9 +414,13 @@ const shipForm = ref({
   remark: "",
 });
 const currentOrder = ref<OrderVO>();
-const logisticsCompanies = ref(["顺丰", "圆通", "中通", "韵达", "申通", "京东", "邮政"]);
 const logisticsCompanyIndex = ref(0);
-const currentLogisticsCompany = ref("");
+// 改成（存 code）：
+// ========== ② picker 选中 当前选中的公司（从字典里取）==========
+const currentCompany = computed(() => logisticsCompanies[logisticsCompanyIndex.value]);
+
+// picker 数据源
+const logisticsCompanies = LOGISTICS_COMPANIES;
 
 // 高级筛选
 const advancedFilter = ref({
@@ -774,10 +787,7 @@ const shipPopup = ref<any>(null); // 使用 any 或具体的组件类型
 // 发货处理
 const handleShip = (order: OrderVO) => {
   shipForm.value.orderIds = [order.id] as number[];
-  currentLogisticsCompany.value = "";
-  shipForm.value.trackingNo = "";
-  shipForm.value.remark = "";
-
+  logisticsCompanyIndex.value = 0; // ← 重置 picker 回到第一项
   // ✅ 这里把 order 存起来
   currentOrder.value = order;
 
@@ -788,35 +798,42 @@ const handleShip = (order: OrderVO) => {
 // 物流公司选择
 const onLogisticsChange = (e: any) => {
   logisticsCompanyIndex.value = e.detail.value;
-  currentLogisticsCompany.value = logisticsCompanies.value[e.detail.value];
+  // ✅ 不用再同步任何东西，currentCompany 自动更新
 };
 
 // 确认发货
 const confirmShip = async () => {
   if (!currentOrder.value) return;
 
-  if (!currentLogisticsCompany.value) {
-    uni.showToast({
-      title: "请选择物流公司",
-      icon: "none",
-    });
+  const company = currentCompany.value;
+
+  if (!company) {
+    uni.showToast({ title: "请选择发货方式", icon: "none" });
     return;
   }
 
-  if (!shipForm.value.trackingNo.trim()) {
-    uni.showToast({
-      title: "请输入运单号",
-      icon: "none",
-    });
+  // 自提不需要物流公司和单号
+  // 自提 / 无需物流 不需要单号
+  const needTrackingNo = company.logisticsType === LogisticsType.PHYSICAL;
+
+  if (needTrackingNo && !shipForm.value.trackingNo?.trim()) {
+    uni.showToast({ title: "请输入运单号", icon: "none" });
     return;
   }
+
+  // ✅ 构造请求体 —— 字段名拼错 TS 直接红波浪线
+  const payload: ShipOrderRequest = {
+    logisticsType: company.logisticsType, // ✅ 新增：物流类型（1=实体物流，2=无需物流，3=自提）
+    logisticsCompanyCode: needTrackingNo ? company.value : undefined, // "SF"
+    logisticsCompany: needTrackingNo ? company.label : undefined,
+    trackingNo: needTrackingNo ? shipForm.value.trackingNo.trim() : undefined,
+    remark: shipForm.value.remark || undefined,
+  };
+
+  console.log("打印构造请求体:", payload);
 
   try {
-    const res = await shipOrder(currentOrder.value.orderSn, {
-      logisticsCompany: currentLogisticsCompany.value,
-      trackingNo: shipForm.value.trackingNo,
-      remark: shipForm.value.remark,
-    });
+    const res = await shipOrder(currentOrder.value.orderSn, payload);
 
     if (res.code === ResultCodeEnum.SUCCESS) {
       uni.showToast({
@@ -837,6 +854,12 @@ const confirmShip = async () => {
       icon: "error",
     });
   }
+};
+
+// ========== ④ 显示物流类型标签（可选） ==========
+// 比如订单列表里显示 "物流配送" / "到店自提"
+const getLogisticsTypeText = (type: number) => {
+  return getLogisticsTypeLabel(type as LogisticsType);
 };
 
 // 关闭发货弹窗
@@ -1020,7 +1043,14 @@ const getFilterParams = () => {
 
 // 计算是否可以确认发货
 const canConfirmShip = computed(() => {
-  return currentLogisticsCompany.value && shipForm.value.trackingNo.trim();
+  const company = currentCompany.value;
+  if (!company) return false;
+  // 实体物流必须填单号
+  if (company.logisticsType === LogisticsType.PHYSICAL) {
+    return !!shipForm.value.trackingNo?.trim();
+  }
+  // 自提 / 无需物流 直接可提交
+  return true;
 });
 
 // 生命周期
