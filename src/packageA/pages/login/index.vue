@@ -169,9 +169,9 @@
           <view class="divider"></view>
 
           <!-- 登录按钮 -->
+          <!--            :disabled="loading || !hasAgreed || !canSubmit"-->
           <button
             class="login-btn"
-            :disabled="loading || !hasAgreed || !canSubmit"
             :style="loading || !hasAgreed ? 'opacity: 0.7;' : ''"
             @click="handleLoginSubmit"
           >
@@ -195,17 +195,17 @@
         </view>
 
         <!-- 底部协议 - 添加圆形选择按钮 -->
-        <view class="agreement">
-          <view class="agreement-checkbox" @click="toggleAgree">
-            <view class="circle-checkbox" :class="{ checked: hasAgreed }">
-              <view v-if="hasAgreed" class="circle-checkbox-inner"></view>
-            </view>
-          </view>
-          <text class="text">是否同意</text>
-          <text class="link" @click="navigateToUserAgreement">《用户协议》</text>
-          <text class="text">和</text>
-          <text class="link" @click="navigateToPrivacy">《隐私政策》</text>
-        </view>
+        <!--        <view class="agreement">-->
+        <!--          <view class="agreement-checkbox" @click="toggleAgree">-->
+        <!--            <view class="circle-checkbox" :class="{ checked: hasAgreed }">-->
+        <!--              <view v-if="hasAgreed" class="circle-checkbox-inner"></view>-->
+        <!--            </view>-->
+        <!--          </view>-->
+        <!--          <text class="text">是否同意</text>-->
+        <!--          <text class="link" @click="navigateToUserAgreement">《用户协议》</text>-->
+        <!--          <text class="text">和</text>-->
+        <!--          <text class="link" @click="navigateToPrivacy">《隐私政策》</text>-->
+        <!--        </view>-->
       </view>
     </view>
 
@@ -223,7 +223,7 @@ import { useUserStore } from "@/store/modules/user";
 import { ref, computed } from "vue";
 import { AuthStorage } from "@/utils/auth.storage";
 import UserAPI from "@/api/system/user";
-
+import uniIcons from "@/packageA/components/uni-icons/uni-icons.vue";
 // 移除 wd-toast 引用
 const loading = ref(false);
 const codeLoading = ref(false);
@@ -296,7 +296,7 @@ const canSubmit = computed(() => {
 
 // 获取登录按钮文本
 const getLoginButtonText = () => {
-  if (!hasAgreed.value) return "请先同意协议";
+  // if (!hasAgreed.value) return "请先同意协议";
   if (!canSubmit.value) return "登录";
   if (tenantList.value.length > 0 && loginFormData.value.tenantId == null) return "请选择租户";
   if (!loginFormData.value.captchaCode) {
@@ -478,21 +478,7 @@ const handleAgree = () => {
 };
 
 // 处理不同意
-const handleDisagree = () => {
-  uni.showModal({
-    title: "提示",
-    content: "您需要同意《用户服务协议》和《隐私政策》才能使用本小程序。",
-    confirmText: "退出小程序",
-    cancelText: "再次查看",
-    success: (res) => {
-      if (res.confirm) {
-        uni.exitMiniProgram();
-      } else {
-        // 用户点击"再次查看"，不做任何操作，停留在当前弹窗
-      }
-    },
-  });
-};
+
 
 // 预览协议
 const previewAgreement = (type: string) => {
