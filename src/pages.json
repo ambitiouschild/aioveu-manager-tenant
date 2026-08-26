@@ -2,7 +2,7 @@
   "easycom": {
     "autoscan": true,
     "custom": {
-//      "^wd-(.*)": "wot-design-uni/components/wd-$1/wd-$1.vue",
+      //      "^wd-(.*)": "wot-design-uni/components/wd-$1/wd-$1.vue",
       "^cu-(.*)": "@/components/cu-$1/index.vue",
       "^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue",
       // 这里写 src 目录下的相对路径

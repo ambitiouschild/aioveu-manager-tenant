@@ -15,6 +15,7 @@
 安装依赖
 
 ```bash
+npm install --no-optional --ignore-scripts
 pnpm install
 ```
 
