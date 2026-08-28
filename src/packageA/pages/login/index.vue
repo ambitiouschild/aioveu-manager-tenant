@@ -270,24 +270,24 @@ onLoad((options) => {
 // 计算是否可提交
 const canSubmit = computed(() => {
   if (!loginFormData.value.username || !loginFormData.value.password) {
-    console.log("计算是否可提交");
+    console.log("计算是否可提交username,password");
     return false;
   }
   // 如果有租户列表且长度>0，必须选择租户
   if (tenantList.value.length > 0 && loginFormData.value.tenantId == null) {
-    console.log("计算是否可提交", loginFormData.value.tenantId);
+    console.log("计算是否可提交tenantId", loginFormData.value.tenantId);
     return false;
   }
 
   if (!loginFormData.value.captchaCode) {
-    console.log("计算是否可提交，验证码:{}", loginFormData.value.captchaCode);
+    console.log("计算是否可提交，验证码captchaCode", loginFormData.value.captchaCode);
     return false;
   }
 
-  if (!hasAgreed.value) {
-    console.log("计算是否可提交，是否同意隐私:{}", hasAgreed.value);
-    return false;
-  }
+  // if (!hasAgreed.value) {
+  //   console.log("计算是否可提交，是否同意隐私:{}", hasAgreed.value);
+  //   return false;
+  // }
 
   console.log("计算是否可提交:可以提交");
 
@@ -479,7 +479,6 @@ const handleAgree = () => {
 
 // 处理不同意
 
-
 // 预览协议
 const previewAgreement = (type: string) => {
   const urls = {
@@ -494,14 +493,14 @@ const previewAgreement = (type: string) => {
 
 // 登录处理 - 使用 uni.showToast 替换 wd-toast
 const handleLoginSubmit = async () => {
-  if (!hasAgreed.value) {
-    uni.showToast({
-      title: "请先同意用户协议和隐私政策",
-      icon: "none",
-      duration: 2000,
-    });
-    return;
-  }
+  // if (!hasAgreed.value) {
+  //   uni.showToast({
+  //     title: "请先同意用户协议和隐私政策",
+  //     icon: "none",
+  //     duration: 2000,
+  //   });
+  //   return;
+  // }
 
   if (!canSubmit.value) {
     if (tenantList.value.length > 0 && !loginFormData.value.tenantId) {

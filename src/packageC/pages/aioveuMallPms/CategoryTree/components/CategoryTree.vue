@@ -146,6 +146,9 @@ import { ref, reactive, onMounted, computed, watch } from "vue";
 import FlatTree from "./flat-tree.vue";
 import PmsCategoryAPI from "@/packageC/api/aioveuMallPms/aioveuMallPmsCategory/pms-category";
 
+import uniPopup from "@/packageC/components/uni-popup/uni-popup.vue";
+import uniPopupDialog from "@/packageC/components/uni-popup-dialog/uni-popup-dialog.vue";
+
 // 定义类型
 interface CategoryNode {
   id: number;
