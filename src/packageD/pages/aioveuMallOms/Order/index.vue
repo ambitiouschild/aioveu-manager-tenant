@@ -1444,7 +1444,10 @@ onUnmounted(() => {
 
 .order-list {
   flex: 1;
-  padding: 20rpx 30rpx;
+  padding: 20rpx 10rpx; // ✅ 30 → 16，左右各多给 14rpx 宽度
+  box-sizing: border-box; // ✅ 确保 padding 算在 width 内
+  width: 100%; // ✅ 加这行
+  overflow-x: hidden; // ✅ 防止横向溢出导致视觉偏移
 
   .empty-order {
     display: flex;
@@ -1472,9 +1475,13 @@ onUnmounted(() => {
   }
 
   .order-card {
+    width: 100%; // ✅ 显式声明
+    box-sizing: border-box; // ✅ 确保 padding 不撑爆
+    margin-left: 0; // ✅ 确保没有左 margin
+    margin-right: 0; // ✅ 确保没有右 margin
     background: #fff;
     border-radius: 20rpx;
-    padding: 30rpx;
+    padding: 28rpx 16rpx; // ✅ 卡片内左右 30 → 24，内容区更宽
     margin-bottom: 20rpx;
     box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
 
