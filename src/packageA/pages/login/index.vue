@@ -170,9 +170,10 @@
 
           <!-- 登录按钮 -->
           <!--            :disabled="loading || !hasAgreed || !canSubmit"-->
+<!--          :style="loading || !hasAgreed ? 'opacity: 0.7;' : ''"-->
           <button
             class="login-btn"
-            :style="loading || !hasAgreed ? 'opacity: 0.7;' : ''"
+            :style="loading ? 'opacity: 0.7;' : ''"
             @click="handleLoginSubmit"
           >
             {{ getLoginButtonText() }}
