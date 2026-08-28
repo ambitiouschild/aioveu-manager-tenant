@@ -44,14 +44,14 @@
           class="date-picker"
         >
           <view class="picker-trigger">
-            {{ formatDate(dateRange.start) }}
+            {{ filterMode === "pending" ? "全部时间" : formatDate(dateRange.start) }}
             <text class="iconfont icon-arrow-down"></text>
           </view>
         </picker>
         <text class="separator">至</text>
         <picker mode="date" :value="dateRange.end" @change="onEndDateChange" class="date-picker">
           <view class="picker-trigger">
-            {{ formatDate(dateRange.end) }}
+            {{ filterMode === "pending" ? "全部时间" : formatDate(dateRange.end) }}
             <text class="iconfont icon-arrow-down"></text>
           </view>
         </picker>
@@ -371,6 +371,7 @@ import {
   OrderStatusLabel,
   OrderStatusClass,
   ORDER_STATUS_VALUES,
+  PENDING_STATUSES,
 } from "@/packageD/enums/OrderStatusEnum";
 // ✅ 物流相关全部从这里来
 import {
@@ -378,8 +379,10 @@ import {
   LOGISTICS_COMPANIES,
   getLogisticsTypeLabel,
   ShipOrderRequest,
+  FilterMode,
 } from "@/packageD/types/oms/logistics";
 
+const filterMode = ref<FilterMode>("all");
 // ==================== 系统信息 ====================
 const systemInfo = uni.getSystemInfoSync();
 
@@ -447,14 +450,15 @@ const selectedAmount = computed(() => {
 
 // 订单状态配置
 const orderStatusList = computed(() => [
-  // { value: -1, label: "全部", class: "all", count: 0 },
-  { value: null, label: "全部", class: "all", count: 0 },
   ...ORDER_STATUS_VALUES.map((status) => ({
     value: status, // 这里是 "PAID" / "UNPAID" 等字符串 ✅
     label: OrderStatusLabel[status],
     class: OrderStatusClass[status],
     count: 0,
   })),
+
+  // { value: -1, label: "全部", class: "all", count: 0 },
+  { value: null, label: "全部", class: "all", count: 0 },
 ]);
 
 // 快捷筛选
@@ -463,6 +467,7 @@ const quickFilters = ref([
   { value: "yesterday", label: "昨日" },
   { value: "thisWeek", label: "本周" },
   { value: "thisMonth", label: "本月" },
+  { value: "pending", label: "全部待处理" }, // ✅ 新增
 ]);
 
 // 订单来源
@@ -490,16 +495,19 @@ const loadOrders = async (reset = false) => {
   loading.value = true;
 
   try {
+    // ✅ 用 getFilterParams() 拿统一的筛选参数
+    const filterParams = getFilterParams();
+
     const params = {
       pageNum: pageNum.value,
       pageSize: pageSize.value,
-      status: activeStatus.value,
-      // startTime: dateRange.value.start + " 00:00:00",
-      // endTime: dateRange.value.end + " 23:59:59",
-      startDate: dateRange.value.start, // ✅ 不要拼接时间
-      endDate: dateRange.value.end, // ✅ 不要拼接时间
-      ...advancedFilter.value,
+      ...filterParams, // ← statuses / status / startDate / endDate 全在这
     };
+
+    //这样
+    //     filterMode = "pending" → params = { statuses: ["UNPAID","PAID","SERVICING"] } ✅
+    // filterMode = "all"     → params = { startDate: "2026-08-28", endDate: "2026-08-28" } ✅
+    // filterMode = "single"  → params = { status: "PAID", startDate: "...", endDate: "..." } ✅
 
     console.log("订单列表参数:", params);
 
@@ -619,8 +627,13 @@ const loadMore = () => {
 // 状态点击
 const onStatusClick = (status: string | null) => {
   if (activeStatus.value === status) {
+    // 点击“全部”
+    filterMode.value = "all";
+
     activeStatus.value = null; // ✅ 取消筛选 // 点击已激活状态则取消筛选
   } else {
+    // 点击单个状态
+    filterMode.value = "single";
     activeStatus.value = status;
   }
   loadOrders(true);
@@ -628,9 +641,37 @@ const onStatusClick = (status: string | null) => {
   loadOrderStatistics();
 };
 
+const isPendingActive = computed(() => filterMode.value === "pending");
+// ✅ 新增：一键待处理
+const onPendingClick = () => {
+  filterMode.value = "pending";
+  activeStatus.value = OrderStatusEnum.PAID; // ✅ 直接切到"待发货"  // 只用于高亮
+
+  // ✅ 清除日期筛选，查所有时间
+  dateRange.value = {
+    start: "", // 或者一个很早的日期，比如 '2020-01-01'
+    end: "", // 或者今天
+  };
+
+  // ✅ 快捷筛选也要同步取消高亮
+  // ✅ 改成 "pending" 而不是 ""
+  activeQuickFilter.value = "pending";
+
+  loadOrders(true);
+  loadOrderStatistics();
+};
+
 // 快捷筛选点击
 const onQuickFilterClick = (filter: string) => {
   activeQuickFilter.value = filter;
+
+  if (filter === "pending") {
+    onPendingClick();
+    return;
+  }
+
+  // ✅ 关键：切回 all 模式
+  filterMode.value = "all";
 
   const now = new Date();
   switch (filter) {
@@ -1027,17 +1068,29 @@ const downloadExcel = (blob: Blob, fileName: string) => {
 // 获取筛选参数
 const getFilterParams = () => {
   const params: any = {
-    // startTime: dateRange.value.start + " 00:00:00",
-    // endTime: dateRange.value.end + " 23:59:59",
-    startDate: dateRange.value.start, // ✅ 不要拼接时间
-    endDate: dateRange.value.end, // ✅ 不要拼接时间
     ...advancedFilter.value,
   };
 
-  if (activeStatus.value !== null) {
-    params.status = activeStatus.value;
+  // ✅ 待处理模式：不限制时间
+  if (filterMode.value !== "pending") {
+    // startTime: dateRange.value.start + " 00:00:00",
+    // endTime: dateRange.value.end + " 23:59:59",
+    params.startDate = dateRange.value.start;
+    params.endDate = dateRange.value.end;
   }
 
+  if (filterMode.value === "pending") {
+    if (activeStatus.value) {
+      // ✅ 有具体状态就只查这个
+      params.status = activeStatus.value;
+    } else {
+      // ✅ 没选具体状态才查全部待处理
+      params.statuses = PENDING_STATUSES;
+    }
+  } else if (filterMode.value === "single" && activeStatus.value) {
+    params.status = activeStatus.value;
+  }
+  // 'all' 不传 status
   return params;
 };
 

@@ -13,6 +13,8 @@ export enum LogisticsType {
   UNKNOWN        = 8,  // 未知
 }
 
+export type FilterMode = "single" | "pending" | "all";
+
 /**
  * 物流类型展示映射
  */

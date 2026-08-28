@@ -57,3 +57,5 @@ export const ORDER_STATUS_VALUES = [
   OrderStatusEnum.CLOSED,
   OrderStatusEnum.SERVICING,
 ];
+
+export const PENDING_STATUSES = [OrderStatusEnum.UNPAID, OrderStatusEnum.PAID, OrderStatusEnum.SERVICING];
