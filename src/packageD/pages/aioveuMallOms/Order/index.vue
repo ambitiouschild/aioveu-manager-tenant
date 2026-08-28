@@ -627,14 +627,22 @@ const loadMore = () => {
 // 状态点击
 const onStatusClick = (status: string | null) => {
   if (activeStatus.value === status) {
-    // 点击“全部”
-    filterMode.value = "all";
-
-    activeStatus.value = null; // ✅ 取消筛选 // 点击已激活状态则取消筛选
+    // 取消筛选
+    if (filterMode.value === "pending") {
+      // pending 模式下取消，回到 pending 不带具体状态
+      activeStatus.value = null;
+    } else {
+      filterMode.value = "all";
+      activeStatus.value = null;
+    }
   } else {
-    // 点击单个状态
-    filterMode.value = "single";
-    activeStatus.value = status;
+    if (filterMode.value === "pending") {
+      // ✅ pending 模式下只换状态，不切 filterMode
+      activeStatus.value = status;
+    } else {
+      filterMode.value = "single";
+      activeStatus.value = status;
+    }
   }
   loadOrders(true);
   //状态切换 在「筛选变化」的地方调用统计
