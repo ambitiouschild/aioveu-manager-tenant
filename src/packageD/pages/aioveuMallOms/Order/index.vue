@@ -1090,9 +1090,13 @@ const getFilterParams = () => {
   }
 
   if (filterMode.value === "pending") {
-    // ✅ 永远用 statuses 查全量待处理
-    params.statuses = PENDING_STATUSES;
-    // 不传 status 单值
+    if (activeStatus.value) {
+      // ✅ 有具体状态就只查这个
+      params.status = activeStatus.value;
+    } else {
+      // ✅ 没选具体状态才查全部待处理
+      params.statuses = PENDING_STATUSES;
+    }
   } else if (filterMode.value === "single" && activeStatus.value) {
     params.status = activeStatus.value;
   }
