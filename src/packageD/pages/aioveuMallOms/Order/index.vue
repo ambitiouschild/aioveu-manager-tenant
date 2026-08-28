@@ -653,7 +653,8 @@ const isPendingActive = computed(() => filterMode.value === "pending");
 // ✅ 新增：一键待处理
 const onPendingClick = () => {
   filterMode.value = "pending";
-  activeStatus.value = OrderStatusEnum.PAID; // ✅ 直接切到"待发货"  // 只用于高亮
+  //关键点：pending模式下 activeStatus纯粹是 UI 高亮用的，不参与拼参数。statuses才是真正查数据的
+  activeStatus.value = OrderStatusEnum.PAID; // ✅ 直接切到"待发货"  // 只用于高亮  // ✅ 只管高亮，不参与查询
 
   // ✅ 清除日期筛选，查所有时间
   dateRange.value = {
@@ -1089,13 +1090,9 @@ const getFilterParams = () => {
   }
 
   if (filterMode.value === "pending") {
-    if (activeStatus.value) {
-      // ✅ 有具体状态就只查这个
-      params.status = activeStatus.value;
-    } else {
-      // ✅ 没选具体状态才查全部待处理
-      params.statuses = PENDING_STATUSES;
-    }
+    // ✅ 永远用 statuses 查全量待处理
+    params.statuses = PENDING_STATUSES;
+    // 不传 status 单值
   } else if (filterMode.value === "single" && activeStatus.value) {
     params.status = activeStatus.value;
   }
