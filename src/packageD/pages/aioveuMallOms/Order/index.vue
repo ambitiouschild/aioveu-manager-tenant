@@ -678,8 +678,9 @@ const onQuickFilterClick = (filter: string) => {
     return;
   }
 
-  // ✅ 关键：切回 all 模式
+  // ✅ 关键：切回 all 模式，同时默认切到待发货
   filterMode.value = "all";
+  activeStatus.value = OrderStatusEnum.PAID; // ✅ 新增：自动切到待发货
 
   const now = new Date();
   switch (filter) {
