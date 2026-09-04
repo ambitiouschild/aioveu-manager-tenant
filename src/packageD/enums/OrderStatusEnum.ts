@@ -20,6 +20,40 @@ export enum OrderStatusEnum {
 }
 
 /**
+ * 订单状态数值 → 枚举值 映射
+ * （后端详情接口返回的是数字，列表接口返回的是字符串，这里统一转换）
+ */
+export const OrderStatusNumberMap: Record<number, OrderStatusEnum> = {
+  0: OrderStatusEnum.UNPAID,
+  1: OrderStatusEnum.PAID,
+  2: OrderStatusEnum.SHIPPED,
+  3: OrderStatusEnum.COMPLETED,
+  4: OrderStatusEnum.CANCELLED,
+  5: OrderStatusEnum.CLOSED,
+  6: OrderStatusEnum.SERVICING,
+};
+
+
+/**
+ * 统一转换：无论后端返回数字还是字符串，都转成 OrderStatusEnum
+ */
+export const normalizeStatus = (raw: number | string | undefined | null): OrderStatusEnum => {
+  if (raw == null) return OrderStatusEnum.UNPAID;
+
+  // 已经是枚举字符串
+  if (typeof raw === "string" && raw in OrderStatusEnum) {
+    return raw as OrderStatusEnum;
+  }
+
+  // 数字 → 枚举
+  if (typeof raw === "number" && raw in OrderStatusNumberMap) {
+    return OrderStatusNumberMap[raw];
+  }
+
+  return OrderStatusEnum.UNPAID;
+};
+
+/**
  * 订单状态文案
  */
 export const OrderStatusLabel: Record<OrderStatusEnum, string> = {
@@ -44,6 +78,17 @@ export const OrderStatusClass: Record<OrderStatusEnum, string> = {
   [OrderStatusEnum.CLOSED]: "closed",
   [OrderStatusEnum.SERVICING]: "servicing",
 };
+
+export const OrderDetailStatusClass: Record<OrderStatusEnum, string> = {
+  [OrderStatusEnum.UNPAID]: "unpaid",
+  [OrderStatusEnum.PAID]: "paid",
+  [OrderStatusEnum.SHIPPED]: "shipped",
+  [OrderStatusEnum.COMPLETED]: "completed",
+  [OrderStatusEnum.CANCELLED]: "cancelled",
+  [OrderStatusEnum.CLOSED]: "closed",
+  [OrderStatusEnum.SERVICING]: "servicing",
+};
+
 
 /**
  * 订单状态 → 状态颜色映射
