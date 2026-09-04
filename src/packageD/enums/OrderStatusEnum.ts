@@ -46,6 +46,30 @@ export const OrderStatusClass: Record<OrderStatusEnum, string> = {
 };
 
 /**
+ * 订单状态 → 状态颜色映射
+ */
+export const OrderStatusColorMap: Record<OrderStatusEnum, string> = {
+  [OrderStatusEnum.UNPAID]: "#fa436a", // 待付款 - 红色，突出显示
+  [OrderStatusEnum.PAID]: "#e6a23c", // 待发货 - 橙色
+  [OrderStatusEnum.SHIPPED]: "#409eff", // 已发货 - 蓝色
+  [OrderStatusEnum.COMPLETED]: "#67c23a", // 已完成 - 绿色
+  [OrderStatusEnum.CANCELLED]: "#909399", // 已取消 - 灰色
+  [OrderStatusEnum.CLOSED]: "#909399", // 已关闭 - 灰色
+  [OrderStatusEnum.SERVICING]: "#67c23a", // 已完成 - 绿色
+};
+
+// 状态颜色映射
+const statusColorMap = {
+  0: "#e6a23c", // 待发货 - 橙色
+  1: "#fa436a", // 待付款 - 红色，突出显示
+  2: "#e6a23c", // 待发货 - 橙色
+  3: "#409eff", // 已发货 - 蓝色
+  4: "#67c23a", // 已完成 - 绿色
+  5: "#909399", // 已关闭 - 灰色
+  6: "#909399", // 已取消 - 灰色
+};
+
+/**
  * 订单状态数值数组（uni-app 最安全用法）
  */
 export const ORDER_STATUS_VALUES = [
